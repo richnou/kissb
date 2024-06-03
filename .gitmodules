@@ -1,0 +1,4 @@
+[submodule "kb-vscode/vscode-kotlin"]
+	path = kb-vscode/vscode-kotlin
+	url = git@github.com:richnou/vscode-kotlin.git
+    branch = dev
