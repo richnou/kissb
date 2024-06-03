@@ -1,0 +1,59 @@
+package provide kiss.terminal 1.0
+
+namespace eval kiss::terminal {
+
+    ## Exec redirecting outputs to console
+    proc execIn {folder args} {
+        set pwd [pwd]
+        exec mkdir -p $folder
+        cd $folder 
+        try {
+            return [exec {*}${args} >@ stdout 2>@ stdout]
+        } finally {
+            cd $pwd
+        }
+        
+    }
+
+        ## Exec redirecting outputs to console
+    proc forkIn {folder args} {
+        set pwd [pwd]
+        exec mkdir -p $folder
+        cd $folder 
+        try {
+            return [exec {*}${args} >@ stdout 2>@ stdout &]
+        } finally {
+            cd $pwd
+        }
+        
+    }
+
+    ## Exec returning stdout as function result
+    proc callIn {folder args} {
+        set pwd [pwd]
+        exec mkdir -p $folder
+        cd $folder 
+        try {
+            return [exec {*}${args}]
+        } finally {
+            cd $pwd
+        }
+        
+    }
+
+    ## Fork Xterm in the give folder with provided command
+    proc xterm-in {folder args} {
+        kiss::terminal::forkIn $folder xterm -fa "Noto Mono" -fs 12 -e {*}$args
+    }
+
+    ## Fork Xterm in the give folder with provided command
+    proc xterm args {
+        kiss::terminal::forkIn . xterm -fa "Noto Mono" -fs 12 -e {*}$args
+    }
+
+
+    namespace export xterm* call* fork* exec*
+    namespace eval :: {
+        namespace import kiss::terminal::xterm* kiss::terminal::call* kiss::terminal::fork* kiss::terminal::exec*
+    }
+}

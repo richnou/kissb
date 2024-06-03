@@ -1,0 +1,66 @@
+package provide coursier 1.0
+package require kiss
+
+
+
+namespace eval coursier {
+
+    set tcFolder ".kb/toolchain/coursier"
+    set outputFolder "repository"
+
+    set binPath ""
+
+    ## On Load -> Toolchain
+    ###########
+    kiss::toolchain::register coursier {
+        puts "Init Coursier Toolchain"
+
+        exec mkdir -p ${coursier::tcFolder}
+
+        #curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
+        #https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-2.5.2-bin.tar.gz
+        #set url "https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-${ivy::version}-bin.tar.gz"
+
+        #if {[file exists ]}
+        set coursier::binPath [file normalize ${coursier::tcFolder}/cs-x86_64-pc-linux]
+        
+        if {![file exists ${coursier::binPath}]} {
+            puts "Downloading Coursier"
+            kiss::utils::download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" ${coursier::tcFolder}/cs-x86_64-pc-linux.gz
+            kiss::utils::execIn ${coursier::tcFolder} gunzip -d cs-x86_64-pc-linux.gz
+            kiss::utils::execIn ${coursier::tcFolder} chmod +x cs-x86_64-pc-linux
+            #kiss::utils::execIn $tcFolder curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
+        } else {
+            puts "Coursier TC ready in ${coursier::binPath}"
+        }
+    }
+
+    ## Fetch
+    ##############
+    set currentDeps {}
+    proc + dep {
+        set outFolder [uplevel {set outFolder}] 
+        #puts "Getting to $outFolder"
+        lappend coursier::currentDeps $dep
+        #coursier::runtime::fetchSingle $outFolder org.apache.commons commons-lang3 3.14.0
+        set files [coursier::runtime::fetchSingle org.apache.commons:commons-lang3:3.14.0]
+        kiss::dependencies::addDeps [uplevel {set module}] $files
+    }
+    proc fetchAll {module deps} {
+
+        set outFolder ${coursier::tcFolder}/repository/$module 
+        file mkdir $outFolder
+
+        ## Load deps
+        eval $deps
+
+
+    }
+
+    namespace eval runtime {
+
+        proc fetchSingle dep {
+            return [kiss::utils::callIn ${coursier::tcFolder} ${coursier::binPath} fetch --classpath $dep]
+        }
+    }
+}

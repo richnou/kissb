@@ -1,0 +1,6 @@
+log.info "Hi"
+
+@ test1 {
+    log.info "Hi From Target"
+    xterm /bin/bash
+}

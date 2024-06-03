@@ -1,0 +1,25 @@
+
+package require kotlin
+package require coursier 
+
+puts "Custom project"
+
+## Select toolchains
+kiss::toolchain::init kotlin-2 
+kiss::toolchain::init coursier
+
+## Load dependencies
+coursier::fetchAll main {
+
+    + org.apache.commons:commons-lang3:3.14.0
+}
+#ivy::fetchAll main {
+#
+#    + org.apache.commons:commons-lang3:3.14.0
+#}
+
+kiss::sources::addSourceFolder main src/main/kotlin 
+
+#kotlin::compile main
+kotlin::assemble main hello.jar
+

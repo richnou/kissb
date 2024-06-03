@@ -1,0 +1,136 @@
+package provide kiss.log 1.0
+catch {package require term::ansi::send}
+
+namespace eval kiss::log {
+
+
+    ## Utils
+    ## Hex codes for emoji: https://dev.to/rodrigoodhin/list-of-emojis-hex-codes-35ma
+    #############
+    set ::kiss.log.level INFO
+    set ::kiss.log.name {top} 
+
+    proc log.get.level args {
+        return ${::kiss.log.level}
+    }
+    proc log.set.level level {
+        set ::kiss.log.level $level
+    }
+
+    proc log.get.name args {
+        return ${::kiss.log.name}
+    }
+    proc log.set.name n {
+        set ::kiss.log.name $n
+    }
+
+    proc log.set.fine args {
+        set ::kiss.log.level FINE
+    }
+    proc log.set.info args {
+        set ::kiss.log.level INFO 
+    }
+
+    proc log {level message} {
+        puts "${level}.${::kiss.log.name} $message"
+    }
+    proc isColorTerm args {
+        set sendPresent [::catch {package present term::ansi::send}]
+        if {$sendPresent} {
+            return 0
+        } else {
+            return 1
+        }
+    }
+
+    proc log.with.logger {logger args} {
+        set __n [log.get.name]
+        log.set.name ${__n}.$logger
+        try {
+            uplevel {*}$args
+        } finally {
+            log.set.name ${__n}
+        }
+    }
+
+    proc log.with {level args} {
+        set l [log.get.level]
+        log.set.level $level
+        try {
+            uplevel $args
+        } finally {
+            log.set.level $l
+        }
+    }
+    proc log.with.fine args {
+        log.with FINE {*}$args
+    }
+    proc log.with.info args {
+        log.with FINE {*}$args
+    }
+    proc log.with.warn args {
+        log.with FINE {*}$args
+    }
+    
+    proc log.fatal message {
+        try {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgred} }
+            log FATA $message
+            #::exit -1
+            error $message  $message
+        } finally {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
+        }
+        
+    }
+    proc log.error message {
+        
+        try {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgred} }
+            log ERRO $message
+        } finally {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
+        }
+        
+    }
+    proc log.warn message {
+        try {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgyellow} }
+            icLog WARN $message
+        } finally {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
+        }
+        
+    }
+    proc log.info message {
+
+        try {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgcyan} }
+            log INFO $message
+        } finally {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
+        }
+        
+    }
+    proc log.fine message {
+        if {[log.get.level] == "FINE"} {
+            icLog FINE $message
+        }   
+    }
+    proc log.success message {
+        try {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fggreen} }
+            icLog SUCC $message
+        } finally {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
+        }
+        
+    }
+
+    #puts "Export/Import log"
+    namespace export log*
+    namespace eval :: {
+        namespace import kiss::log::log*
+    }
+
+}

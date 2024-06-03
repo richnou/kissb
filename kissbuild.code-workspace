@@ -1,0 +1,44 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+    ],
+    "settings": {
+        "[tcl]": {},
+        "kotlin.languageServer.port": 9002,
+        "kotlin.languageServer.path": "./ls",
+        "kotlin.languageServer.transport": "tcp"
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Kotlin Extension",
+                "type": "extensionHost",
+                "request": "launch",
+                "runtimeExecutable": "${execPath}",
+                "args": [
+                    "--extensionDevelopmentPath=./kb-vscode/vscode-kotlin"
+                ],
+                "outFiles": [
+                    "./kb-vscode/vscode-kotlin/dist/**/*.js"
+                ]
+            },
+            {
+                "name": "Extension Tests",
+                "type": "extensionHost",
+                "request": "launch",
+                "runtimeExecutable": "${execPath}",
+                "args": [
+                    "--extensionDevelopmentPath=${workspaceFolder}",
+                    "--extensionTestsPath=${workspaceFolder}/out/test"
+                ],
+                "outFiles": [
+                    "${workspaceFolder}/out/test/**/*.js"
+                ]
+            }
+        ],
+        "compounds": []
+    }
+}

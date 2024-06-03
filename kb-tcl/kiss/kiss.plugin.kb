@@ -1,0 +1,165 @@
+package provide kiss 1.0
+
+namespace eval kiss {
+
+
+    #####################
+    ## Context
+    #####################
+
+
+    #####################
+    ## Env variables
+    #####################
+    namespace eval env {
+
+        #set _targets [dict create]
+
+        proc ::env {name default} {
+            if {[array names ::env -exact $name] == ""} {
+                puts "Setting default for $name"
+                #uplevel [list set env($name) $default]
+                uplevel [list array set env [list $name $default]]
+            }
+            #return [uplevel [list set \$env($name)]]
+            return [uplevel [array get env $name]]
+        }
+
+    }
+
+    #############################
+    ## Targets
+    #############################
+    proc ::@ {name args} {
+        kiss::targets::@ $name {*}$args
+    }
+    namespace eval targets {
+
+        set _targets [dict create]
+
+        proc @ {name args} {
+            dict append kiss::targets::_targets $name {*}$args
+        }
+
+        proc listTargets args {
+            return [dict keys $::kiss::targets::_targets]
+        }
+
+        proc getScript target {
+            return [dict get $::kiss::targets::_targets $target]
+        }
+
+        ## Run Target
+        proc run {target argv args} {
+            set script [getScript $target]
+            array set env [array get ::env]
+            log.with.logger $target {
+                eval $script
+            }
+            
+            #return [dict keys $::kiss::targets::_targets]
+        }
+
+    }
+
+    #############################
+    namespace eval toolchain {
+
+        array set tc {}
+
+        proc register {name args} {
+            array set kiss::toolchain::tc [list $name {*}$args]
+        }
+
+        proc init {name} {
+            puts "INIT:  "
+            set script [lindex [array get  kiss::toolchain::tc $name] 1]
+            eval $script
+        }
+    }
+
+
+    #############################
+    namespace eval sources {
+
+        array set src {}
+
+        proc addSourceFolder {module path} {
+            set sources [kiss::utils::callIn [pwd] find $path -type f]
+            puts "Found sources: $sources"
+            array set kiss::sources::src [list $module $sources]
+        }
+
+        proc getSources {module} {
+            return [lindex [array get kiss::sources::src $module] 1]
+        }
+    }
+
+    ###############################
+    namespace eval dependencies {
+
+        set moduleDeps [dict create]
+
+        proc addDeps {module args} {
+            dict append kiss::dependencies::moduleDeps $module {*}$args
+        }
+
+        proc getDeps module {
+            return [dict get $kiss::dependencies::moduleDeps $module]
+        }
+
+    }
+
+    #################################
+    namespace eval utils {
+
+        proc ::isArgv argName {
+            return [uplevel [list expr \[ lsearch -exact \$argv $argName\] > -1]]
+        }
+
+        proc download {url dir} {
+            exec wget -p $url -O $dir >@ stdout 2>@ stdout
+        }
+
+        ## Exec redirecting outputs to console
+        proc execIn {folder args} {
+            set pwd [pwd]
+            exec mkdir -p $folder
+            cd $folder 
+            try {
+                return [exec {*}${args} >@ stdout 2>@ stdout]
+            } finally {
+                cd $pwd
+            }
+            
+        }
+
+         ## Exec redirecting outputs to console
+        proc forkIn {folder args} {
+            set pwd [pwd]
+            exec mkdir -p $folder
+            cd $folder 
+            try {
+                return [exec {*}${args} >@ stdout 2>@ stdout &]
+            } finally {
+                cd $pwd
+            }
+            
+        }
+
+        ## Exec returning stdout as function result
+        proc callIn {folder args} {
+            set pwd [pwd]
+            exec mkdir -p $folder
+            cd $folder 
+            try {
+                return [exec {*}${args}]
+            } finally {
+                cd $pwd
+            }
+            
+        }
+
+    }
+
+}

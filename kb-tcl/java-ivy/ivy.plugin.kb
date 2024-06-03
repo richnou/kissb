@@ -1,0 +1,64 @@
+package provide ivy 1.0
+package require kiss 
+
+namespace eval ivy {
+
+    set tcFolder ".kb/toolchain/ivy"
+    set version 2.5.2
+    set outputFolder "repository"
+
+    set binPath ""
+
+    ## On Load -> Toolchain
+    ###########
+    kiss::toolchain::register ivy {
+        puts "Init ivy Toolchain"
+
+        set tcFolder ".kb/toolchain/ivy"
+        exec mkdir -p $tcFolder
+
+        #https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-2.5.2-bin.tar.gz
+        set url "https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-${ivy::version}-bin.tar.gz"
+
+        #if {[file exists ]}
+        set ivy::binPath [file normalize $tcFolder/apache-ivy-${ivy::version}/ivy-${ivy::version}.jar]
+        
+        if {![file exists ${ivy::binPath}]} {
+            puts "Downloading"
+            kiss::utils::download $url $tcFolder/ivy.tar.gz
+            kiss::utils::execIn $tcFolder tar xvzf ivy.tar.gz
+        } else {
+            puts "Ivy TC ready"
+        }
+    }
+
+    ## Fetch
+    ##############
+    set currentDeps {}
+    proc + dep {
+        set outFolder [uplevel {set outFolder}]
+        #puts "Getting to $outFolder"
+        lappend ivy::currentDeps $dep
+        ivy::runtime::fetchSingle $outFolder org.apache.commons commons-lang3 3.14.0
+    }
+    proc fetchAll {module deps} {
+
+        set outFolder ${ivy::tcFolder}/repository/$module 
+        file mkdir $outFolder
+
+        ## Load deps
+        eval $deps
+
+
+    }
+
+    ## Runtime
+    namespace eval runtime {
+
+        proc fetchSingle {cache org module rev} {
+            kiss::utils::execIn $cache java -jar ${ivy::binPath} -dependency $org $module $rev -cache ./ -makepom out.pom
+        }
+    }
+
+
+}

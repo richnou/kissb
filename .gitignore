@@ -1,0 +1,6 @@
+.kb
+node_modules
+*.jar
+*.fleet
+*.gradle
+build

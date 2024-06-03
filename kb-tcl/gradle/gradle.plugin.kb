@@ -1,0 +1,11 @@
+package provide gradle 1.0
+package require kiss
+
+namespace eval gradle {
+
+
+    proc ::gradlew args {
+        ::kiss::utils::execIn . ./gradlew {*}$args
+    }
+
+}
