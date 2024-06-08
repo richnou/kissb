@@ -1,0 +1,28 @@
+package require kotlin
+package require kotlin.mp
+package require kotlin.mp.compose
+package require ivy
+
+## Init Kotlin
+kiss::toolchain::init kotlin-2
+kiss::toolchain::init ivy
+
+ 
+## Apply KMP convention
+kotlin::mp::conventionV1
+
+## Apply Compose Mp
+kotlin::mp::compose::init 
+#kotlin::mp::compose::use foundation layout
+
+## Generate Build config
+kotlin::mp::generateBuildConfig
+
+## Build
+@ build {
+    kotlin::compile jvm.main
+}
+
+@ run : build {
+    kotlin::run jvm.main MainAppKt
+}

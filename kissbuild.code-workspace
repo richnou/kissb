@@ -19,7 +19,7 @@
                 "request": "launch",
                 "runtimeExecutable": "${execPath}",
                 "args": [
-                    "--extensionDevelopmentPath=./kb-vscode/vscode-kotlin"
+                    "--extensionDevelopmentPath=${workspaceFolder}"
                 ],
                 "outFiles": [
                     "./kb-vscode/vscode-kotlin/dist/**/*.js"

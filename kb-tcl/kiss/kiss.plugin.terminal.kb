@@ -9,6 +9,8 @@ namespace eval kiss::terminal {
         cd $folder 
         try {
             return [exec {*}${args} >@ stdout 2>@ stdout]
+        } on error e {
+            log.error "Error running command $args"
         } finally {
             cd $pwd
         }
@@ -22,6 +24,8 @@ namespace eval kiss::terminal {
         cd $folder 
         try {
             return [exec {*}${args} >@ stdout 2>@ stdout &]
+        } on error e {
+            log.error "Error running command $args"
         } finally {
             cd $pwd
         }
@@ -34,7 +38,14 @@ namespace eval kiss::terminal {
         exec mkdir -p $folder
         cd $folder 
         try {
-            return [exec {*}${args}]
+            return [exec {*}${args} 2> /dev/null]
+        } on error {output options} {
+            if {[dict get $options -errorcode]!= "NONE"} {
+                log.error "Error running command $args"
+                log.error "- res: $options"
+            } else {
+                return $output
+            }
         } finally {
             cd $pwd
         }

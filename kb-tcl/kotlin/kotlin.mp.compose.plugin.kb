@@ -1,0 +1,70 @@
+package provide kotlin.mp.compose 1.0
+package require kotlin.mp
+package require coursier
+
+namespace eval kotlin::mp::compose {
+
+    set composeVersion          1.6.11
+    set composeCompilerVersion  1.5.14
+
+    coursier::addRepository https://maven.pkg.jetbrains.space/public/p/compose/dev
+    coursier::addRepository https://dl.google.com/android/maven2/
+
+    proc init args {
+        #log.info "Init compose into module $module"
+
+        set composeCompiler [join [coursier::fetchSingleLib org.jetbrains.kotlin:kotlin-compose-compiler-plugin:${kotlin::kotlinVersion}] ,]
+
+        #kiss::vars::append jvm.main.kotlin.compiler.args org.jetbrains.compose.compiler:compiler:${kotlin::mp::compose::composeVersion}
+        kiss::vars::append jvm.main.kotlin.compiler.args -Xplugin=$composeCompiler
+        
+        coursier::fetchAll common.main {
+            #org/jetbrains/compose/runtime/runtime-desktop/1.6.11/
+            #+ org.jetbrains.compose.runtime:runtime:${kotlin::mp::compose::composeVersion}
+            
+        }
+
+        ## Desktop target
+        coursier::fetchAll jvm.main {
+            #org/jetbrains/compose/runtime/runtime-desktop/1.6.11/
+            #,json,aar,bundle,json,aar,bundle
+            + org.jetbrains.compose.ui:ui-desktop:${kotlin::mp::compose::composeVersion}
+            + org.jetbrains.compose.runtime:runtime-desktop:${kotlin::mp::compose::composeVersion}
+            #+ org.jetbrains.compose.runtime:runtime-linuxx64:${kotlin::mp::compose::composeVersion}
+
+
+            + org.jetbrains.compose.desktop:desktop-jvm:${kotlin::mp::compose::composeVersion}
+            + androidx.lifecycle:lifecycle-viewmodel-desktop:2.8.0
+
+            # Platform desktop impl
+            + org.jetbrains.compose.desktop:desktop-jvm-linux-x64:${kotlin::mp::compose::composeVersion} --reconciliation androidx.arch.core:core-common:relaxed \
+                                                                                                        --reconciliation androidx.collection:collection:relaxed \
+                                                                                                        --reconciliation androidx.lifecycle:lifecycle-runtime:relaxed \
+                                                                                                        --reconciliation androidx.lifecycle:lifecycle-viewmodel:relaxed \
+                                                                                                        --artifact-type jar
+
+            + org.jetbrains.compose.foundation:foundation-layout-desktop:${kotlin::mp::compose::composeVersion}
+           
+        }
+    }
+
+    proc use args {
+        
+        foreach lib $args {
+            coursier::fetchAll common.main {
+                upvar lib lib
+                #org/jetbrains/compose/runtime/runtime-desktop/1.6.11/
+                + org.jetbrains.compose.$lib:$lib:${kotlin::mp::compose::composeVersion}
+            
+            }
+            coursier::fetchAll jvm.main {
+                upvar lib lib
+                #org/jetbrains/compose/runtime/runtime-desktop/1.6.11/
+                + org.jetbrains.compose.$lib:$lib-desktop:${kotlin::mp::compose::composeVersion}
+            }
+        }
+        
+    }
+
+    
+}

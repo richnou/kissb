@@ -1,0 +1,26 @@
+package provide kotlin.mp 1.0
+package require kotlin 
+
+namespace eval kotlin::mp {
+
+    ## Applies the Source Convention v1
+    proc conventionV1 args {
+        
+        ## Set source folders
+        kiss::sources::addSourceFolder common.main  src/common/main/kotlin
+        kiss::sources::addSourceFolder jvm.main     src/jvm/main/kotlin
+        kiss::sources::addSourceFolder android.main src/android/main/kotlin
+
+        ## Init base dependencies for each target
+        kotlin::init common.main
+        kotlin::init jvm.main
+    }
+
+    proc generateBuildConfig args {
+
+        ## Generate build file
+        kotlin::buildserver::generate common.main
+        kotlin::buildserver::generate jvm.main
+        kotlin::buildserver::generate android.main
+    }
+}

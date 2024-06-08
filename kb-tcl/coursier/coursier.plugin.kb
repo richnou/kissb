@@ -1,7 +1,4 @@
 package provide coursier 1.0
-package require kiss
-
-
 
 namespace eval coursier {
 
@@ -9,6 +6,14 @@ namespace eval coursier {
     set outputFolder "repository"
 
     set binPath ""
+
+    set repositories {ivy2Local central sonatype:releases}
+
+    ## Repos
+    ###############
+    proc addRepository url {
+        lappend coursier::repositories $url
+    }
 
     ## On Load -> Toolchain
     ###########
@@ -38,13 +43,39 @@ namespace eval coursier {
     ## Fetch
     ##############
     set currentDeps {}
-    proc + dep {
+    proc + {dep args} {
         set outFolder [uplevel {set outFolder}] 
         #puts "Getting to $outFolder"
         lappend coursier::currentDeps $dep
-        #coursier::runtime::fetchSingle $outFolder org.apache.commons commons-lang3 3.14.0
-        set files [coursier::runtime::fetchSingle org.apache.commons:commons-lang3:3.14.0]
-        kiss::dependencies::addDeps [uplevel {set module}] $files
+        #coursier::runtime::fetchSingle $outFolder org.apache.commons commons-lang3 3.14.0 --default=true --javadoc --sources 
+        log.info "Fetching $dep"
+        set files [coursier::runtime::fetchSingle $dep {*}$args]
+        log.info "- Result: $files"
+
+        ## Parse result to sort dependencies in main artifact, javadoc, sources
+        set sortedDeps [dict create]
+        foreach resolvedFile $files {
+            set tail [file tail $resolvedFile]
+            switch -glob $tail {
+                *-sources.jar {
+                    log.debug "$resolvedFile is sources"
+                    dict lappend sortedDeps [string map {-sources ""} $tail] sources $resolvedFile
+                }
+                *-javadoc.jar {
+                    log.debug "$resolvedFile is javadoc"
+                    dict lappend sortedDeps [string map {-javadoc ""} $tail] doc $resolvedFile
+                }
+                default {
+                    log.debug "$resolvedFile is lib"
+                    dict lappend sortedDeps $tail lib $resolvedFile
+                }
+            }
+            
+        }
+        log.debug "Result map: $sortedDeps"
+        #exit 0 
+        #kiss::dependencies::addDeps [uplevel {set module}] {*}$files
+        kiss::dependencies::addDeps [uplevel {set module}] $sortedDeps
     }
     proc fetchAll {module deps} {
 
@@ -57,10 +88,18 @@ namespace eval coursier {
 
     }
 
+    proc fetchSingleLib {dep} {
+        return [coursier::runtime::fetchSingle $dep]
+    }
+
     namespace eval runtime {
 
-        proc fetchSingle dep {
-            return [kiss::utils::callIn ${coursier::tcFolder} ${coursier::binPath} fetch --classpath $dep]
+        proc fetchSingle {dep args} {
+            set repos {}
+            foreach r $coursier::repositories {
+                lappend repos -r $r
+            }
+            return [kiss::terminal::callIn ${coursier::tcFolder} ${coursier::binPath} fetch -q {*}$repos {*}$args $dep]
         }
     }
 }

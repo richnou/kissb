@@ -62,14 +62,18 @@ namespace eval kiss::log {
             log.set.level $l
         }
     }
-    proc log.with.fine args {
-        log.with FINE {*}$args
-    }
+    
     proc log.with.info args {
         log.with FINE {*}$args
     }
     proc log.with.warn args {
         log.with FINE {*}$args
+    }
+    proc log.with.fine args {
+        log.with FINE {*}$args
+    }
+    proc log.with.debug args {
+        log.with DEBUG {*}$args
     }
     
     proc log.fatal message {
@@ -96,12 +100,23 @@ namespace eval kiss::log {
     proc log.warn message {
         try {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgyellow} }
-            icLog WARN $message
+            log WARN $message
         } finally {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
         }
         
     }
+
+    proc log.success message {
+        try {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fggreen} }
+            log SUCC $message
+        } finally {
+            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
+        }
+        
+    }
+
     proc log.info message {
 
         try {
@@ -113,19 +128,16 @@ namespace eval kiss::log {
         
     }
     proc log.fine message {
-        if {[log.get.level] == "FINE"} {
-            icLog FINE $message
+        if {[log.get.level] == "FINE" || [log.get.level] == "DEBUG"} {
+            log FINE $message
         }   
     }
-    proc log.success message {
-        try {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fggreen} }
-            icLog SUCC $message
-        } finally {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
-        }
-        
+    proc log.debug message {
+        if {[log.get.level] == "DEBUG"} {
+            log DEBUG $message
+        }   
     }
+    
 
     #puts "Export/Import log"
     namespace export log*

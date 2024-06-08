@@ -1,27 +1,22 @@
 package provide kotlin 1.0
-package require kiss 
+package require coursier
 
 namespace eval kotlin {
 
     set tcFolder ".kb/toolchain/kotlin"
-    set baseBuildFolder ".kb/toolchain/kotlin/build"
+    set baseBuildFolder ".kb/build/kotlin"
 
-    ## Toolchain init
-    ###########
-    proc toolchain args {
-        puts "Testing Toolchain"
+    set kotlinVersion "2.0.0"
 
-        
-        exec mkdir -p $kotlin::tcFolder
+    proc _buildirForModule module {
+        return [kiss::vars::get kotlin.compiler.buildDir]/$module/classes
+    }
 
-        #if {[file exists ]}
-        puts "Downloading"
-        if {![file exists $tcFolder/kotlinc/bin/kotlinc]} {
-            kiss::utils::download https://github.com/JetBrains/kotlin/releases/download/v2.0.0/kotlin-compiler-2.0.0.zip $tcFolder/kotlinc.zip
-            kiss::utils::execIn $tcFolder unzip  kotlinc.zip
+    proc init module {
+
+        coursier::fetchAll $module {
+            + org.jetbrains.kotlin:kotlin-stdlib:${kotlin::kotlinVersion}
         }
-        
-        #kiss::utils::execIn $tcFolder/kotlinc tar --strip-components=1 -xvaf  ../kotlinc.tar.gz
     }
 
     proc compile module {
@@ -30,12 +25,28 @@ namespace eval kotlin {
         file mkdir $outputFolder
 
         set sources [kiss::sources::getSources $module]
-        puts "Kotlin Compiling $sources for module $module"
+        log.info "Kotlin Compiling $sources for module $module"
+        if {[llength $sources] == 0} {
+            log.warn "No sources to compile"
+            return 
+        }
+        #log.info "Deps: [kiss::dependencies::getDeps $module]"
+        #set cpString [join  [kiss::dependencies::getDeps $module] ":"]
+        #log.info "Dep string: $cpString"
 
-        set deps [kiss:dependencies::getDeps $module]
-        puts "Dependencies: $deps"
+        set depsList [kiss::dependencies::resolveDeps $module lib]
+        set cpString [join $depsList ":"]
 
-        kiss::utils::execIn [pwd] $kotlin::tcFolder/kotlinc/bin/kotlinc $sources -d $outputFolder
+        set args [concat [kiss::vars::get kotlin.compiler.args] [kiss::vars::get ${module}.kotlin.compiler.args]]
+        log.info "Compile args: $args"
+
+        kiss::utils::execIn [pwd] $kotlin::tcFolder/kotlinc/bin/kotlinc \
+                                    {*}$sources \
+                                    -classpath $cpString \
+                                    -d [_buildirForModule $module] \
+                                    {*}$args
+
+        log.success "Done compiling"
 
     }
 
@@ -53,21 +64,73 @@ namespace eval kotlin {
 
     }
 
+    proc run {module class} {
+
+        log.info "Compiling and running $module main class $class"
+
+        # Compile
+        compile $module
+
+        # Run
+        set cp [concat [_buildirForModule $module] [kiss::dependencies::resolveDeps $module lib]]
+        kiss::utils::execIn [pwd] java -cp [join $cp ":"] $class
+    }
+
     ## On Load
     ###########
     kiss::toolchain::register kotlin-2 {
         #puts "Testing Toolchain Init"
 
-        set tcFolder ".kb/toolchain/kotlin"
-        exec mkdir -p $tcFolder
+        kiss::toolchain::init coursier
+
+        set  ::kotlin::tcFolder [file normalize ".kb/toolchain/kotlin"]
+        exec mkdir -p $::kotlin::tcFolder
+
+        set kotlin::baseBuildFolder [file normalize $kotlin::baseBuildFolder]
+        exec mkdir -p $::kotlin::baseBuildFolder
 
         #if {[file exists ]}
         #puts "Downloading"
-        if {![file exists $tcFolder/kotlinc/bin/kotlinc]} {
-            kiss::utils::download https://github.com/JetBrains/kotlin/releases/download/v2.0.0/kotlin-compiler-2.0.0.zip $tcFolder/kotlinc.zip
-            kiss::utils::execIn $tcFolder unzip  kotlinc.zip
+        if {![file exists $::kotlin::tcFolder/kotlinc/bin/kotlinc]} {
+            kiss::utils::download https://github.com/JetBrains/kotlin/releases/download/v2.0.0/kotlin-compiler-2.0.0.zip $::kotlin::tcFolder/kotlinc.zip
+            kiss::utils::execIn $::kotlin::tcFolder unzip  kotlinc.zip
         } else {
             puts "Kotlin TC ready"
+        }
+
+        ## Setup args
+        kiss::vars::append kotlin.home $::kotlin::tcFolder/kotlinc
+        kiss::vars::append kotlin.compiler.args -kotlin-home      $::kotlin::tcFolder/kotlinc
+        kiss::vars::append kotlin.compiler.args -language-version 2.0
+        kiss::vars::append kotlin.compiler.args -Xenable-incremental-compilation
+
+        kiss::vars::append kotlin.compiler.buildDir $::kotlin::baseBuildFolder
+    }
+
+
+    ## Build Server Output
+    ####################
+    namespace eval buildserver {
+
+        proc generate {module args} {
+            log.info "Generating Kotlin Build Server Config"
+
+            set bsFile $::kotlin::baseBuildFolder/build.$module.json
+
+            kiss::json::write $bsFile [subst {
+                toolchain "kotlin-2"
+                platform "jvm"
+                module $module
+                env {
+                    kotlin.home "$::kotlin::tcFolder/kotlinc"
+                }
+                buildDirectory [kiss::vars::get kotlin.compiler.buildDir]/$module/classes
+                args:: [list [concat [kiss::vars::get kotlin.compiler.args] [kiss::vars::get ${module}.kotlin.compiler.args]]]
+
+                sources:: [list [kiss::sources::getSources $module]]
+
+                classpath  [list [kiss::dependencies::getDeps $module]]
+            }]
         }
     }
 }

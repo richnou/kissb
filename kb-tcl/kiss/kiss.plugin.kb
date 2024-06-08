@@ -27,6 +27,24 @@ namespace eval kiss {
 
     }
 
+    namespace eval vars {
+
+        set _vars [dict create]
+
+        proc append {name args} {
+            dict lappend kiss::vars::_vars $name {*}$args
+        }
+        proc get {name {default {}}} {
+            if {[dict exists $kiss::vars::_vars $name]} {
+                return [dict get $kiss::vars::_vars $name]
+            } else {
+                return $default
+            }
+            
+        }
+
+    }
+
     #############################
     ## Targets
     #############################
@@ -38,7 +56,21 @@ namespace eval kiss {
         set _targets [dict create]
 
         proc @ {name args} {
-            dict append kiss::targets::_targets $name {*}$args
+            log.info "Registering target $name, size of args=[llength $args]"
+            set script [lindex $args end]
+            #log.info "Script is: $script"
+            set reqTargets {}
+            if {[llength $args]>1} {
+                set requiredTargets [lrange $args 0 end-1]
+                foreach requiredTarget $requiredTargets {
+                    if {$requiredTarget!=":" && $requiredTarget!="<-" } {
+                        log.info "- Required target: $requiredTarget"
+                        lappend reqTargets $requiredTarget
+                    }
+                }
+            } 
+            #dict append kiss::targets::_targets $name {*}$args
+            dict lappend kiss::targets::_targets $name $reqTargets $script 
         }
 
         proc listTargets args {
@@ -46,7 +78,9 @@ namespace eval kiss {
         }
 
         proc getScript target {
-            return [dict get $::kiss::targets::_targets $target]
+            set targetcontent [dict get $::kiss::targets::_targets $target]
+            #log.info "Returning $target script: [lindex $targetcontent end]"
+            return [lindex $targetcontent end]
         }
 
         ## Run Target
@@ -85,7 +119,8 @@ namespace eval kiss {
         array set src {}
 
         proc addSourceFolder {module path} {
-            set sources [kiss::utils::callIn [pwd] find $path -type f]
+            #set sources [lmap [kiss::utils::callIn [pwd] find $path -type f]
+            set sources [lmap f [glob -nocomplain -type f -path $path **/*] { file normalize $f} ]
             puts "Found sources: $sources"
             array set kiss::sources::src [list $module $sources]
         }
@@ -100,15 +135,41 @@ namespace eval kiss {
 
         set moduleDeps [dict create]
 
-        proc addDeps {module args} {
-            dict append kiss::dependencies::moduleDeps $module {*}$args
+        ## Adds dependencies to the current dict
+        ## The passed dependencies is a dict with format: name {lib xxx sources xxx doc xxxx}
+        proc addDeps {module depsDict} {
+            #dict lappend kiss::dependencies::moduleDeps $module {*}$args
+            dict lappend kiss::dependencies::moduleDeps $module {*}$depsDict
         }
 
         proc getDeps module {
-            return [dict get $kiss::dependencies::moduleDeps $module]
+            if {[dict exists $kiss::dependencies::moduleDeps $module]} {
+                return [dict get $kiss::dependencies::moduleDeps $module]
+            } else {
+                return {}
+            }
+             
+        }
+
+        proc resolveDeps {module classifier} {
+            set currentDeps [getDeps $module]
+
+            set res [lmap {name dict} $currentDeps {
+                if {[dict exists $dict $classifier]} {
+                    dict get $dict $classifier
+                } else {
+                    log.warn "No $classifier in $dict"
+                    string cat ""
+                }
+                
+            }]
+            log.info "Resolved for $module: $res"
+            return $res 
         }
 
     }
+
+    
 
     #################################
     namespace eval utils {
