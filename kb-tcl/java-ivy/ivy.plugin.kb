@@ -15,7 +15,7 @@ namespace eval ivy {
         puts "Init ivy Toolchain"
 
         set tcFolder ".kb/toolchain/ivy"
-        exec mkdir -p $tcFolder
+        file mkdir $tcFolder
 
         #https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-2.5.2-bin.tar.gz
         set url "https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-${ivy::version}-bin.tar.gz"

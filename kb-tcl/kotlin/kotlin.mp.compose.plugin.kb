@@ -26,24 +26,36 @@ namespace eval kotlin::mp::compose {
 
         ## Desktop target
         coursier::fetchAll jvm.main {
-            #org/jetbrains/compose/runtime/runtime-desktop/1.6.11/
-            #,json,aar,bundle,json,aar,bundle
+
+            ## Common Desktop UI and Runtime, required
             + org.jetbrains.compose.ui:ui-desktop:${kotlin::mp::compose::composeVersion}
             + org.jetbrains.compose.runtime:runtime-desktop:${kotlin::mp::compose::composeVersion}
-            #+ org.jetbrains.compose.runtime:runtime-linuxx64:${kotlin::mp::compose::composeVersion}
-
-
+           
             + org.jetbrains.compose.desktop:desktop-jvm:${kotlin::mp::compose::composeVersion}
             + androidx.lifecycle:lifecycle-viewmodel-desktop:2.8.0
 
+            ## Layout
+            + org.jetbrains.compose.foundation:foundation-layout-desktop:${kotlin::mp::compose::composeVersion}
+
             # Platform desktop impl
-            + org.jetbrains.compose.desktop:desktop-jvm-linux-x64:${kotlin::mp::compose::composeVersion} --reconciliation androidx.arch.core:core-common:relaxed \
+            if {[kiss::utils::isWindows64]} {
+                + org.jetbrains.compose.desktop:desktop-jvm-windows-x64:${kotlin::mp::compose::composeVersion} --reconciliation androidx.arch.core:core-common:relaxed \
                                                                                                         --reconciliation androidx.collection:collection:relaxed \
                                                                                                         --reconciliation androidx.lifecycle:lifecycle-runtime:relaxed \
                                                                                                         --reconciliation androidx.lifecycle:lifecycle-viewmodel:relaxed \
                                                                                                         --artifact-type jar
+            } elseif {[kiss::utils::isLinux64]} {
+                + org.jetbrains.compose.desktop:desktop-jvm-linux-x64:${kotlin::mp::compose::composeVersion} --reconciliation androidx.arch.core:core-common:relaxed \
+                                                                                                        --reconciliation androidx.collection:collection:relaxed \
+                                                                                                        --reconciliation androidx.lifecycle:lifecycle-runtime:relaxed \
+                                                                                                        --reconciliation androidx.lifecycle:lifecycle-viewmodel:relaxed \
+                                                                                                        --artifact-type jar
+            } else {
+                log.error "Platform support not set for $::tcl_platform(platform)_$::tcl_platform(machine)"
+            }
+            
 
-            + org.jetbrains.compose.foundation:foundation-layout-desktop:${kotlin::mp::compose::composeVersion}
+            
            
         }
     }

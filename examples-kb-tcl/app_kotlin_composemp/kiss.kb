@@ -1,11 +1,11 @@
 package require kotlin
 package require kotlin.mp
 package require kotlin.mp.compose
-package require ivy
+ 
 
 ## Init Kotlin
 kiss::toolchain::init kotlin-2
-kiss::toolchain::init ivy
+ 
 
  
 ## Apply KMP convention

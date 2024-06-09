@@ -6,6 +6,10 @@
     ],
     "settings": {
         "[tcl]": {},
+        "files.associations": {
+            "*.kb": "tcl",
+            
+          },
         "kotlin.languageServer.port": 9002,
         "kotlin.languageServer.path": "./ls",
         "kotlin.languageServer.transport": "tcp"

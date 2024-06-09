@@ -1,4 +1,5 @@
 package provide kiss 1.0
+#package require TclCurl
 
 namespace eval kiss {
 
@@ -163,7 +164,7 @@ namespace eval kiss {
                 }
                 
             }]
-            log.info "Resolved for $module: $res"
+            log.debug "Resolved for $module: $res"
             return $res 
         }
 
@@ -173,6 +174,37 @@ namespace eval kiss {
 
     #################################
     namespace eval utils {
+
+        proc isWindows  args {
+            if {$::tcl_platform(platform)=="windows"} {
+                return true 
+            } else {
+                return false
+            } 
+        }
+        proc isWindows64  args {
+            if {$::tcl_platform(platform)=="windows" && $::tcl_platform(machine) == "amd64"} {
+                return true 
+            } else {
+                return false
+            } 
+        }
+
+        proc isLinux  args {
+            if {$::tcl_platform(platform)=="unix"} {
+                return true 
+            } else {
+                return false
+            } 
+        }
+
+        proc isLinux64  args {
+            if {$::tcl_platform(platform)=="unix" && $::tcl_platform(machine) == "x86_64"} {
+                return true 
+            } else {
+                return false
+            } 
+        }
 
         proc ::isArgv argName {
             return [uplevel [list expr \[ lsearch -exact \$argv $argName\] > -1]]
@@ -185,7 +217,7 @@ namespace eval kiss {
         ## Exec redirecting outputs to console
         proc execIn {folder args} {
             set pwd [pwd]
-            exec mkdir -p $folder
+            file mkdir $folder
             cd $folder 
             try {
                 return [exec {*}${args} >@ stdout 2>@ stdout]
@@ -198,7 +230,7 @@ namespace eval kiss {
          ## Exec redirecting outputs to console
         proc forkIn {folder args} {
             set pwd [pwd]
-            exec mkdir -p $folder
+            file mkdir $folder
             cd $folder 
             try {
                 return [exec {*}${args} >@ stdout 2>@ stdout &]
@@ -211,7 +243,7 @@ namespace eval kiss {
         ## Exec returning stdout as function result
         proc callIn {folder args} {
             set pwd [pwd]
-            exec mkdir -p $folder
+            file mkdir $folder
             cd $folder 
             try {
                 return [exec {*}${args}]

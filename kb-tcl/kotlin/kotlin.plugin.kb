@@ -5,6 +5,7 @@ namespace eval kotlin {
 
     set tcFolder ".kb/toolchain/kotlin"
     set baseBuildFolder ".kb/build/kotlin"
+    #set baseBuildFolder ".kb/build/kotlin"
 
     set kotlinVersion "2.0.0"
 
@@ -35,12 +36,20 @@ namespace eval kotlin {
         #log.info "Dep string: $cpString"
 
         set depsList [kiss::dependencies::resolveDeps $module lib]
-        set cpString [join $depsList ":"]
+        set cpString [join $depsList [kiss::files::pathSeparator]]
 
         set args [concat [kiss::vars::get kotlin.compiler.args] [kiss::vars::get ${module}.kotlin.compiler.args]]
         log.info "Compile args: $args"
 
-        kiss::utils::execIn [pwd] $kotlin::tcFolder/kotlinc/bin/kotlinc \
+        ## Write command to file
+        kiss::files::writeText $kotlin::baseBuildFolder/${module}.kotlinargs "$sources \
+                                    -classpath $cpString \
+                                    -d [_buildirForModule $module] \
+                                    $args"
+
+        #exit 0
+        kiss::utils::execIn $kotlin::baseBuildFolder $kotlin::tcFolder/kotlinc/bin/kotlinc @$kotlin::baseBuildFolder/${module}.kotlinargs
+        #kiss::utils::execIn [pwd] $kotlin::tcFolder/kotlinc/bin/kotlinc \
                                     {*}$sources \
                                     -classpath $cpString \
                                     -d [_buildirForModule $module] \
@@ -73,7 +82,7 @@ namespace eval kotlin {
 
         # Run
         set cp [concat [_buildirForModule $module] [kiss::dependencies::resolveDeps $module lib]]
-        kiss::utils::execIn [pwd] java -cp [join $cp ":"] $class
+        kiss::utils::execIn [pwd] java -cp [join $cp [kiss::files::pathSeparator]] $class
     }
 
     ## On Load
@@ -84,16 +93,21 @@ namespace eval kotlin {
         kiss::toolchain::init coursier
 
         set  ::kotlin::tcFolder [file normalize ".kb/toolchain/kotlin"]
-        exec mkdir -p $::kotlin::tcFolder
+        file mkdir $::kotlin::tcFolder
 
         set kotlin::baseBuildFolder [file normalize $kotlin::baseBuildFolder]
-        exec mkdir -p $::kotlin::baseBuildFolder
+        file mkdir $::kotlin::baseBuildFolder
 
         #if {[file exists ]}
         #puts "Downloading"
         if {![file exists $::kotlin::tcFolder/kotlinc/bin/kotlinc]} {
             kiss::utils::download https://github.com/JetBrains/kotlin/releases/download/v2.0.0/kotlin-compiler-2.0.0.zip $::kotlin::tcFolder/kotlinc.zip
-            kiss::utils::execIn $::kotlin::tcFolder unzip  kotlinc.zip
+            if {[kiss::utils::isWindows]} { 
+                kiss::utils::execIn ${::kotlin::tcFolder} powershell -command "Expand-Archive kotlinc.zip -DestinationPath ."
+            } else {
+                kiss::utils::execIn $::kotlin::tcFolder unzip  kotlinc.zip
+            }
+            
         } else {
             puts "Kotlin TC ready"
         }

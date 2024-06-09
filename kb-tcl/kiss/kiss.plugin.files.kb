@@ -1,0 +1,18 @@
+package provide kiss.files 1.0
+
+
+namespace eval kiss::files {
+
+    proc pathSeparator args {
+        return $::tcl_platform(pathSeparator)
+    }
+    proc writeText {f text} {
+        set fid [open $f w+]
+        puts -nonewline $fid $text
+        close $fid
+    }
+
+    proc normalizePath p {
+        return [string map {\\ /} $p]
+    }
+}
