@@ -1,0 +1,48 @@
+package provide python3 1.0
+package require kiss 
+
+puts "Loading python3"
+
+## This package assumes python3 is installed already
+namespace eval python3 {
+
+    set venvPath [file normalize ".kb/build/python3-venv"]
+
+    ## Register a venv toolchain
+    kiss::toolchain::register python3-venv { 
+
+        ## Create venv folder
+        file mkdir $python3::venvPath
+
+        ## Install venv
+        if {![file exists $python3::venvPath/pyvenv.cfg]} {
+            kiss::terminal::execIn $python3::venvPath python3 -m venv .
+        }
+        
+
+    }
+
+    #####################
+    ## Venv utils
+    ###################
+
+    ## install requirements 
+    proc venv.requirements {files args} {
+        foreach rFile [concat $files $args] {
+            kiss::terminal::execIn $python3::venvPath ./bin/pip install -r $rFile
+        }
+        #set rArgs [join $args -r]
+        #kiss::terminal::execIn $python3::venvPath ./bin/pip install -r {*}$rArgs
+    }
+
+    ## Returns true if an exe is in the bin folder
+    proc venv.hasBin name {
+        return [file exists $python3::venvPath/bin/$name]
+    }
+
+    ## Runs a specific bin with arguments
+    ## Run folder is the current folder! 
+    proc venv.runBin {bin args} {
+        kiss::terminal::execIn [pwd] $python3::venvPath/bin/$bin {*}$args
+    }
+}

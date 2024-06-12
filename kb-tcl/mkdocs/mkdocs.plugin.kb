@@ -1,0 +1,56 @@
+package provide mkdocs 1.0
+package require python3
+package require zipfile::mkzip
+
+puts "Loading mkdocs"
+
+namespace eval mkdocs {
+
+    set pluginFolder [file dirname [file normalize [info script]]]
+    set buildDir [file normalize ".kb/build/mkdocs"]
+
+    ## Init Venv
+    ## Install mkdocs
+    proc init args {
+        
+        log.info "Initializing mkdocs..."
+
+        ## Ensure venv
+        kiss::toolchain::init python3-venv
+
+        ## Ensure mkdocs
+        kiss::withIfRefreshOrNot [python3::venv.hasBin mkdocs] {
+            lappend reqFiles $mkdocs::pluginFolder/mkdocs.base.requirements
+            if {[lsearch $args -material]!=-1} {
+                lappend reqFiles $mkdocs::pluginFolder/mkdocs.material.requirements
+            }
+            if {[file exists [pwd]/requirements.txt]} {
+                lappend reqFiles [file normalize [pwd]/requirements.txt]
+            }
+            python3::venv.requirements $reqFiles
+        }
+
+        ## Ensure build directory
+        file mkdir $mkdocs::buildDir
+        
+    }
+
+    proc serve args {
+        python3::venv.runBin mkdocs --color serve 
+    }
+
+    proc buildFolder args {
+        return $mkdocs::buildDir/${::build.name}
+    }
+    proc build args {
+        set htmlOutputFolder $mkdocs::buildDir/${::build.name}
+
+        python3::venv.runBin mkdocs --color build -c -d $htmlOutputFolder
+        kiss::withArgsContains -zip -> kiss::files::inDirectory $htmlOutputFolder {
+            cd ..
+            set htmlFolder [file tail $htmlOutputFolder]
+            log.success "Zipping $htmlFolder"
+            ::zipfile::mkzip::mkzip ${::build.name}.zip -directory $htmlFolder
+        }
+    }
+}

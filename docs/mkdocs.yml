@@ -1,0 +1,66 @@
+site_name: KISSB Documentation
+nav:
+  - ...
+
+docs_dir: pages
+plugins:
+  - exclude:
+      glob:
+        - '**/~*'
+  - drawio_file
+  - search
+  - table-reader:
+      base_path: "docs_dir"
+      data_path: "."
+      search_page_directory: True
+      allow_missing_files: True
+  - kroki
+  - git-revision-date
+  - awesome-pages
+  - include-markdown
+  - mkdocstrings
+  - glightbox
+repo_url: !ENV [IC_REPO_URL, '']
+repo_name: Repository
+extra_css:
+extra_javascript:
+  - wd.js
+  - https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js
+  - https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js
+theme:
+  name: material
+  #custom_dir: custom_theme/
+  font:
+    text: Baloo Chettan 2
+  logo: apix-name.png
+  features:
+    - navigation.expand
+    - navigation.sections
+    - navigation.instant
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - content.code.copy
+    - toc.integrate
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed
+  - abbr
+  - pymdownx.snippets
+  - footnotes
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      use_pygments: true
+      linenums: true
+      linenums_style: pymdownx.table
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      title: 'Table of Contents'
+      toc_depth: '2-5'
+      permalink: true

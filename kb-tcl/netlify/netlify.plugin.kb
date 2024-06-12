@@ -1,0 +1,33 @@
+package provide netlify 1.0
+package require kiss 
+
+
+namespace eval netlify {
+
+    set netlifyCliPath ".kb/toolchain/netlify-cli/node_modules/.bin/netlify"
+
+    # Toolchain and Login
+    kiss::toolchain::register netlify-cli {
+
+        log.info "Loading Netlify CLI in: $toolchainFolder"
+
+        set netlify::netlifyCliPath $toolchainFolder/node_modules/.bin/netlify
+
+        ## Install venv
+        if {![file exists $netlify::netlifyCliPath]} {
+            kiss::terminal::execIn $toolchainFolder npm i netlify-cli
+        } elseif {$::refresh} {
+            log.info "Updating Netlify CLI"
+            kiss::terminal::execIn $toolchainFolder npm update --save
+        }
+
+    }
+    proc init args {
+        kiss::toolchain::init netlify-cli
+    }
+
+    proc run args {
+        kiss::terminal::execIn [pwd] $netlify::netlifyCliPath {*}$args
+    }
+
+}
