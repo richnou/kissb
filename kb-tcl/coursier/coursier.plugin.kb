@@ -35,7 +35,7 @@ namespace eval coursier {
         
         
         if {![file exists ${coursier::binPath}]} {
-            puts "Downloading Coursier"
+            log.info "Downloading Coursier"
             if {[kiss::utils::isWindows]} {
                 kiss::utils::download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-win32.zip" ${coursier::tcFolder}/cs-x86_64-pc-win32.zip
                 kiss::utils::execIn ${coursier::tcFolder} powershell -command "Expand-Archive cs-x86_64-pc-win32.zip -DestinationPath ."
@@ -44,7 +44,8 @@ namespace eval coursier {
             } else {
                 kiss::utils::download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" ${coursier::tcFolder}/cs-x86_64-pc-linux.gz
                 kiss::utils::execIn ${coursier::tcFolder} gunzip -d cs-x86_64-pc-linux.gz
-                kiss::utils::execIn ${coursier::tcFolder} chmod +x cs-x86_64-pc-linux
+                kiss::utils::execIn ${coursier::tcFolder} mv cs-x86_64-pc-linux cs
+                kiss::utils::execIn ${coursier::tcFolder} chmod +x cs
             }
             
             #kiss::utils::execIn $tcFolder curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
@@ -65,7 +66,7 @@ namespace eval coursier {
         #set files  [string map {\\ /} [coursier::runtime::fetchSingle $dep {*}$args]]
         set files  [coursier::runtime::fetchSingle $dep --default=true --javadoc --sources  {*}$args]
         
-        log.info "- Result ([llength $files]): $files"
+        log.debug "- Result ([llength $files]): $files"
 
         ## Parse result to sort dependencies in main artifact, javadoc, sources
         set sortedDeps [dict create]
@@ -106,6 +107,23 @@ namespace eval coursier {
 
     proc fetchSingleLib {dep} {
         return [coursier::runtime::fetchSingle $dep]
+    }
+
+
+    ## Java
+    ############
+
+    ## This method gets env settings for the target java and update current env
+    proc selectJava {name args} {
+        set jEnv [kiss::terminal::callIn ${coursier::tcFolder} ${coursier::binPath} java --jvm $name --env {*}$args]
+        foreach {export v} $jEnv {
+            puts "Coursier java env: $v"
+            if {[string match JAVA_HOME=* $v]} {
+                set ::env(JAVA_HOME) [string map {\" ""} [lindex [split $v =] end]]
+                puts "New Java home: $::env(JAVA_HOME)"
+                set ::env(PATH) "$::env(JAVA_HOME)/bin[kiss::files::pathSeparator]$::env(PATH)"
+            }
+        }
     }
 
     namespace eval runtime {

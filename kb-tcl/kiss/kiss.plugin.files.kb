@@ -3,6 +3,10 @@ package provide kiss.files 1.0
 
 namespace eval kiss::files {
 
+    proc exists f {
+        return [file exists $f]
+    }
+    
     proc pathSeparator args {
         return $::tcl_platform(pathSeparator)
     }
@@ -14,5 +18,18 @@ namespace eval kiss::files {
 
     proc normalizePath p {
         return [string map {\\ /} $p]
+    }
+
+    proc inDirectory {d script} {
+        
+        file mkdir $d 
+        set tmpDir [pwd]
+        cd $d 
+        try {
+            uplevel $script
+        } finally {
+            cd $tmpDir
+        }
+
     }
 }

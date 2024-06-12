@@ -18,11 +18,17 @@ kotlin::mp::compose::init
 ## Generate Build config
 kotlin::mp::generateBuildConfig
 
+coursier::selectJava ibm-semeru-openj9-java21:21.0.3+9_openj9-0.44.0
+
 ## Build
 @ build {
     kotlin::compile jvm.main
 }
 
-@ run : build {
+# : build
+@ run  {
+    
+    kiss::utils::execIn [pwd] which java
+    kiss::utils::execIn [pwd] java -version
     kotlin::run jvm.main MainAppKt
 }

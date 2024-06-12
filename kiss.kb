@@ -1,0 +1,37 @@
+
+## Distribution
+#####
+package require zipfile::mkzip
+package require kiss.files 
+
+set version 1.0.0-beta1
+
+@ dist {
+
+    package require zipfile::mkzip
+
+    upvar version version 
+
+    ## Create dist
+    set base [pwd]
+    
+    kiss::files::inDirectory .kb/build/dist/$version {
+        puts "Base dir: $base - cwd: [pwd]"
+        #file delete -force *
+        foreach package {coursier gradle java-ivy kiss kotlin mkdocs python3 pkgIndex.tcl} {
+            file delete -force $package
+            file copy -force $base/kb-tcl/$package .
+        }
+        
+        
+    }
+
+    # Create Files
+    #-zipkit -directory 
+    #::zipfile::mkzip::mkzip $base/dist-${version}.zip -comment "KISSB version=$version" -directory .kb/build/dist/$version/
+    kiss::files::inDirectory .kb/build/dist/ {
+        file delete -force $base/dist-${version}.zip
+        kiss::terminal::execIn [pwd] zip -r $base/dist-${version}.zip  $version
+    }
+    
+}

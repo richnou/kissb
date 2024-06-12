@@ -28,11 +28,19 @@ namespace eval kiss {
 
     }
 
+    #####################
+    ## Env variables
+    #####################
+    set ::build.name "default"
+
     namespace eval vars {
 
         set _vars [dict create]
 
         proc append {name args} {
+            dict lappend kiss::vars::_vars $name {*}$args
+        }
+        proc set {name args} {
             dict lappend kiss::vars::_vars $name {*}$args
         }
         proc get {name {default {}}} {
@@ -49,6 +57,7 @@ namespace eval kiss {
     #############################
     ## Targets
     #############################
+
     proc ::@ {name args} {
         kiss::targets::@ $name {*}$args
     }
@@ -85,9 +94,15 @@ namespace eval kiss {
         }
 
         ## Run Target
-        proc run {target argv args} {
+        proc run {target args} {
             set script [getScript $target]
             array set env [array get ::env]
+            if {[llength $args]>0} {
+                set argv {*}$args
+            } else {
+                set argv {}
+            }
+            
             log.with.logger $target {
                 eval $script
             }
@@ -95,6 +110,18 @@ namespace eval kiss {
             #return [dict keys $::kiss::targets::_targets]
         }
 
+        proc ::> {target args} {
+            log.info "Require target: $target"
+            kiss::targets::run $target {*}$args
+        }
+
+    }
+
+    ## Make to run stuff based on file requirements
+    proc ::make {out @ in script} {
+        if { ([file exists $in] && ![file exists $out]) ||  (![file exists $in] || ([file mtime $in] > [file mtime $out]))} {
+            uplevel $script
+        }
     }
 
     #############################
@@ -102,12 +129,19 @@ namespace eval kiss {
 
         array set tc {}
 
+        set globalInstallFolder $::env(HOME)/.kissb/toolchains
+
         proc register {name args} {
             array set kiss::toolchain::tc [list $name {*}$args]
         }
 
+        ## Init a toolchain of a given name
+        ## The init closure is passed a $toolchainFolder variable pointing to a global folder so that scripts can share toolchain installations
         proc init {name} {
-            puts "INIT:  "
+            
+            set toolchainFolder $kiss::toolchain::globalInstallFolder/$name
+            file mkdir $toolchainFolder
+
             set script [lindex [array get  kiss::toolchain::tc $name] 1]
             eval $script
         }
@@ -173,6 +207,56 @@ namespace eval kiss {
     
 
     #################################
+
+    ############################
+    ## Utils and build logic
+    ##############################
+    if {[llength [array get ::env KB_REFRESH]] >0} {
+        set ::refresh true
+    } else {
+        set ::refresh false
+    }
+
+    ## Runs the script if condition is not satistifed or refresh is requested
+    ## Useful to install libs only if not present or global refresh is required
+    proc ifRefreshOrNot v {
+        if {$v == true || [llength [array get ::env KB_REFRESH]] >0} {
+            return true 
+        } else {
+            return false
+        }
+    }
+    proc ifRefresh args {
+        if {[llength [array get ::env KB_REFRESH]] >0} {
+            return true 
+        } else {
+            return false
+        }
+    }
+    proc withIfRefreshOrNot {v script} {
+        if {[ifRefreshOrNot $v]} {
+            uplevel [list eval $script]
+        } 
+    }
+    proc withIfRefresh {v script} {
+        if {[ifRefresh]} {
+            uplevel [list eval $script]
+        } 
+    }
+
+    proc withArgsContains {v -> args} {
+        set localArgs [uplevel {set args}]
+        if {[lsearch -exact $localArgs $v]!=-1} {
+            uplevel [list {*}$args]
+        }
+    }
+
+    proc ::assert {res message} {
+        if {!$res} {
+            log.error "Assert failed: $message"
+            uplevel {return}
+        }
+    }
     namespace eval utils {
 
         proc isWindows  args {
@@ -205,6 +289,15 @@ namespace eval kiss {
                 return false
             } 
         }
+
+        proc isLinuxWSL  args {
+            if {$::tcl_platform(platform)=="unix" && [string match *WSL2* [exec uname -a]]} {
+                return true 
+            } else {
+                return false
+            } 
+        }
+
 
         proc ::isArgv argName {
             return [uplevel [list expr \[ lsearch -exact \$argv $argName\] > -1]]

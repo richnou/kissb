@@ -19,7 +19,11 @@ if {[llength $argv] == 0 } {
     }
 } else {
     set target [lindex $argv 0]
-    puts "Running target: $target"
+    log.info "Running target: $target"
 
-    kiss::targets::run $target $argv
+    # Remove target from args
+    set argv [lrange $argv 1 end]
+
+    # Run Target
+    kiss::targets::run $target {*}$argv
 }

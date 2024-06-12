@@ -4,3 +4,5 @@ node_modules
 *.fleet
 *.gradle
 build
+# Local Netlify folder
+.netlify

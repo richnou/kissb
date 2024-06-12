@@ -73,12 +73,21 @@ namespace eval kotlin {
 
     }
 
+    ## This method runs a main class for a module - it doens't compile, users should setup targets to first compile then run
     proc run {module class} {
 
         log.info "Compiling and running $module main class $class"
 
+        # Set UI Env variable for Linux WSL
+        # In WSL with Xming or WSLg, LIBGL should be indirect otherwise openGL acceleration crashes the JVM with SIGSEGV
+        if {[kiss::utils::isLinuxWSL]} {
+            # LIBGL_ALWAYS_INDIRECT=true
+            set ::env(LIBGL_ALWAYS_INDIRECT) true
+        }
+        
+
         # Compile
-        compile $module
+        #compile $module
 
         # Run
         set cp [concat [_buildirForModule $module] [kiss::dependencies::resolveDeps $module lib]]
