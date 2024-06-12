@@ -1,0 +1,5 @@
+{
+    "kotlin.languageServer.enabled": true,
+    "kotlin.languageServer.runServer": false,
+    "kotlin.languageServer.port": 9002
+}
