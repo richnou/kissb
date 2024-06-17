@@ -6,18 +6,22 @@ package require kiss.files
 
 set version 1.0.0-beta1
 
-@ dist {
+files.writeText "test.out" "Hi"
+
+@ dist-zip {
 
     package require zipfile::mkzip
 
-    upvar version version 
-
+ 
     ## Create dist
     set base [pwd]
     
-    kiss::files::inDirectory .kb/build/dist/$version {
+    kiss::files::inDirectory .kb/build/dist/kissb-${::version} {
         puts "Base dir: $base - cwd: [pwd]"
         #file delete -force *
+        file delete -force bin
+        file copy -force $base/bin .
+
         foreach package {coursier gradle java-ivy kiss kotlin mkdocs python3 pkgIndex.tcl} {
             file delete -force $package
             file copy -force $base/kb-tcl/$package .
@@ -30,8 +34,32 @@ set version 1.0.0-beta1
     #-zipkit -directory 
     #::zipfile::mkzip::mkzip $base/dist-${version}.zip -comment "KISSB version=$version" -directory .kb/build/dist/$version/
     kiss::files::inDirectory .kb/build/dist/ {
-        file delete -force $base/dist-${version}.zip
-        kiss::terminal::execIn [pwd] zip -r $base/dist-${version}.zip  $version
+        file delete -force $base/dist-${::version}.zip
+        kiss::terminal::execIn [pwd] zip -r $base/dist-${::version}.zip  kissb-$::version
+    }
+
+    return $base/dist-${::version}.zip
+    
+}
+
+@ dist-docker {
+
+    set zipFile [> dist-zip]
+
+    puts "Test: $zipFile, args=$argv"
+
+    env IMAGE_NAME rleys/kissb
+    env IMAGE_TAG dev
+
+    kiss::files::inDirectory .kb/build/dist-docker/ {
+        file copy -force ../../../dist/docker/Dockerfile .
+        file copy -force $zipFile dist.zip
+        kiss::terminal::execIn [pwd] docker build . -t ${::IMAGE_NAME}:${::IMAGE_TAG}
+    }
+
+    withArgsContains -push {
+        kiss::terminal::execIn [pwd] docker push ${::IMAGE_NAME}:${::IMAGE_TAG}
     }
     
+
 }
