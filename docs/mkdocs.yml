@@ -1,4 +1,5 @@
 site_name: KISSB Documentation
+site_url: https://www.kissb.dev
 nav:
   - ...
 
@@ -20,19 +21,19 @@ plugins:
   - include-markdown
   - mkdocstrings
   - glightbox
-repo_url: !ENV [IC_REPO_URL, '']
+  - macros
+  - social
+  - privacy
+
+repo_url: https://github.com/richnou/kissb
+edit_uri: edit/main/docs/pages/
 repo_name: Repository
 extra_css:
-extra_javascript:
-  - wd.js
-  - https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/skins/default.js
-  - https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.1.0/wavedrom.min.js
 theme:
   name: material
   #custom_dir: custom_theme/
   font:
     text: Baloo Chettan 2
-  logo: apix-name.png
   features:
     - navigation.expand
     - navigation.sections
@@ -41,6 +42,7 @@ theme:
     - navigation.indexes
     - navigation.top
     - content.code.copy
+    - content.action.edit
     - toc.integrate
 markdown_extensions:
   - admonition
