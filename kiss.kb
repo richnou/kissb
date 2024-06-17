@@ -3,10 +3,15 @@
 #####
 package require zipfile::mkzip
 package require kiss.files 
+package require builder.rclone 
 
-set version 1.0.0-beta1
+rclone.init
+
+set version [clock format [clock seconds] -format %Y%m%d]
 
 files.writeText "test.out" "Hi"
+
+
 
 @ dist-zip {
 
@@ -37,6 +42,18 @@ files.writeText "test.out" "Hi"
         file delete -force $base/dist-${::version}.zip
         kiss::terminal::execIn [pwd] zip -r $base/dist-${::version}.zip  kissb-$::version
     }
+
+    ## Push to S3
+    ########
+    withArgsContains -s3 {
+        rclone.run copy --s3-acl=public-read $base/dist-${::version}.zip ovhs3:kissb/kissb/dev/
+
+        ## Push file
+        #files.writeText .kb/build/dist/dev.ini "{version=${::version}}"
+        json.write .kb/build/dist/dev.json {version ${::version}}
+        rclone.run copy --s3-acl=public-read .kb/build/dist/dev.json ovhs3:kissb/kissb/dev/
+    }
+
 
     return $base/dist-${::version}.zip
     
