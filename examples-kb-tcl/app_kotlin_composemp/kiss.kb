@@ -32,3 +32,12 @@ coursier::selectJava ibm-semeru-openj9-java21:21.0.3+9_openj9-0.44.0
     kiss::utils::execIn [pwd] java -version
     kotlin::run jvm.main MainAppKt
 }
+
+@ docs {
+
+    #kotlin::dokka::run jvm.main
+    #kotlin::dokka::help -sourceSet
+    kotlin::dokka::generate jvm.main
+    kotlin::dokka::run -sourceSet -h
+
+}

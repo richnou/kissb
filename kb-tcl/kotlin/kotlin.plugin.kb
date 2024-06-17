@@ -156,4 +156,56 @@ namespace eval kotlin {
             }]
         }
     }
+
+
+    #####################
+    ## Dokka
+    #####################
+    namespace eval dokka {
+        
+        set version 1.9.20
+
+        kiss::vars::set dokka.build.output .kb/build/dokka
+        kiss::vars::set dokka.version 1.9.20
+
+
+        proc help args {
+            ## Get Artifact for Dokka CLI
+            set dokkaCliJar [coursier::fetchSingleLib org.jetbrains.dokka:dokka-cli:1.9.20]
+            execIn [pwd] java -jar $dokkaCliJar -help {*}$args
+
+        }
+        proc run args {
+            ## Get Artifact for Dokka CLI
+            set dokkaCliJar [coursier::fetchSingleLib org.jetbrains.dokka:dokka-cli:1.9.20]
+            execIn [pwd] java -jar $dokkaCliJar {*}$args
+
+        }
+        proc generate module {
+            
+            ## Get Dependencies for Dokka output plugin to buildup classpath
+            lappend dokkaHtmlDep {*}[coursier::fetchSingleLib org.jetbrains.dokka:dokka-base:${::dokka.version}]
+            lappend dokkaHtmlDep {*}[coursier::fetchSingleLib org.jetbrains.dokka:analysis-kotlin-descriptors:${::dokka.version}]
+            lappend dokkaHtmlDep {*}[coursier::fetchSingleLib org.jetbrains.kotlinx:kotlinx-html-jvm:0.8.0]
+            lappend dokkaHtmlDep {*}[coursier::fetchSingleLib org.freemarker:freemarker:2.3.31]
+
+            #puts "DOKKA/ [join $dokkaHtmlDep ";"]"
+            
+            ## Get Artifact for Dokka CLI
+            set dokkaCliJar [coursier::fetchSingleLib org.jetbrains.dokka:dokka-cli:1.9.20]
+
+
+            # Get dependencies and return only libs
+            set deps [join [kiss::dependencies::resolveDeps $module lib] ";"]
+         
+            ## Run
+            files.mkdir ${::dokka.build.output}/$module
+            execIn [pwd] java   -jar $dokkaCliJar -pluginsClasspath [join $dokkaHtmlDep ";"] \
+                                -sourceSet "-src [join [kiss::sources::getSourceFolders $module] ;] -classpath $deps" \
+                                -outputDir ${::dokka.build.output}/$module
+
+        
+        }
+    
+    }
 }
