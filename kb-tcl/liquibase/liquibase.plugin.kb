@@ -1,0 +1,38 @@
+package provide liquibase 1.0 
+package require kiss 
+
+namespace eval liquibase {
+
+    set version 4.28.0
+    set localJar ""
+
+    kiss::toolchain::register liquibase {
+
+        log.info "Init Liquibase into folder: $toolchainFolder"
+        
+        set liquibase::localJar $toolchainFolder/liquibase-core-${liquibase::version}.jar
+        set jarUrl https://github.com/liquibase/liquibase/releases/download/v${liquibase::version}/liquibase-core-${liquibase::version}.jar
+        if {![file exists ${liquibase::localJar}]} {
+            kiss::utils::download $jarUrl ${liquibase::localJar}
+        }
+        
+
+    }
+
+    proc ::liquibase.init args {
+        kiss::toolchain::init liquibase
+    }
+
+    proc ::liquibase.help args {
+        log.info "Running Liquibase - help"
+        liquibase.run --help
+    }
+
+    proc ::liquibase.run args {
+        log.info "Running Liquibase"
+        kiss::terminal::execIn [pwd] java -jar ${liquibase::localJar} {*}$args
+    }
+
+    
+
+}
