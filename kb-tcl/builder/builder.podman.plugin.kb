@@ -1,0 +1,40 @@
+package provide builder.podman 1.0
+
+
+namespace eval builder::podman {
+
+    set runtimeCommand "podman" 
+    set builderImagePrefix "rleys/builder:"
+
+
+    kiss.extension builder {
+
+        selectDockerRuntime args {
+            set builder::podman::runtimeCommand docker
+        }
+
+        build {outputFile on os with script} {
+            
+            uplevel [list set os $os]
+            set terminalScript [uplevel [list subst $script]]
+            files.require $outputFile {
+                log.info "Building $outputFile"
+                builder.podman.run $os $terminalScript
+            }
+        }
+    }
+
+    kiss.extension builder.podman {
+
+        run {os script} {
+
+            uplevel [list set os $os]
+            set terminalScript [uplevel [list subst $script]]
+            exec.run echo "$terminalScript" | ${builder::podman::runtimeCommand} run -i -v.:/build ${builder::podman::builderImagePrefix}$os /bin/bash
+
+        }
+
+        
+    }
+
+}

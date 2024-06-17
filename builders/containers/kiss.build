@@ -1,0 +1,43 @@
+
+env.unset XDG_RUNTIME_DIR
+env XDG_RUNTIME_DIR [pwd]/.tmp
+
+proc build-image name {
+    #exec.run podman build -f Dockerfile.$name -t rleys/builder:$name
+    exec.run docker build -f Dockerfile.$name -t rleys/builder:$name .
+    exec.run docker push rleys/builder:$name
+}
+
+
+
+@ rocky {
+
+    build-image rocky9
+}
+
+@ ubuntu {
+
+    build-image ubuntu-jammy
+    build-image ubuntu-focal
+    build-image ubuntu-mantic
+    build-image ubuntu-noble
+
+}
+
+@ all {
+
+    build-image ubuntu-jammy
+    build-image ubuntu-focal
+    build-image ubuntu-mantic
+    build-image ubuntu-noble
+}
+
+
+return 
+withArgsContains -enter {
+    
+    exec.run podman run --rm -it rleys/builder:ubuntu-jammy /bin/bash
+} else {
+    build-image ubuntu-jammy
+}
+

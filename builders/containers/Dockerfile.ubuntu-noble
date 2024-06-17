@@ -1,0 +1,14 @@
+FROM ubuntu:noble
+
+RUN apt update
+RUN apt install -y gcc-multilib \
+                    binutils-mingw-w64-i686 \
+                    binutils-mingw-w64-x86-64 \
+                    gcc-mingw-w64 \
+                    gcc-mingw-w64-base \
+                    gcc-mingw-w64-i686 \
+                    gcc-mingw-w64-x86-64 \
+                    gcc-multilib \
+                    make automake autoconf minizip zip
+            
+WORKDIR /build

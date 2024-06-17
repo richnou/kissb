@@ -1,0 +1,6 @@
+FROM rockylinux:9
+
+RUN dnf -y update
+RUN dnf install -y gcc make automake autoconf zip
+
+WORKDIR /build
