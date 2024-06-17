@@ -18,12 +18,21 @@ namespace eval kiss {
 
         proc ::env {name default} {
             if {[array names ::env -exact $name] == ""} {
-                puts "Setting default for $name"
+                puts "Setting default for $name to $default"
                 #uplevel [list set env($name) $default]
-                uplevel [list array set env [list $name $default]]
+                set ::env($name) $default
+                #array set ::env [list $name $default]
             }
-            #return [uplevel [list set \$env($name)]]
-            return [uplevel [array get env $name]]
+            set v $::env($name)
+            puts "Setting ::$name = $v"
+            set ::$name $v
+
+            return $v
+        }
+
+        proc ::env.unset name {
+        
+            array unset ::env $name
         }
 
     }
@@ -40,8 +49,9 @@ namespace eval kiss {
         proc append {name args} {
             dict lappend kiss::vars::_vars $name {*}$args
         }
-        proc set {name args} {
-            dict lappend kiss::vars::_vars $name {*}$args
+        proc set {name v} {
+            dict lappend kiss::vars::_vars $name $v
+            ::set ::${name} $v
         }
         proc get {name {default {}}} {
             if {[dict exists $kiss::vars::_vars $name]} {
@@ -141,9 +151,8 @@ namespace eval kiss {
             
             set toolchainFolder $kiss::toolchain::globalInstallFolder/$name
             file mkdir $toolchainFolder
-
             set script [lindex [array get  kiss::toolchain::tc $name] 1]
-            eval $script
+            return [eval $script]
         }
     }
 
@@ -151,17 +160,31 @@ namespace eval kiss {
     #############################
     namespace eval sources {
 
-        array set src {}
+        set src [dict create]
 
         proc addSourceFolder {module path} {
             #set sources [lmap [kiss::utils::callIn [pwd] find $path -type f]
             set sources [lmap f [glob -nocomplain -type f -path $path **/*] { file normalize $f} ]
             puts "Found sources: $sources"
-            array set kiss::sources::src [list $module $sources]
+            dict lappend kiss::sources::src $module [list $path $sources]
         }
 
-        proc getSources {module} {
-            return [lindex [array get kiss::sources::src $module] 1]
+        proc getSources module {
+            if {[dict exists ${kiss::sources::src} $module]} {
+                set allPaths [dict get ${kiss::sources::src} $module]
+                return [join [lmap pathSources $allPaths { lindex $pathSources end}]]
+                #return [lindex [dict get ${kiss::sources::src} $module] end]
+            } else {
+                return {}
+            }
+        }
+        proc getSourceFolders module {
+            if {[dict exists ${kiss::sources::src} $module]} {
+                set allPaths [dict get ${kiss::sources::src} $module]
+                return [join [lmap pathSources $allPaths { lindex $pathSources 0}]]
+            } else {
+                return {}
+            }
         }
     }
 
@@ -244,10 +267,12 @@ namespace eval kiss {
         } 
     }
 
-    proc withArgsContains {v -> args} {
+    proc ::withArgsContains {v script {else ""} {elseScript {}}} {
         set localArgs [uplevel {set args}]
         if {[lsearch -exact $localArgs $v]!=-1} {
-            uplevel [list {*}$args]
+            uplevel [list eval $script]
+        } else {
+            uplevel [list eval $elseScript]
         }
     }
 
@@ -257,6 +282,32 @@ namespace eval kiss {
             uplevel {return}
         }
     }
+
+    proc ::ignore {test script} {
+        if {!$test} {
+            uplevel [list eval $script]
+        }
+    }
+
+    ############################
+    ## Extension to help ease write extension procedures
+    ##############################
+    proc ::kiss.extension {extName functions} {
+        
+        set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
+        
+        #log.info "Functions no comments: $functionsNoComments"
+        foreach {procName procArgs procScript} $functionsNoComments {
+            #log.info "Extension $procName with args $procArgs"
+            proc ::${extName}.${procName} $procArgs $procScript
+        }
+    }
+
+    ############################
+    ## Utils
+    ##############################
+
+
     namespace eval utils {
 
         proc isWindows  args {

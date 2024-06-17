@@ -1,4 +1,5 @@
 package provide kiss.terminal 1.0
+package require kiss 
 
 namespace eval kiss::terminal {
 
@@ -67,5 +68,13 @@ namespace eval kiss::terminal {
     namespace export xterm* call* fork* exec*
     namespace eval :: {
         namespace import kiss::terminal::xterm* kiss::terminal::call* kiss::terminal::fork* kiss::terminal::exec*
+    }
+
+    kiss.extension exec {
+
+        run args {
+            kiss::terminal::execIn [pwd] {*}$args
+        }
+
     }
 }

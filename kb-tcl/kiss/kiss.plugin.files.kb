@@ -15,6 +15,9 @@ namespace eval kiss::files {
         puts -nonewline $fid $text
         close $fid
     }
+    proc ::files.writeText {f text} {
+        kiss::files::writeText $f $text
+    }
 
     proc normalizePath p {
         return [string map {\\ /} $p]
@@ -32,4 +35,62 @@ namespace eval kiss::files {
         }
 
     }
+
+    
+    ## Extensions
+    ##################
+    kiss.extension files {
+
+        ## Create directory
+        mkdir p {
+            file mkdir $p
+        }
+
+        ## Copy file to directory
+        ## @arg files -> file or blob
+        cp {files dir} {
+            foreach f [glob $files] {
+                file copy -force  $f $dir
+            }
+            
+        }
+
+
+        ## Require File, if not present, run script
+        require {f script} {
+            if {![file exists $f]} {
+                uplevel [list eval $script]
+            }
+        }
+
+        inDirectory {d script} {
+            file mkdir $d 
+            set tmpDir [pwd]
+            cd $d 
+            try {
+                uplevel $script
+            } finally {
+                cd $tmpDir
+            }
+
+        }
+
+        ## Download
+        download {src {out ""}} {
+            #exec wget -p $url -O $dir >@ stdout 2>@ stdout
+            if {$out==""} {
+                kiss::terminal::execIn [pwd] wget -p $src
+            } else {
+                kiss::terminal::execIn [pwd] wget -p $src -O $out
+            }
+            
+        }
+
+        ## Unzip
+        unzip f {
+            exec.run unzip $f
+        }
+
+    }
+   
 }
