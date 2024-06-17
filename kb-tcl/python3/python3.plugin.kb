@@ -17,14 +17,31 @@ namespace eval python3 {
         ## Install venv
         if {![file exists $python3::venvPath/pyvenv.cfg]} {
             kiss::terminal::execIn $python3::venvPath python3 -m venv .
+            return true
+        } else {
+            return false
         }
         
 
     }
 
+    proc ::python3.venv.init script {
+        if {[kiss::ifRefresh] || [kiss::toolchain::init python3-venv]} {
+            eval $script
+        }
+    }
+
     #####################
     ## Venv utils
     ###################
+
+    ## install requirements 
+    proc ::python3.venv.require args {
+        # write requirements
+        kiss::files::writeText $python3::venvPath/.tmp.requirements.txt [join $args \n]
+        kiss::terminal::execIn $python3::venvPath ./bin/pip install -r .tmp.requirements.txt
+        
+    }
 
     ## install requirements 
     proc venv.requirements {files args} {
@@ -44,5 +61,11 @@ namespace eval python3 {
     ## Run folder is the current folder! 
     proc venv.runBin {bin args} {
         kiss::terminal::execIn [pwd] $python3::venvPath/bin/$bin {*}$args
+    }
+
+    ## Runs a specific script
+    ## Run folder is the current folder! 
+    proc ::python3.venv.run {script args} {
+        ::python3::venv.runBin python3 $script {*}$args
     }
 }

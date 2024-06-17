@@ -1,6 +1,6 @@
 
 netlify::init
-mkdocs::init -material
+mkdocs::init -kissv1
 
 
 

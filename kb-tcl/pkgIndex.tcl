@@ -6,6 +6,8 @@ package ifneeded kotlin             1.0 [list source $dir/kotlin/kotlin.plugin.k
 package ifneeded kotlin.mp          1.0 [list source $dir/kotlin/kotlin.mp.plugin.kb]
 package ifneeded kotlin.mp.compose  1.0 [list source $dir/kotlin/kotlin.mp.compose.plugin.kb]
 
+package ifneeded liquibase             1.0 [list source $dir/liquibase/liquibase.plugin.kb]
+
 package ifneeded ivy                1.0 [list source $dir/java-ivy/ivy.plugin.kb]
 package ifneeded coursier           1.0 [list source $dir/coursier/coursier.plugin.kb]
 package ifneeded gradle             1.0 [list source $dir/gradle/gradle.plugin.kb]
@@ -15,6 +17,9 @@ package ifneeded mkdocs             1.0 [list source $dir/mkdocs/mkdocs.plugin.k
 package ifneeded netlify            1.0 [list source $dir/netlify/netlify.plugin.kb]
 
 package ifneeded nodejs             1.0 [list source $dir/nodejs/nodejs.plugin.kb]
+
+package ifneeded builder.podman     1.0 [list source $dir/builder/builder.podman.plugin.kb]
+package ifneeded builder.rclone     1.0 [list source $dir/builder/builder.rclone.plugin.kb]
 
 ## Flows
 ##############

@@ -24,6 +24,9 @@ namespace eval mkdocs {
             if {[lsearch $args -material]!=-1} {
                 lappend reqFiles $mkdocs::pluginFolder/mkdocs.material.requirements
             }
+            if {[lsearch $args -kissv1]!=-1} {
+                lappend reqFiles $mkdocs::pluginFolder/mkdocs.kissv1.requirements
+            }
             if {[file exists [pwd]/requirements.txt]} {
                 lappend reqFiles [file normalize [pwd]/requirements.txt]
             }
