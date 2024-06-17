@@ -1,0 +1,12 @@
+package require python3
+
+log.info "Welcome to this project build script"
+
+# Load a python venv (python should be installed)
+python3.venv.init {
+    log.info "Installing Requirements"
+    python3.venv.require PySide2
+}
+
+# Run
+python3.venv.run main.py
