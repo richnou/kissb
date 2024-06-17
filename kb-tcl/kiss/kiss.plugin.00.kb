@@ -304,6 +304,20 @@ namespace eval kiss {
     }
 
     ############################
+    ## Core extension
+    ##############################
+    kiss.extension kiss {
+
+        args.contains {v script {else ""} {elseScript {}}} {
+            set localArgs [uplevel {set args}]
+            if {[lsearch -exact $localArgs $v]!=-1} {
+                uplevel [list eval $script]
+            } else {
+                uplevel [list eval $elseScript]
+            }
+        }
+    }
+    ############################
     ## Utils
     ##############################
 

@@ -55,6 +55,12 @@ namespace eval kiss::files {
             
         }
 
+        writeText {f text} {
+            set fid [open $f w+]
+            puts -nonewline $fid $text
+            close $fid
+        }
+
 
         ## Require File, if not present, run script
         require {f script} {

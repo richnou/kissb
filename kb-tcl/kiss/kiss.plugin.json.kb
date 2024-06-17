@@ -70,4 +70,18 @@ namespace eval kiss::json {
             return "\"$v\""
         }
     }
+
+    kiss.extension json {
+
+        write {outFile spec} {
+
+            set o [open $outFile w+]
+            puts $o "\{"
+            puts $o [kiss::json::objToString $spec]
+            puts $o "\}"
+            close $o
+        }
+
+
+    }
 }

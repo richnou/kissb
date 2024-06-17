@@ -1,9 +1,26 @@
 package require kiss 
 
 
+## Process Arguments
+##############
+
+## Targets are arguments without "-" as starter
+set targets {}
+set args {}
+foreach arg $argv {
+    if {[string match -* $arg]} {
+        lappend args $arg
+    } else {
+        lappend targets arg
+    }
+}
+
+## Standard Arguments
+kiss.args.contains --refresh {
+    env KB_REFRESH 1
+}
 
 ## Load local Kiss build
-set args $argv
 foreach buildFile {kiss.b kiss.kb kiss.build} {
     if {[file exists $buildFile]} {
         source $buildFile
@@ -11,6 +28,8 @@ foreach buildFile {kiss.b kiss.kb kiss.build} {
     }
 }
 #source kiss.kb
+
+
 
 ## Run target
 if {[llength $argv] == 0 } {
