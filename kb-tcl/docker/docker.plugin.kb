@@ -1,0 +1,37 @@
+package provide kissb.docker 1.0
+
+namespace eval docker {
+
+    kissb.extension docker {
+
+        run args {
+            exec.run docker {*}$args
+        }
+
+        ## Runs the script with docker compose UP
+        compose.withUP script {
+
+            try {
+                docker.run compose up -d --wait
+                uplevel [list eval $script]
+            } finally {
+                #docker.run compose down
+            }   
+
+        }
+
+        ## Runs the script with docker compose UP
+        compose.withUPDown script {
+
+            try {
+                docker.run compose up -d --wait
+                uplevel [list eval $script]
+            } finally {
+                docker.run compose down
+            }   
+
+        }
+
+    }
+
+}
