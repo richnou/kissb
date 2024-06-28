@@ -7,7 +7,8 @@ package require builder.rclone
 
 rclone.init
 
-set version [clock format [clock seconds] -format %Y%m%d]
+set version [env CI_VERSION [clock format [clock seconds] -format %Y%m%d]]
+set track   [env CI_TRACK   dev]
 
 files.writeText "test.out" "Hi"
 
@@ -18,20 +19,23 @@ files.writeText "test.out" "Hi"
     package require zipfile::mkzip
 
  
-    ## Create dist
+    ## Create dist by copying all files to the build directory
+    ## Overwrite the info.tcl file in the package folder to overwrite version
     set base [pwd]
     
     kiss::files::inDirectory .kb/build/dist/kissb-${::version} {
         puts "Base dir: $base - cwd: [pwd]"
         #file delete -force *
         file delete -force bin
-        file copy -force $base/bin .
+        file copy -force $base/kb-tcl/bin .
 
         foreach package {coursier gradle java-ivy kiss kotlin mkdocs python3 pkgIndex.tcl} {
             file delete -force $package
             file copy -force $base/kb-tcl/$package .
         }
-        
+
+        ## Overwrite info
+        files.writeText info.tcl "vars.set kissb.version ${::version} ; vars.set kissb.track ${::track}"
         
     }
 
@@ -43,7 +47,7 @@ files.writeText "test.out" "Hi"
         kiss::terminal::execIn [pwd] zip -r $base/dist-${::version}.zip  kissb-$::version
     }
 
-    ## Push to S3
+    ## Push to S3 - push the install script alone
     ########
     withArgsContains -s3 {
         rclone.run copy --s3-acl=public-read $base/dist-${::version}.zip ovhs3:kissb/kissb/dev/
@@ -52,6 +56,7 @@ files.writeText "test.out" "Hi"
         #files.writeText .kb/build/dist/dev.ini "{version=${::version}}"
         json.write .kb/build/dist/dev.json {version ${::version}}
         rclone.run copy --s3-acl=public-read .kb/build/dist/dev.json ovhs3:kissb/kissb/dev/
+        rclone.run copy --s3-acl=public-read scripts/linux/install.tcl ovhs3:kissb/kissb/dev/
     }
 
 
@@ -66,7 +71,7 @@ files.writeText "test.out" "Hi"
     puts "Test: $zipFile, args=$argv"
 
     env IMAGE_NAME rleys/kissb
-    env IMAGE_TAG dev
+    env IMAGE_TAG ${::track}
 
     kiss::files::inDirectory .kb/build/dist-docker/ {
         file copy -force ../../../dist/docker/Dockerfile .

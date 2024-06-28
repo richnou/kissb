@@ -1,5 +1,9 @@
-package require kiss 
+lappend auto_path [file dirname [info script]]/../
+package require kissb 
 
+log.info "KISSB Version=${kissb.version}"
+
+set ::BASE [pwd]
 
 ## Process Arguments
 ##############
@@ -8,16 +12,22 @@ package require kiss
 set targets {}
 set args {}
 foreach arg $argv {
-    if {[string match -* $arg]} {
+    if {[string match -* $arg] || [file exists $arg]} {
         lappend args $arg
     } else {
-        lappend targets arg
+        lappend targets $arg
     }
 }
 
 ## Standard Arguments
-kiss.args.contains --refresh {
+kissb.args.contains --refresh {
     env KB_REFRESH 1
+}
+kissb.args.contains --force {
+    env KB_FORCE 1
+}
+kissb.args.contains --debug {
+    log.set.level DEBUG
 }
 
 ## Load local Kiss build
@@ -32,13 +42,13 @@ foreach buildFile {kiss.b kiss.kb kiss.build} {
 
 
 ## Run target
-if {[llength $argv] == 0 } {
+if {[llength $targets] == 0 && [llength $args] == 0 } {
     log.warn "No targets provided"
     foreach target [kiss::targets::listTargets] {
         puts "- $target"
     }
-} else {
-    set target [lindex $argv 0]
+} elseif {[llength $targets]>0} {
+    set target [lindex $targets 0]
 
     ## Run Target or command
     ###########
@@ -46,17 +56,14 @@ if {[llength $argv] == 0 } {
 
         set cmd [string range $target 1 end]
         log.info "Running command: $cmd"
-        [$cmd]
+        [$cmd {*}$args]
 
     } elseif {[string range $target 0 0]!="-"} {
 
-        log.info "Running target: $target"
-
-        # Remove target from args
-        set argv [lrange $argv 1 end]
+        
 
         # Run Target
-        kiss::targets::run $target {*}$argv
+        kiss::targets::run $target {*}$args
 
     }
     
