@@ -1,4 +1,4 @@
-package provide builder.rclone 1.0
+package provide kissb.builder.rclone 1.0
 
 
 namespace eval rclone {
@@ -26,7 +26,7 @@ namespace eval rclone {
     }
     
     
-    kiss.extension rclone {
+    kissb.extension rclone {
         init args {
             kiss::toolchain::init rclone
         }

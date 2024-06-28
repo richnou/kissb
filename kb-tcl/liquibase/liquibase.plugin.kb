@@ -1,5 +1,5 @@
-package provide liquibase 1.0 
-package require kiss 
+package provide kissb.liquibase 1.0 
+
 
 namespace eval liquibase {
 

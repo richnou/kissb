@@ -1,4 +1,4 @@
-package provide builder.podman 1.0
+package provide kissb.builder.podman 1.0
 
 
 namespace eval builder::podman {
@@ -7,7 +7,7 @@ namespace eval builder::podman {
     set builderImagePrefix "rleys/builder:"
 
 
-    kiss.extension builder {
+    kissb.extension builder {
 
         selectDockerRuntime args {
             set builder::podman::runtimeCommand docker
@@ -17,20 +17,21 @@ namespace eval builder::podman {
             
             uplevel [list set os $os]
             set terminalScript [uplevel [list subst $script]]
-            files.require $outputFile {
+            files.requireOrForce $outputFile {
                 log.info "Building $outputFile"
                 builder.podman.run $os $terminalScript
             }
         }
     }
 
-    kiss.extension builder.podman {
+    kissb.extension builder.podman {
 
         run {os script} {
 
             uplevel [list set os $os]
             set terminalScript [uplevel [list subst $script]]
-            exec.run echo "$terminalScript" | ${builder::podman::runtimeCommand} run -i -v.:/build ${builder::podman::builderImagePrefix}$os /bin/bash
+            # -u [exec id -u]
+            exec.run echo "$terminalScript" | ${builder::podman::runtimeCommand} run  -u [exec id -u] -i -v.:/build ${builder::podman::builderImagePrefix}$os /bin/bash
 
         }
 
