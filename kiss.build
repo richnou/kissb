@@ -1,9 +1,8 @@
 
 ## Distribution
 #####
-package require zipfile::mkzip
-package require kiss.files 
-package require builder.rclone 
+package require kissb.files 
+package require kissb.builder.rclone 
 
 rclone.init
 
@@ -49,7 +48,7 @@ files.writeText "test.out" "Hi"
 
     ## Push to S3 - push the install script alone
     ########
-    withArgsContains -s3 {
+    kissb.args.contains -s3 {
         rclone.run copy --s3-acl=public-read $base/dist-${::version}.zip ovhs3:kissb/kissb/dev/
 
         ## Push file
@@ -57,6 +56,8 @@ files.writeText "test.out" "Hi"
         json.write .kb/build/dist/dev.json {version ${::version}}
         rclone.run copy --s3-acl=public-read .kb/build/dist/dev.json ovhs3:kissb/kissb/dev/
         rclone.run copy --s3-acl=public-read scripts/linux/install.tcl ovhs3:kissb/kissb/dev/
+
+        log.success "Uploaded to S3"
     }
 
 
@@ -68,7 +69,7 @@ files.writeText "test.out" "Hi"
 
     set zipFile [> dist-zip]
 
-    puts "Test: $zipFile, args=$argv"
+    puts "Test: $zipFile, args=$args"
 
     env IMAGE_NAME rleys/kissb
     env IMAGE_TAG ${::track}
@@ -76,11 +77,11 @@ files.writeText "test.out" "Hi"
     kiss::files::inDirectory .kb/build/dist-docker/ {
         file copy -force ../../../dist/docker/Dockerfile .
         file copy -force $zipFile dist.zip
-        kiss::terminal::execIn [pwd] docker build . -t ${::IMAGE_NAME}:${::IMAGE_TAG}
+        exec.run docker build . -t ${::IMAGE_NAME}:${::IMAGE_TAG}
     }
 
-    withArgsContains -push {
-        kiss::terminal::execIn [pwd] docker push ${::IMAGE_NAME}:${::IMAGE_TAG}
+    kissb.args.contains -push {
+        exec.run docker push ${::IMAGE_NAME}:${::IMAGE_TAG}
     }
     
 
