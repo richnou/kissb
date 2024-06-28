@@ -49,7 +49,7 @@ namespace eval mkdocs {
         set htmlOutputFolder $mkdocs::buildDir/${::build.name}
 
         python3::venv.runBin mkdocs --color build -c -d $htmlOutputFolder
-        kiss.args.contains -zip {
+        kissb.args.contains -zip {
             kiss::files::inDirectory $htmlOutputFolder {
                 cd ..
                 set htmlFolder [file tail $htmlOutputFolder]

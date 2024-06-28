@@ -18,9 +18,11 @@ mkdocs::init -kissv1
 
 @ deploy {
     
+    log.success "Deploying Site to netlify (args=$args)"
+    
     > build
     
     netlify::run login
     netlify::run link
-    netlify::run deploy -d [mkdocs::buildFolder] $args
+    netlify::run deploy -d [mkdocs::buildFolder] {*}$args
 }

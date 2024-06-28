@@ -15,7 +15,7 @@ namespace eval netlify {
         ## Install venv
         if {![file exists $netlify::netlifyCliPath]} {
             kiss::terminal::execIn $toolchainFolder npm i netlify-cli
-        } elseif {$::refresh} {
+        } elseif {[env KB_REFRESH 0] == 1} {
             log.info "Updating Netlify CLI"
             kiss::terminal::execIn $toolchainFolder npm update --save
         }
