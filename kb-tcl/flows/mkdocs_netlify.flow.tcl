@@ -1,3 +1,5 @@
+package require kissb.mkdocs
+package require kissb.netlify
 
 netlify::init
 mkdocs::init -kissv1

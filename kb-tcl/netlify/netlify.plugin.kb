@@ -1,5 +1,4 @@
-package provide netlify 1.0
-package require kiss 
+package provide kissb.netlify 1.0
 
 
 namespace eval netlify {
