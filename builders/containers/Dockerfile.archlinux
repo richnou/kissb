@@ -1,0 +1,6 @@
+from archlinux:latest
+
+RUN pacman -Sy --noconfirm base-devel zip
+
+RUN mkdir /build && chmod 0777 /build
+WORKDIR /build

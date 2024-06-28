@@ -5,7 +5,7 @@ env XDG_RUNTIME_DIR [pwd]/.tmp
 proc build-image name {
     #exec.run podman build -f Dockerfile.$name -t rleys/builder:$name
     exec.run docker build -f Dockerfile.$name -t rleys/builder:$name .
-    exec.run docker push rleys/builder:$name
+    #exec.run docker push rleys/builder:$name
 }
 
 
@@ -21,6 +21,12 @@ proc build-image name {
     build-image ubuntu-focal
     build-image ubuntu-mantic
     build-image ubuntu-noble
+
+}
+
+@ arch {
+
+    build-image archlinux
 
 }
 
