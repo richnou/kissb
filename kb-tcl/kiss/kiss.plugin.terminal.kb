@@ -1,5 +1,5 @@
-package provide kiss.terminal 1.0
-package require kiss 
+package provide kissb.terminal 1.0
+ 
 
 namespace eval kiss::terminal {
 
@@ -11,14 +11,15 @@ namespace eval kiss::terminal {
         try {
             return [exec {*}${args} >@ stdout 2>@ stdout]
         } on error e {
-            log.error "Error running command $args"
+            log.error "Error running command $args ($e)"
+            throw e "Error running command $args ($e)"
         } finally {
             cd $pwd
         }
         
     }
 
-        ## Exec redirecting outputs to console
+    ## Exec redirecting outputs to console
     proc forkIn {folder args} {
         set pwd [pwd]
         file mkdir $folder
@@ -70,11 +71,12 @@ namespace eval kiss::terminal {
         namespace import kiss::terminal::xterm* kiss::terminal::call* kiss::terminal::fork* kiss::terminal::exec*
     }
 
-    kiss.extension exec {
+    kissb.extension exec {
 
         run args {
             kiss::terminal::execIn [pwd] {*}$args
         }
+
 
     }
 }

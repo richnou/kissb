@@ -1,4 +1,4 @@
-package provide kiss.json 1.0
+package provide kissb.json 1.0
 
 
 namespace eval kiss::json {
@@ -71,8 +71,11 @@ namespace eval kiss::json {
         }
     }
 
-    kiss.extension json {
+    kissb.extension json {
 
+        toString spec {
+            return "\{\n[kiss::json::objToString $spec]\n\}"
+        }
         write {outFile spec} {
 
             set o [open $outFile w+]

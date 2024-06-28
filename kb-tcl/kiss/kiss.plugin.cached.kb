@@ -1,0 +1,37 @@
+package provide kissb.cached 1.0
+
+namespace eval kiss::cached {
+
+    set cacheFolder ".kb/cached"
+
+    kissb.extension kissb.cached {
+
+
+        ## Return existing file from local cache or run script with $file variable containing file path
+        fileOrElse {name noarg varname script} {
+            set file ${::kiss::cached::cacheFolder}/$name
+            if {![file exists $file]} {
+                uplevel [list eval $script]
+            }
+            set cachedContent [files.read $file]
+            uplevel [list set $varname $cachedContent]
+            return $cachedContent
+
+            #if {[file exists $file]} {
+            #    log.success "Found Cached file $file"
+            #    return files.read $file
+            #} else {
+            #    
+            #    uplevel [list set $varname \[files.read $file\]]
+            #}
+        }
+
+        writeFile {name content} {
+            set file [file normalize ${::kiss::cached::cacheFolder}/$name]
+            file mkdir [file dirname $file]
+            files.writeText $file $content
+        }
+
+    }
+
+}

@@ -1,8 +1,28 @@
-package provide kiss 1.0
-#package require TclCurl
+package provide kissb 1.0
+
 
 namespace eval kiss {
 
+    #####################
+    ## Functions definition
+    #######################
+    proc ::def {name arguments script} {
+        ::proc $name $arguments $script
+    }
+
+    ############################
+    ## Extension to help ease write extension procedures
+    ##############################
+    proc ::kissb.extension {extName functions} {
+        
+        set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
+        
+        #log.info "Functions no comments: $functionsNoComments"
+        foreach {procName procArgs procScript} $functionsNoComments {
+            log.debug "Extension $extName.$procName with args $procArgs"
+            proc ::${extName}.${procName} $procArgs $procScript
+        }
+    }
 
     #####################
     ## Context
@@ -18,13 +38,13 @@ namespace eval kiss {
 
         proc ::env {name default} {
             if {[array names ::env -exact $name] == ""} {
-                puts "Setting default for $name to $default"
+                #puts "Setting default for $name to $default"
                 #uplevel [list set env($name) $default]
                 set ::env($name) $default
                 #array set ::env [list $name $default]
             }
             set v $::env($name)
-            puts "Setting ::$name = $v"
+            #puts "Setting ::$name = $v"
             set ::$name $v
 
             return $v
@@ -50,10 +70,10 @@ namespace eval kiss {
             dict lappend kiss::vars::_vars $name {*}$args
         }
         proc set {name v} {
-            dict lappend kiss::vars::_vars $name $v
+            dict set kiss::vars::_vars $name $v
             ::set ::${name} $v
         }
-        proc get {name {default {}}} {
+        proc get {name {default ""}} {
             if {[dict exists $kiss::vars::_vars $name]} {
                 return [dict get $kiss::vars::_vars $name]
             } else {
@@ -61,6 +81,8 @@ namespace eval kiss {
             }
             
         }
+
+        
 
     }
 
@@ -102,16 +124,29 @@ namespace eval kiss {
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent end]
         }
+        proc getRequiredTargets target {
+            set targetcontent [dict get $::kiss::targets::_targets $target]
+            #log.info "Returning $target script: [lindex $targetcontent end]"
+            return [lindex $targetcontent 0]
+        }
 
         ## Run Target
         proc run {target args} {
+            
+            log.info "Running target: $target with args=$args"
+
             set script [getScript $target]
-            array set env [array get ::env]
-            if {[llength $args]>0} {
-                set argv {*}$args
-            } else {
-                set argv {}
+            set reqTargets [getRequiredTargets $target]
+            
+            foreach reqTarget $reqTargets {
+                uplevel #0 [list kiss::targets::run $reqTarget {*}$args]
             }
+            #array set env [array get ::env]
+            #if {[llength $args]>0} {
+            #    set argv {*}$args
+            #} else {
+            #    set argv {}
+            #}
             
             log.with.logger $target {
                 eval $script
@@ -120,9 +155,11 @@ namespace eval kiss {
             #return [dict keys $::kiss::targets::_targets]
         }
 
-        proc ::> {target args} {
-            log.info "Require target: $target"
-            kiss::targets::run $target {*}$args
+        proc > {target args} {
+            set mergedArgs [concat $args [uplevel [list set args]]]
+            log.info "Call target: $target with args=$mergedArgs"
+            kiss::targets::run $target {*}$mergedArgs
+            #uplevel #0 [list kiss::targets::run $target {*}$mergedArgs]
         }
 
     }
@@ -196,8 +233,18 @@ namespace eval kiss {
         ## Adds dependencies to the current dict
         ## The passed dependencies is a dict with format: name {lib xxx sources xxx doc xxxx}
         proc addDeps {module depsDict} {
-            #dict lappend kiss::dependencies::moduleDeps $module {*}$args
             dict lappend kiss::dependencies::moduleDeps $module {*}$depsDict
+        }
+
+        proc addDepSpec {module spec resolver} {
+            set specDict [dict create $spec [dict create spec $spec resolved false resolver $resolver]]
+            dict lappend kiss::dependencies::moduleDeps $module {*}$specDict
+        }
+
+        proc mergeDeps {module inputDict} {
+            set actualDepsDict [dict get $kiss::dependencies::moduleDeps $module]
+            set merged [dict merge $actualDepsDict $inputDict]
+            dict set kiss::dependencies::moduleDeps $module $merged
         }
 
         proc getDeps module {
@@ -209,18 +256,35 @@ namespace eval kiss {
              
         }
 
+        ## The deps specs are the keys of the dict
+        proc getDepsSpecs module {
+            set currentDeps [getDeps $module]
+            return [dict keys $currentDeps *]
+        }
+
         proc resolveDeps {module classifier} {
             set currentDeps [getDeps $module]
 
-            set res [lmap {name dict} $currentDeps {
-                if {[dict exists $dict $classifier]} {
-                    dict get $dict $classifier
-                } else {
-                    log.warn "No $classifier in $dict"
-                    string cat ""
+            set res {}
+            foreach {name resolutionDict} $currentDeps {
+                dict with resolutionDict {
+                    if {$resolved!=false} {
+                        dict for {resolvedSpec resolvedDict} $resolved {
+                            if {[dict exists $resolvedDict $classifier]} {
+                                lappend res [dict get $resolvedDict $classifier]
+                            } else {
+                                #log.warn "No $classifier in $dict"
+                                #string cat ""
+                            }
+                        }
+                       
+                    }
                 }
+
                 
-            }]
+                
+            }
+           
             log.debug "Resolved for $module: $res"
             return $res 
         }
@@ -261,7 +325,7 @@ namespace eval kiss {
             uplevel [list eval $script]
         } 
     }
-    proc withIfRefresh {v script} {
+    proc withIfRefresh {script} {
         if {[ifRefresh]} {
             uplevel [list eval $script]
         } 
@@ -289,34 +353,9 @@ namespace eval kiss {
         }
     }
 
-    ############################
-    ## Extension to help ease write extension procedures
-    ##############################
-    proc ::kiss.extension {extName functions} {
-        
-        set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
-        
-        #log.info "Functions no comments: $functionsNoComments"
-        foreach {procName procArgs procScript} $functionsNoComments {
-            #log.info "Extension $procName with args $procArgs"
-            proc ::${extName}.${procName} $procArgs $procScript
-        }
-    }
+    
 
-    ############################
-    ## Core extension
-    ##############################
-    kiss.extension kiss {
-
-        args.contains {v script {else ""} {elseScript {}}} {
-            set localArgs [uplevel {set args}]
-            if {[lsearch -exact $localArgs $v]!=-1} {
-                uplevel [list eval $script]
-            } else {
-                uplevel [list eval $elseScript]
-            }
-        }
-    }
+    
     ############################
     ## Utils
     ##############################
@@ -413,4 +452,26 @@ namespace eval kiss {
 
     }
 
+
+    ## Flows
+    ##############
+    proc ::kissb_search {name version} {
+        log.info "Searching for Package $name"
+        if {[string match flow::* $name]} {
+            
+            set flowFile $::kissDir/flows/[string map {flow:: "" + _} $name].flow.tcl
+            log.info "Searching for Flow in $flowFile"
+            if {[file exists $flowFile]} {
+                log.success "Found, providing"
+                package provide $name $version
+                source $flowFile
+            }
+        }
+    }
+    package unknown ::kissb_search
+
 }
+
+
+## Load installation info 
+#source [file dirname [info script]]/../info.tcl

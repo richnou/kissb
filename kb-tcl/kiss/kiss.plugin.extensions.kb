@@ -1,0 +1,42 @@
+
+############################
+## Core extension
+##############################
+
+kissb.extension kissb {
+
+    args.contains {v script {else ""} {elseScript {}}} {
+        set localArgs [uplevel {set args}]
+        if {[lsearch -exact $localArgs $v]!=-1} {
+            uplevel [list eval $script]
+        } else {
+            uplevel [list eval $elseScript]
+        }
+    }
+
+
+    onRefresh {script} {
+        if {[kiss::ifRefresh]} {
+            uplevel [list eval $script]
+        } 
+    }
+    withIfRefresh {script} {
+        if {[kiss::ifRefresh]} {
+            uplevel [list eval $script]
+        } 
+    }
+}
+
+############################
+## vars extension
+##############################
+kissb.extension vars {
+
+    set {name v} {
+        ::kiss::vars::set $name $v
+    }
+
+    get {name {v ""}} {
+        return [::kiss::vars::get $name $v]
+    }
+}

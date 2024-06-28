@@ -1,4 +1,4 @@
-package provide kiss.files 1.0
+package provide kissb.files 1.0
 
 
 namespace eval kiss::files {
@@ -39,11 +39,15 @@ namespace eval kiss::files {
     
     ## Extensions
     ##################
-    kiss.extension files {
+    kissb.extension files {
 
         ## Create directory
         mkdir p {
             file mkdir $p
+        }
+
+        delete f {
+            file delete $f
         }
 
         ## Copy file to directory
@@ -55,10 +59,42 @@ namespace eval kiss::files {
             
         }
 
-        writeText {f text} {
+        cpSubst {files dir} {
+            foreach f [glob $files] {
+                set fileText [files.read $f]
+                set fileTextReplaced [uplevel [list subst $fileText]]
+                files.writeText $dir/[file tail $f] $fileTextReplaced
+            }
+            
+        }
+
+        read f {
+            set fid [open $f r]
+            try {
+                return [read $fid]
+            } finally {
+                close $fid
+            }
+        }
+        writeText {f args} {
             set fid [open $f w+]
-            puts -nonewline $fid $text
-            close $fid
+            try {
+                puts -nonewline $fid [join $args]
+            } finally {
+                close $fid
+            }
+        }
+
+        appendText {f args} {
+            set fid [open $f a+]
+            try {
+                puts -nonewline $fid [join $args]
+            } finally {
+                close $fid
+            }
+        }
+        appendLine {f args} {
+            files.appendText $f {*}$args \n
         }
 
 
@@ -66,6 +102,20 @@ namespace eval kiss::files {
         require {f script} {
             if {![file exists $f]} {
                 uplevel [list eval $script]
+            }
+        }
+        requireOrForce {f script} {
+            if {[env KB_FORCE 0]==1} {
+                uplevel [list eval $script]
+            } else {
+                uplevel [list files.require $f $script]
+            }
+        }
+        requireOrRefresh {f script} {
+            if {[env KB_REFRESH 0]==1} {
+                uplevel [list eval $script]
+            } else {
+                uplevel [list files.require $f $script]
             }
         }
 
@@ -96,7 +146,66 @@ namespace eval kiss::files {
         unzip f {
             exec.run unzip $f
         }
+        untar f {
+            exec.run tar xvaf $f
+        }
+        extract f {
+            if {[string match *.tar.* $f]} {
+                files.untar $f
+            } else {
+                files.unzip $f
+            }
+        }
 
+        ## Files writer
+        withWriter {outPath script} {
+            try {
+                kiss::files::writer::open $outPath
+                uplevel [list eval $script]
+            } finally {
+                kiss::files::writer::close
+            }
+        }
+
+        writer.printLine args {
+            kiss::files::writer::printLine {*}$args
+        }
+        writer.indent args {
+            kiss::files::writer::incrIndent
+        }
+        writer.outdent args {
+            kiss::files::writer::decrIndent
+        }
+    }
+
+
+    ##############
+    ## Writer 
+    ###############
+    namespace eval writer {
+        
+        set indent 0
+        set fid -1
+
+        proc incrIndent args {
+            incr kiss::files::writer::indent
+        }
+        proc decrIndent args {
+            incr kiss::files::writer::indent  -1
+        }
+        proc getIndent args {
+            return [string repeat " " [expr 4*${kiss::files::writer::indent}]]
+        }
+    
+        proc open file {
+            set kiss::files::writer::fid [::open $file w+]
+        }
+        proc close args {
+            ::close ${kiss::files::writer::fid}
+        }
+        proc printLine args {
+            puts ${kiss::files::writer::fid} [getIndent][join $args]
+        }
     }
    
 }
