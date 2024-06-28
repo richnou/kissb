@@ -1,21 +1,34 @@
 # Installation
 
-**Current Version:** {{ latest_dev_release() }}
+- **Current Version:** {{ latest_dev_release() }}
+- **Latest Docker image push:** {{ latest_docker_push() }}
 
-## Manualy
+## Manual Installation
 
-### Install TCL and TCL Lib
+### Install TCL and requirements
 
 Kissb requires TCL 8 to be installed on your system:
 
 | OS | Installation | Requirements |
 |----|--------------| ------------- |
-| Ubuntu |  sudo apt install tcl tcllib        | |
-| Rocky Linux |  sudo dnf install tcl tcllib       | Install EPEL: [https://wiki.rockylinux.org/rocky/repo/#notes-on-epel](https://wiki.rockylinux.org/rocky/repo/#notes-on-epel){target=_blank} |
+| Ubuntu |  sudo apt install tcl tcllib tcl-tls       | |
+| Rocky Linux |  sudo dnf install tcl tcllib  tcltls     | Install EPEL: [https://wiki.rockylinux.org/rocky/repo/#notes-on-epel](https://wiki.rockylinux.org/rocky/repo/#notes-on-epel){target=_blank} |
+
+### Install Using Install script
+
+The release repository provides an installation TCL script which downloads the zip file and unpacks it to the standard installation location ~/.kissb/install/TRACK
+
+For example for the dev track:
+
+~~~bash 
+wget -qO- https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/install.tcl | tclsh
+~~~
+
+Once an installation is available, the install script won't run anymore, updates should be done through the kissb update command
 
 ### Install Distribution Folder 
 
-Download the latest distribution, and unpack it for example in .kissb/dist
+Download the latest distribution from the desired track, and unpack it for example in ~/.kissb/install/TRACK
 
 ~~~bash 
 mkdir -p ~/.kissb/dist && cd ~/.kissb/dist
@@ -42,5 +55,3 @@ For example, setup an alias in your terminal to run the image with your user id:
 The following image tags are recommended: *latest* for the latest release, and *dev* for the most up to date version.
 
 To update kissb, just pull the image on a regular basis.
-
-## Flatpack
