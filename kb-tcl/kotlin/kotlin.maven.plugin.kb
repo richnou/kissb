@@ -1,0 +1,147 @@
+package provide kissb.kotlin.maven 1.0
+
+
+namespace eval kotlin::maven {
+
+
+    proc getMavenProperties args {
+    
+        return [list kotlin.version [vars.get kotlin.version] kotlin.compiler.jvmTarget [vars.get jvm.target]]
+    }
+
+    proc getMavenPlugin {{extra {}} args} {
+
+        ## Search
+        set deps {}
+        if {[lsearch $args -dependencies]!=-1} {
+            lappend deps dependencies [subst [lindex $args [expr [lsearch $args -dependencies]+1]]]
+        }
+        
+        ## Add source dirs
+        set sourceDirsElements {}
+        foreach srcDir [kiss::sources::getSourceFolders main] {
+            lappend sourceDirsElements sourceDir $srcDir
+        }
+
+        ## Return plugin
+        return [list plugin [subst {
+            groupId     org.jetbrains.kotlin
+            artifactId  kotlin-maven-plugin
+            version     [vars.get kotlin.version]
+            executions {
+                execution {
+                    id compile
+                    phase compile
+                    goals {
+                        goal compile
+                    }
+                    configuration [list [concat [subst $extra] [subst {
+                        sourceDirs {
+                            $sourceDirsElements
+                        }
+                    }]]]
+                }
+            }
+            $deps
+        }]]
+        return [list kotlin.version [vars.get kotlin.version] kotlin.compiler.jvmTarget [vars.get jvm.target]]
+    }
+
+    kissb.extension kotlin.maven {
+
+        
+
+        generate outPath {
+
+
+            set o [file normalize $outPath/pom.xml]
+            set projectName [file tail [file normalize [pwd]]]
+
+            files.writeText $o <?xml version="1.0" encoding="UTF-8"?>
+            files.appendLine $o <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+            files.appendLine $o <modelVersion>4.0.0</modelVersion>
+            files.appendLine $o <groupId>org.kissb.group</groupId>
+            files.appendLine $o <artifactId>$projectName</artifactId>
+            files.appendLine $o <version>0.0.1</version>
+            files.appendLine $o <packaging>jar</packaging>
+
+            ## Prepare source folders
+            set sourceFolders {
+                <sourceDirs>
+            }
+            foreach srcFolder [kiss::sources::getSourceFolders main] {
+                lappend sourceFolders <sourceDir>\${project.basedir}/$srcFolder</sourceDir>
+            }
+
+            lappend sourceFolders {
+                </sourceDirs>
+            }
+            set sourceFolders [join $sourceFolders]
+
+            ## Add Kotlin
+            files.appendLine $o <properties>
+            files.appendLine $o "    <kotlin.version>2.0.0</kotlin.version>"
+            files.appendLine $o "    <kotlin.compiler.jvmTarget>[kiss::vars::get jvm.target]</kotlin.compiler.jvmTarget>"
+            files.appendLine $o "    <maven.compiler.source>[kiss::vars::get jvm.source]</maven.compiler.source>"
+            files.appendLine $o "    <maven.compiler.target>[kiss::vars::get jvm.target]</maven.compiler.target>"
+            
+    
+            
+            files.appendLine $o </properties>
+            files.appendText  $o [subst {
+<build>
+    <plugins>
+        <plugin>
+            <artifactId>kotlin-maven-plugin</artifactId>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <version>\${kotlin.version}</version>
+            <executions>
+                <execution>
+                    <id>compile</id>
+                    <goals>
+                        <goal>compile</goal>
+                    </goals>
+                    <configuration>$sourceFolders</configuration>
+                </execution>
+
+                <execution>
+                    <id>test-compile</id>
+                    <goals>
+                        <goal>test-compile</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+}]
+
+            ## Add Dependencies
+            files.appendLine $o <dependencies>
+            foreach dep [kiss::dependencies::resolveDeps main spec] {
+                files.appendLine $o <dependency>
+
+                set split [split $dep :]
+                files.appendLine $o "    <groupId>[lindex $split 0]</groupId>"
+                files.appendLine $o "    <artifactId>[lindex $split 1]</artifactId>"
+                files.appendLine $o "    <version>[lindex $split 2]</version>"
+
+                files.appendLine $o </dependency>
+            }
+            files.appendLine $o </dependencies>
+
+            files.appendText $o </project>
+
+
+            ## Maven config
+            set mvnConfig $outPath/.mvn/jvm.config
+            file mkdir [file dirname $mvnConfig]
+            
+            files.writeText $mvnConfig "--add-opens=java.base/java.lang=ALL-UNNAMED\n--add-opens=java.base/java.io=ALL-UNNAMED"
+            
+
+        }
+
+    }
+}

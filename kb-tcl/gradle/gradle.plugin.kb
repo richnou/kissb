@@ -1,5 +1,5 @@
-package provide gradle 1.0
-package require kiss
+package provide kissb.gradle 1.0
+
 
 namespace eval gradle {
 

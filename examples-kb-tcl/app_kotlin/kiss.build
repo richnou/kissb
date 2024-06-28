@@ -1,0 +1,63 @@
+package require kissb.kotlin
+package require kissb.kotlin.maven
+#package require coursier 
+
+puts "Custom project"
+
+## Select toolchains
+kotlin.init
+
+## Load dependencies
+kotlin.module main {
+    kotlin.compiler.jvm.source 21
+}
+kotlin.dependencies.add main org.apache.commons:commons-lang3:3.14.0
+kotlin.dependencies.add main org.duckdb:duckdb_jdbc:1.0.0
+
+puts "Deps: [kiss::dependencies::getDeps main]"
+
+coursier::resolveModule main 
+puts "---"
+puts "Deps: [kiss::dependencies::getDeps main]"
+
+
+#coursier::fetchAll main {
+
+ #   + org.apache.commons:commons-lang3:3.14.0
+ #   + org.duckdb:duckdb_jdbc:1.0.0
+#}
+
+## Configure stuff
+
+#ivy::fetchAll main {
+#
+#    + org.apache.commons:commons-lang3:3.14.0
+#}
+
+kiss::sources::addSourceFolder main src/main/kotlin
+
+## Generate build file
+#kotlin::buildserver::generate main
+
+@ assemble {
+    #kotlin::compile main
+    kotlin::assemble main hello.jar
+}
+
+@ run  {
+    kotlin::compile main
+    #kotlin::assemble main hello.jar
+    kotlin::run main HelloWorldKt
+}
+
+@ docs {
+
+    dokka.generate main
+}
+
+@ eclipse {
+
+    #kotlin.project.eclipse .
+    kotlin.maven.generate .
+}
+

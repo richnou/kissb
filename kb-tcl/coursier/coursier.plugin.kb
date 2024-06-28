@@ -1,7 +1,9 @@
-package provide coursier 1.0
+package provide kissb.coursier 1.0
+package require sha256
 
 namespace eval coursier {
 
+    set buildFolder ".kb/coursier"
     set tcFolder ".kb/toolchain/coursier"
     set outputFolder "repository"
 
@@ -15,18 +17,56 @@ namespace eval coursier {
         lappend coursier::repositories $url
     }
 
+    ## Dependency resolution
+    ################
+    proc resolveModule module {
+        
+        # Get  the deps dictionary
+        set depsForModule [kiss::dependencies::getDeps $module]
+
+        # Create a SHA of the required specs for caching purpose
+        set specList {}
+        foreach {spec depDict} $depsForModule {
+            lappend specList $specList
+        }
+        set specSHA [::sha2::sha256 -hex -- [join [lsort $specList]]]
+        log.debug "Coursier spec SHA256: $specSHA"
+
+        # Get Cache file
+        set cacheFileName coursier-${module}-deps-${specSHA}
+        kissb.cached.fileOrElse ${cacheFileName}.txt -> cachedDepsDict {
+
+            # Resolve what needs be
+            dict for {spec depInfo} $depsForModule {
+                dict with depInfo {
+                    if {$resolved==false} {
+                        set resolvedDict [coursier::fetchSpec $spec]
+                        dict set depsForModule $spec resolved $resolvedDict
+                        #log.info "Resolving $spec -> $resolvedDict"
+                        #dict merge depInfo [coursier::fetchSpec $spec]
+                    }
+                }
+            }
+
+            # Write Dict output to file
+            kissb.cached.writeFile ${cacheFileName}.txt  $depsForModule
+            kissb.cached.writeFile ${cacheFileName}.json [json.toString $depsForModule]
+        }
+        log.debug "[namespace current] Cached deps: $cachedDepsDict"
+        set mergedDict [kiss::dependencies::mergeDeps $module $cachedDepsDict]
+        
+         
+     
+    }
+
     ## On Load -> Toolchain
     ###########
     kiss::toolchain::register coursier {
         puts "Init Coursier Toolchain"
 
+        set coursier::tcFolder $toolchainFolder
         file mkdir ${coursier::tcFolder}
 
-        #curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
-        #https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-2.5.2-bin.tar.gz
-        #set url "https://dlcdn.apache.org//ant/ivy/2.5.2/apache-ivy-${ivy::version}-bin.tar.gz"
-
-        #if {[file exists ]} -x86_64-pc-linux
         if {[kiss::utils::isWindows]} {
             set coursier::binPath [file normalize ${coursier::tcFolder}/cs.exe]
         } else {
@@ -70,6 +110,7 @@ namespace eval coursier {
 
         ## Parse result to sort dependencies in main artifact, javadoc, sources
         set sortedDeps [dict create]
+        dict lappend sortedDeps $dep spec $dep
         foreach resolvedFile $files {
             set resolvedFile [string map {\\ /} $resolvedFile]
             set tail [file tail $resolvedFile]
@@ -93,6 +134,34 @@ namespace eval coursier {
         #exit 0 
         #kiss::dependencies::addDeps [uplevel {set module}] {*}$files
         kiss::dependencies::addDeps [uplevel {set module}] $sortedDeps
+    }
+
+    proc fetchSpec {specId args} {
+        
+        set files  [coursier::runtime::fetchSingle $specId --default=true --javadoc --sources  {*}$args]
+        set sortedDeps [dict create]
+        #dict lappend sortedDeps $dep spec $dep
+        foreach resolvedFile $files {
+            set resolvedFile [string map {\\ /} $resolvedFile]
+            set tail [file tail $resolvedFile]
+            switch -glob $tail {
+                *-sources.jar {
+                    log.debug "$resolvedFile is sources"
+                    dict lappend sortedDeps [string map {-sources ""} $tail] sources $resolvedFile
+                }
+                *-javadoc.jar {
+                    log.debug "$resolvedFile is javadoc"
+                    dict lappend sortedDeps [string map {-javadoc ""} $tail] doc $resolvedFile
+                }
+                default {
+                    log.debug "$resolvedFile is lib"
+                    dict lappend sortedDeps $tail lib [file normalize $resolvedFile]
+                }
+            }
+            
+        }
+        return $sortedDeps
+        
     }
     proc fetchAll {module deps} {
 
@@ -137,6 +206,35 @@ namespace eval coursier {
             #set resLibsNormalized [lmap f $resLibs {kiss::files::normalizePath $f}]
             set resLibsNormalized [kiss::files::normalizePath $resLibs]
             return $resLibsNormalized
+        }
+    }
+
+
+    ####################
+    ## Extension
+    #####################
+    kissb.extension coursier {
+
+        init args {
+            kiss::toolchain::init coursier
+        }
+
+        fetch.classpath.of {dep {classifier ""} {type ""}} {
+            set args {}
+            if {$classifier!=""} {
+                lappend args -C $classifier
+            }
+            if {$type!=""} {
+                lappend args -A $type
+            }
+            return [coursier::runtime::fetchSingle $dep {*}$args]
+            
+        }
+        
+        ## Returns classpath string for dep
+        classpath {dep {classifier ""} {type ""}} {
+            return [join  [coursier.fetch.classpath.of $dep $classifier $type] ":"]
+            
         }
     }
 }

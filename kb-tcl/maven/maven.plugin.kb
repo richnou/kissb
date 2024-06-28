@@ -1,0 +1,88 @@
+package provide kissb.maven 1.0
+
+namespace eval maven {
+
+    set wrapperVersion  3.3.2
+    set mavenVersion    3.9.8
+
+    kiss::toolchain::register maven-wrapper {
+
+        files.requireOrRefresh mvnw {
+            
+            log.info "Setting up maven wrapper"
+
+            ## Download wrapper
+            files.download https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper-distribution/${maven::wrapperVersion}/maven-wrapper-distribution-${maven::wrapperVersion}-bin.zip maven-wrapper-distribution-${maven::wrapperVersion}-bin.zip
+            files.extract maven-wrapper-distribution-${maven::wrapperVersion}-bin.zip
+            files.delete  maven-wrapper-distribution-${maven::wrapperVersion}-bin.zip
+
+            ## Set properties
+            files.writeText .mvn/wrapper/maven-wrapper.properties distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${maven::mavenVersion}/apache-maven-${maven::mavenVersion}-bin.zip
+
+        
+        }
+    }
+
+
+    proc writeSpec spec {
+    
+        foreach {key val} $spec {
+            switch $key {
+                artifactId {
+                    files.writer.printLine  "<artifactId>$val</artifactId>"
+                }
+                groupId {
+                    files.writer.printLine  "<groupId>$val</groupId>"
+                }
+                version {
+                    files.writer.printLine  "<version>$val</version>"
+                }
+                
+                default {
+                    if {[llength $val]==1} {
+                        files.writer.printLine <$key>$val</$key>
+                    } else {
+                        files.writer.printLine <$key>
+                        files.writer.indent
+                        try {
+                            maven::writeSpec $val
+                        } finally {
+                            files.writer.outdent
+                            files.writer.printLine </$key>
+                        }
+                        #log.warn "Maven unknown key $key"
+                    }
+                    
+                }
+            }
+        }
+    }
+
+    kissb.extension maven {
+
+        generate.spec {outPath spec} {
+
+            set pomFile [file normalize $outPath/pom.xml]
+            set specSubst [uplevel [list subst $spec]]
+
+            ## Create Writer and go through spec
+            files.withWriter $pomFile {
+
+                files.writer.printLine <?xml version="1.0" encoding="UTF-8"?>
+                files.writer.printLine <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                files.writer.printLine <modelVersion>4.0.0</modelVersion>
+                
+                files.writer.indent
+
+                maven::writeSpec $specSubst
+                
+                files.writer.outdent
+                files.writer.printLine </project>
+                
+
+            }
+
+        }
+    }
+
+}

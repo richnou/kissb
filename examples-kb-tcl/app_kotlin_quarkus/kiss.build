@@ -1,0 +1,38 @@
+
+package require kissb.quarkus
+package require kissb.kotlin
+
+quarkus.init
+kotlin.init
+
+#quarkus.run --version 
+#quarkus.run dev --help
+
+#return
+
+vars.set kissb.artifactId   org.kissb.examples
+vars.set kissb.groupId      quarkus-example
+vars.set kissb.version      0.0.1
+
+# Set main module
+kotlin.module main
+kotlin.sources.add main src/main/kotlin
+
+# Set Quarkus Extensions
+quarkus.extension.add main quarkus-smallrye-health quarkus-rest quarkus-kotlin
+
+quarkus.maven.generate .
+
+withArgsContains -dev {
+    quarkus.dev
+}
+
+@ build {
+    # Compile
+    kotlin::compile main
+}
+
+@ dev {
+    
+    quarkus.dev
+}

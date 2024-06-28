@@ -1,0 +1,173 @@
+package provide kissb.quarkus 1.0
+package require kissb.kotlin.maven
+package require kissb.coursier
+package require kissb.maven
+
+namespace eval quarkus {
+
+    set version 3.12.0
+    set cliJar ""
+    set cliCP ""
+
+    kiss::toolchain::register quarkus {
+
+        ## Get Classpth for quarkus CLI cached
+        kissb.withIfRefresh {
+            files.delete quarkus/cli-cp-${quarkus::version}.txt
+        }
+        kissb.cached.fileOrElse quarkus/cli-cp-${quarkus::version}.txt -> ::quarkus::cliCP {
+            kissb.cached.writeFile quarkus/cli-cp-${quarkus::version}.txt [join [coursier.fetch.classpath.of io.quarkus:quarkus-cli:$quarkus::version  runner jar]]
+        }
+
+        return 
+        set ::quarkus::cliCP [] 
+        set cliPath [coursier.fetch.classpath.of io.quarkus:quarkus-cli:$quarkus::version]
+        set ::quarkus::cliJar [lindex $cliPath 0]
+        set ::quarkus::cliCP [join [lrange $cliPath 0 end] ":"]
+
+        set ::quarkus::cliCP [coursier.fetch.classpath.of io.quarkus:quarkus-cli:$quarkus::version runner jar]
+
+        log.info "Quarkus version: $quarkus::version"
+        files.inDirectory $toolchainFolder/$quarkus::version {
+
+            # 
+        }
+    }
+
+    kissb.extension quarkus {
+
+        init args {
+            coursier.init 
+            kiss::toolchain::init quarkus
+            kiss::toolchain::init maven-wrapper
+            vars.set quarkus.version ${quarkus::version}
+        }
+
+        run args {
+            exec.run java -cp $quarkus::cliCP io.quarkus.cli.Main {*}$args 
+            #exec.run java -cp $quarkus::cliCP  -Dapp.name=quarkus \
+            #    -Dapp.pid=\$\$ \
+            #    -Dapp.repo=[pwd] \
+            #    -Dapp.home=[pwd] -Dbasedir=[pwd] io.quarkus.cli.Main {*}$args
+        }
+
+        dev args {
+            quarkus.run dev
+        }
+
+        extension.add {module args} {
+            foreach dep $args {
+                # Dep must start with quarkus-
+                if {![string match "quarkus-*" $dep]} {
+                    set dep quarkus-$dep 
+                }
+                kiss::dependencies::addDepSpec $module io.quarkus:$dep:${quarkus::version} coursier
+                #coursier::fetchAll $module {
+                #    upvar dep dep
+                #    + io.quarkus:$dep:${quarkus::version}
+                #}
+            }
+        }
+
+        maven.generate path {
+            quarkus::maven::generate $path
+        }
+
+
+    }
+
+    namespace eval maven {
+    
+        proc generate {outPath} {
+            
+            ## Ensure resolved
+            #coursier::resolveModule main
+
+            ## Create dependencies
+            set depsXml [join [lmap dep [kiss::dependencies::getDepsSpecs main] {
+                set splitDep [split $dep :]
+                if {[lindex $splitDep 0]!="io.quarkus"} {
+                    list dependency [list groupId [lindex $splitDep 0] artifactId [lindex $splitDep 1] version [lindex $splitDep 2] ] 
+                } else {
+                    list dependency [list groupId [lindex $splitDep 0] artifactId [lindex $splitDep 1] ] 
+                }
+                
+            }]]
+
+            #log.info "Deps: $depsXml"
+
+               #properties [list [concat [kotlin::maven::getMavenProperties] {
+                #    quarkus.platform.artifact-id    quarkus-bom
+                #    quarkus.platform.group-id       io.quarkus.platform
+                #    quarkus.platform.version        [vars.get quarkus.version]
+                #    maven.compiler.source           [vars.get jvm.source]
+                #    maven.compiler.target           [vars.get jvm.target]
+                #}]]
+
+            ## Generate
+            maven.generate.spec $outPath {
+                artifactId [vars.get kissb.artifactId "default"]
+                groupId [vars.get kissb.groupId "default"]
+                version [vars.get kissb.version "0.0.1"]
+             
+                properties [list [concat [kotlin::maven::getMavenProperties] [subst {
+                    
+                    quarkus.platform.artifact-id    quarkus-bom
+                    quarkus.platform.group-id       io.quarkus.platform
+                    quarkus.platform.version        [vars.get quarkus.version]
+                    maven.compiler.source           [vars.get jvm.source]
+                    maven.compiler.target           [vars.get jvm.target]
+                }]]]
+            
+                dependencyManagement {
+                    dependencies {
+                        dependency {
+                            groupId     \${quarkus.platform.group-id}
+                            artifactId  \${quarkus.platform.artifact-id}
+                            version     \${quarkus.platform.version}
+                            type        pom
+                            scope       import
+                        }
+                    }
+                }
+                build {
+                    sourceDirectory [kiss::sources::getSourceFolders main]
+                    plugins [list [concat [kotlin::maven::getMavenPlugin {
+                        
+                        compilerPlugins {
+                            plugin all-open
+                        }
+                        pluginOptions {
+                            option all-open:annotation=jakarta.ws.rs.Path
+                        }
+                    } -dependencies { dependency {
+                            groupId     org.jetbrains.kotlin
+                            artifactId  kotlin-maven-allopen
+                            version     ${::kotlin.version}
+                            } } ] { 
+                        plugin {
+                            groupId     \${quarkus.platform.group-id}
+                            artifactId  quarkus-maven-plugin
+                            version     \${quarkus.platform.version}
+                            executions {
+                                execution {
+                                    goals {
+                                        goal build
+                                    }
+                                }
+                            }
+                        }
+                    }]]
+                }
+                dependencies {
+                    $depsXml
+                }
+            }
+           
+        
+        }
+    }
+
+    
+
+}

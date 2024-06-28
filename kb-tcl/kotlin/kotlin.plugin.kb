@@ -1,5 +1,5 @@
-package provide kotlin 1.0
-package require coursier
+package provide kissb.kotlin 1.0
+package require kissb.coursier
 
 namespace eval kotlin {
 
@@ -15,9 +15,10 @@ namespace eval kotlin {
 
     proc init module {
 
-        coursier::fetchAll $module {
-            + org.jetbrains.kotlin:kotlin-stdlib:${kotlin::kotlinVersion}
-        }
+        kotlin.dependencies.add $module org.jetbrains.kotlin:kotlin-stdlib:${kotlin::kotlinVersion}
+        #coursier::fetchAll $module {
+        #    + org.jetbrains.kotlin:kotlin-stdlib:${kotlin::kotlinVersion}
+        #}
     }
 
     proc compile module {
@@ -37,6 +38,8 @@ namespace eval kotlin {
 
         set depsList [kiss::dependencies::resolveDeps $module lib]
         set cpString [join $depsList [kiss::files::pathSeparator]]
+
+        log.info "Deps: $depsList"
 
         set args [concat [kiss::vars::get kotlin.compiler.args] [kiss::vars::get ${module}.kotlin.compiler.args]]
         log.info "Compile args: $args"
@@ -101,7 +104,8 @@ namespace eval kotlin {
 
         kiss::toolchain::init coursier
 
-        set  ::kotlin::tcFolder [file normalize ".kb/toolchain/kotlin"]
+        #set  ::kotlin::tcFolder [file normalize ".kb/toolchain/kotlin"]
+        set  ::kotlin::tcFolder $toolchainFolder
         file mkdir $::kotlin::tcFolder
 
         set kotlin::baseBuildFolder [file normalize $kotlin::baseBuildFolder]
@@ -118,16 +122,24 @@ namespace eval kotlin {
             }
             
         } else {
-            puts "Kotlin TC ready"
+            log.debug "Kotlin TC ready"
         }
 
         ## Setup args
+        ###########
         kiss::vars::append kotlin.home $::kotlin::tcFolder/kotlinc
         kiss::vars::append kotlin.compiler.args -kotlin-home      $::kotlin::tcFolder/kotlinc
         kiss::vars::append kotlin.compiler.args -language-version 2.0
         kiss::vars::append kotlin.compiler.args -Xenable-incremental-compilation
 
+        kiss::vars::set kotlin.version ${kotlin::kotlinVersion}
+
+        ## Set JVM target/source from java
+        kiss::vars::set jvm.target 1.8
+        kiss::vars::set jvm.source 1.8
+
         kiss::vars::append kotlin.compiler.buildDir $::kotlin::baseBuildFolder
+        
     }
 
 
@@ -154,6 +166,111 @@ namespace eval kotlin {
 
                 classpath  [list [kiss::dependencies::getDeps $module]]
             }]
+        }
+    }
+
+
+    ############################
+    ## Extension for kotlin
+    ######################
+    kissb.extension kotlin {
+
+        init args {
+            kiss::toolchain::init kotlin-2
+        }
+        
+        module {name {script {}}} {
+            kotlin::init $name
+            uplevel [list eval $script]
+        }
+
+        compiler.jvm.target v {
+            kiss::vars::set jvm.target $v
+            kiss::vars::append kotlin.compiler.args -jvm-target $v
+        }
+        compiler.jvm.source v {
+            kiss::vars::set jvm.source $v
+            kotlin.compiler.jvm.target $v
+        }
+
+        sources.add {module args} {
+            foreach folder $args {
+                kiss::sources::addSourceFolder $module $folder
+            }
+        }
+
+        dependencies.compile {module deps} {
+            foreach dep $deps {
+                kiss::dependencies::addDepSpec $module $dep coursier
+                #coursier::fetchAll $module {
+                #    upvar dep dep
+                #    + $dep
+                #}
+                
+            }
+        }
+        dependencies.add {module deps} {
+            foreach dep $deps {
+                kiss::dependencies::addDepSpec $module $dep coursier
+                #coursier::fetchAll $module {
+                #    upvar dep dep
+                #    + $dep
+                #}
+                
+            }
+        }
+
+        project.eclipse outPath {
+            kotlin::eclipse::generate $outPath
+        }
+
+    }
+
+
+    #####################
+    ## Eclipse Project 
+    #####################
+    namespace eval eclipse {
+    
+        proc generate outPath {
+            
+            ## Generate Project output
+            ##############
+            set projectName [file tail [file normalize [pwd]]]
+            set projectFile [file normalize $outPath/.project]
+            set classpathFile [file normalize $outPath/.classpath]
+            
+            log.info "Generating Eclipse project to $projectFile"
+            files.writeText $projectFile [subst {<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+    <name>$projectName</name>
+    <comment/>
+    <projects/>
+    <buildSpec>
+        <buildCommand>
+            <name>org.eclipse.jdt.core.javabuilder</name>
+            <arguments/>
+        </buildCommand>
+    </buildSpec>
+    <natures>
+        <nature>org.eclipse.jdt.core.javanature</nature>
+    </natures>
+</projectDescription>
+            }]
+
+            files.writeText $outPath/${projectName}.iml [subst {<?xml version="1.0" encoding="UTF-8"?>
+<module classpath="eclipse" classpath-dir="\$MODULE_DIR\$" type="JAVA_MODULE" version="4" />
+            }]
+
+            files.writeText $classpathFile [subst {<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+            }]
+
+            foreach sourceFolder [kiss::sources::getSourceFolders main] {
+                files.appendText $classpathFile "<classpathentry kind=\"src\" path=\"$sourceFolder\"/>\n"
+            }
+            files.appendText $classpathFile "<classpathentry kind=\"output\" path=\"[kiss::vars::get kotlin.compiler.buildDir]/main/classes\"/>"
+            files.appendText $classpathFile "</classpath>"
         }
     }
 
@@ -204,7 +321,16 @@ namespace eval kotlin {
                                 -sourceSet "-src [join [kiss::sources::getSourceFolders $module] ;] -classpath $deps" \
                                 -outputDir ${::dokka.build.output}/$module
 
+            ## Report output 
+            log.success "Generated Dokka HTML in ${::dokka.build.output}/$module"
+
         
+        }
+
+        kissb.extension dokka {
+            generate module {
+                kotlin::dokka::generate $module
+            }
         }
     
     }

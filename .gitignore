@@ -6,7 +6,11 @@ node_modules
 build
 .cache
 __pycache__
-
+target/
+.idea
+pom.xml
+mvnw*
+.mvn
 # Local Netlify folder
 .netlify
 

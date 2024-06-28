@@ -1,5 +1,5 @@
-package provide ivy 1.0
-package require kiss 
+package provide kissb.ivy 1.0
+
 
 namespace eval ivy {
 

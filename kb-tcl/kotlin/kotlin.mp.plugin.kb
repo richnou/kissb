@@ -1,5 +1,5 @@
-package provide kotlin.mp 1.0
-package require kotlin 
+package provide kissb.kotlin.mp 1.0
+package require kissb.kotlin 
 
 namespace eval kotlin::mp {
 

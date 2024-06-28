@@ -1,6 +1,6 @@
-package provide kotlin.mp.compose 1.0
-package require kotlin.mp
-package require coursier
+package provide kissb.kotlin.mp.compose 1.0
+package require kissb.kotlin.mp
+package require kissb.coursier
 
 namespace eval kotlin::mp::compose {
 
