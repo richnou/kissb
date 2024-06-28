@@ -12,7 +12,14 @@ set ::BASE [pwd]
 set targets {}
 set args {}
 foreach arg $argv {
-    if {[string match -* $arg] || [file exists $arg]} {
+    if {$arg == "--refresh"} {
+        env KB_REFRESH 1
+        env KB_REFRESH_ALL 1
+    } elseif {$arg == "--force"} {
+        env KB_FORCE 1
+    } elseif {$arg == "--debug"} {
+        log.set.level DEBUG
+    } elseif {[string match -* $arg] || [file exists $arg]} {
         lappend args $arg
     } else {
         lappend targets $arg
@@ -20,15 +27,15 @@ foreach arg $argv {
 }
 
 ## Standard Arguments
-kissb.args.contains --refresh {
-    env KB_REFRESH 1
-}
-kissb.args.contains --force {
-    env KB_FORCE 1
-}
-kissb.args.contains --debug {
-    log.set.level DEBUG
-}
+#kissb.args.contains --refresh {
+#    env KB_REFRESH 1
+#}
+#kissb.args.contains --force {
+#    env KB_FORCE 1
+#}
+#kissb.args.contains --debug {
+#    log.set.level DEBUG
+#}
 
 ## Load local Kiss build
 foreach buildFile {kiss.b kiss.kb kiss.build} {
