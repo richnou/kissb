@@ -1,5 +1,5 @@
-package provide python3 1.0
-package require kiss 
+package provide kissb.python3 1.0
+package require kissb 
 
 puts "Loading python3"
 
@@ -25,7 +25,7 @@ namespace eval python3 {
 
     }
 
-    proc ::python3.venv.init script {
+    proc ::python3.venv.init {{script {}}} {
         if {[kiss::ifRefresh] || [kiss::toolchain::init python3-venv]} {
             eval $script
         }
