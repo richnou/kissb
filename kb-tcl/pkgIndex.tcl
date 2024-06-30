@@ -6,6 +6,8 @@ package ifneeded kissb.kotlin.maven       1.0 [list source $dir/kotlin/kotlin.ma
 package ifneeded kissb.kotlin.mp          1.0 [list source $dir/kotlin/kotlin.mp.plugin.kb]
 package ifneeded kissb.kotlin.mp.compose  1.0 [list source $dir/kotlin/kotlin.mp.compose.plugin.kb]
 
+package ifneeded kissb.scala              1.0 [list source $dir/scala/scala.plugin.kb]
+
 package ifneeded kissb.quarkus            1.0 [list source $dir/quarkus/quarkus.plugin.kb]
 package ifneeded kissb.liquibase          1.0 [list source $dir/liquibase/liquibase.plugin.kb]
 

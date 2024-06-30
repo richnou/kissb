@@ -1,0 +1,48 @@
+package require kissb.scala
+
+
+
+#flow.load scala/single_app_c1.flow
+
+## Init
+#scala.init
+
+## Folders
+
+#kiss::sources::addSourceFolder main.test      src/test/scala
+#kiss::sources::addSourceFolder main.resources src/main/resources
+
+## Select versions
+scala.module main 3.4.2
+scala.jvm  main 21 ibm-semeru-openj9-java21:21.0.3+9_openj9-0.44.0
+
+#scala.dependencies.add main 
+#scala.jvm  main 21
+#scala.versions main 3.3.3
+
+#coursier.run java --available
+
+## Scala test
+scalatest.init main
+
+## Compile
+@ build {
+
+    scala.compile main
+}
+
+@ test {
+
+    #scala.compile main/test
+    scalatest.run main
+}
+
+@ run : build {
+    scala.run main Test
+}
+
+@ bloop {
+
+    scala.bloop main
+    scala.bloop main.test
+}

@@ -176,6 +176,12 @@ namespace eval kiss::files {
         writer.outdent args {
             kiss::files::writer::decrIndent
         }
+
+
+        ## PATH
+        joinWithPathSeparator args {
+            return [join {*}$args [kiss::files::pathSeparator]]
+        }
     }
 
 

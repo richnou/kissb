@@ -1,10 +1,10 @@
+# KISSB 
 
-Main Language:
 
-- target: Like Makefile target, the target to be run 
 
-    - PLatform -> target platform, can be native, jvm, or something else 
+## TCL Requirements
 
-        - Module -> can contain sources, dependencies -> Module can need others
+Packages required by OS:
 
-- Composite Builds: include other build in others as dependencies
+    sudo apt install tclxml tcllib
+

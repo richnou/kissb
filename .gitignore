@@ -11,6 +11,9 @@ target/
 pom.xml
 mvnw*
 .mvn
+.bloop
+.metals
+
 # Local Netlify folder
 .netlify
 

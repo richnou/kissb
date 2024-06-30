@@ -9,7 +9,7 @@ namespace eval coursier {
 
     set binPath ""
 
-    set repositories {ivy2Local central sonatype:releases}
+    set repositories {ivy2Local central sonatype:releases https://oss.sonatype.org/content/groups/public/}
 
     ## Repos
     ###############
@@ -23,6 +23,8 @@ namespace eval coursier {
         
         # Get  the deps dictionary
         set depsForModule [kiss::dependencies::getDeps $module]
+
+        log.debug "Coursier resolve deps for $module: $depsForModule"
 
         # Create a SHA of the required specs for caching purpose
         set specList {}
@@ -219,8 +221,20 @@ namespace eval coursier {
             kiss::toolchain::init coursier
         }
 
-        fetch.classpath.of {dep {classifier ""} {type ""}} {
-            set args {}
+        run args {
+            exec.run ${coursier::binPath} {*}$args
+        }
+
+        install args {
+            return [coursier.run install {*}$args]
+        }
+
+        setup args {
+            return [exec.call ${coursier::binPath} setup {*}$args]
+        }
+
+        fetch.classpath.of {dep {classifier ""} {type ""} args} {
+
             if {$classifier!=""} {
                 lappend args -C $classifier
             }
@@ -232,9 +246,24 @@ namespace eval coursier {
         }
         
         ## Returns classpath string for dep
-        classpath {dep {classifier ""} {type ""}} {
-            return [join  [coursier.fetch.classpath.of $dep $classifier $type] ":"]
+        classpath {dep {classifier ""} {type ""} args} {
+            return [files.joinWithPathSeparator  [coursier.fetch.classpath.of $dep $classifier $type {*}$args]]
             
+        }
+
+        ## App
+        withApp {apps script} {
+
+            #set appsArgs {}
+            #foreach app apps {
+            #    lappend appsArgs
+            #}
+            set jvmVersion   [vars.get scala.jvm.name 21]
+            set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm $jvmVersion --apps [join $apps ,]]
+            exec.withEnv $compileEnv $script
+
         }
     }
 }
+
+source [file dirname [info script]]/coursier.bom.plugin.kb

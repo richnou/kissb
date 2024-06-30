@@ -15,19 +15,27 @@ kissb.extension kissb {
     }
 
 
-    onRefresh {script} {
+    onRefresh script {
         if {[kiss::ifRefresh]} {
             uplevel [list eval $script]
         } 
     }
-    withIfRefresh {script} {
+
+    withIfRefresh script {
         if {[kiss::ifRefresh]} {
             uplevel [list eval $script]
         } 
+    }
+
+    each {lst script} {
+        foreach v $lst {
+            uplevel [list set it $v]
+            uplevel [list eval $script]
+        }
     }
 }
 
-############################
+##############################
 ## vars extension
 ##############################
 kissb.extension vars {
@@ -36,7 +44,65 @@ kissb.extension vars {
         ::kiss::vars::set $name $v
     }
 
+    append {name v} {
+        ::kiss::vars::append $name $v
+    }
+
     get {name {v ""}} {
         return [::kiss::vars::get $name $v]
+    }
+
+    exists name {
+        return [::kiss::vars::exists $name]
+    }
+
+    ## Module based variable resolution
+    resolve spec {
+
+        # Split at . MODULE/MODULE/MODULE.VAR.VAR.VAR , and take first result
+        set module [lindex [split $spec .] 0]
+        set name   [join [lrange [split $spec .] 1 end] .]
+
+        # For a module a/b/c, build search paths: a/b/c.VAR , a/b.VAR then a.VAR   (override effect)
+        set i 0
+        set candidates {}
+        set splitModuleNames [split $module /]
+        foreach splitName $splitModuleNames {
+            set splitName [lindex [split $splitName .] 0]
+            set candidateName [join [lrange $splitModuleNames 0 end-$i] /]
+            lappend candidates $candidateName
+            incr i
+        }
+        foreach candidate $candidates {
+            #log.info "Searching for var $name in $candidate"
+            if {[vars.exists ${candidate}.${name}]} {
+                return [vars.get ${candidate}.${name}]
+            }
+        }
+
+        return -error "Variable could not be resolved: $spec"
+    }
+}
+
+##############################
+## Dependencies extension
+##############################
+kissb.extension dependencies {
+
+    ## Save provided dict in bom
+    bom dict {
+        #log.info "Adding BOM: $spec"
+        kiss::dependencies::addBOM $dict
+    }
+
+    add {module resolver args} {
+
+        foreach dSpecs $args {
+            foreach dSpec $dSpecs {
+                log.info "Adding Dependency: $dSpec"
+                kiss::dependencies::addDepSpec $module $dSpec $resolver
+            }
+        }
+
     }
 }

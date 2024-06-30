@@ -11,7 +11,7 @@ namespace eval kiss::terminal {
         try {
             return [exec {*}${args} >@ stdout 2>@ stdout]
         } on error e {
-            log.error "Error running command $args ($e)"
+            #log.error "Error running command $args ($e)"
             throw e "Error running command $args ($e)"
         } finally {
             cd $pwd
@@ -46,9 +46,16 @@ namespace eval kiss::terminal {
             if {[dict get $options -errorcode]!= "NONE"} {
                 log.error "Error running command $args"
                 log.error "- res: $options"
+
+                log.error "Error running command $args ($options)"
+                throw e "Error running command $args ($options)"
+                
             } else {
+                # If error code is NONE, there was no error, only stderr had content, so just return stdout output
                 return $output
             }
+           
+
         } finally {
             cd $pwd
         }
@@ -75,6 +82,78 @@ namespace eval kiss::terminal {
 
         run args {
             kiss::terminal::execIn [pwd] {*}$args
+        }
+
+        call args {
+            return [kiss::terminal::callIn [pwd] {*}$args]
+        }
+
+        ## Runs a command and returns a dict of env based on export lines
+        cmdGetBashEnv args {
+            return [exec.bashEnvToDict [{*}$args]]
+        }
+
+        ## Converts "export XXX=YYY" lines to an environment dict
+        bashEnvToDict str {
+            set res [dict create]
+            foreach l [split $str \n] {
+                #log.info "Bash env Line: $l"
+                if {[regexp {export\s+([\w_]+)=(?:\"?([^\"]+)\"?)} $l -> name value]} {
+                    
+                    #log.info "- env var $name -> $value"
+                    dict update res $name envVal {
+                        dict set envVal merge [string match *\$${name}* $value]
+                        set value [regsub -all :?\\$${name} $value ""]
+                        dict lappend envVal value $value
+                    }
+                    continue
+                  
+                }
+           
+            }
+            return $res
+        }
+
+        ## Env
+        ###########
+        withEnv {envDict args} {
+
+            ## Update env
+            set envBackup [dict create]
+            dict for {name spec} $envDict {
+                ## Save env var value before merging or updating
+                set currentEnvVal ""
+                if {[llength [array get ::env $name]]!=0} {
+                    dict set envBackup $name $::env($name)
+                    set currentEnvVal $::env($name)
+                }
+                ## Update env with current dict var
+                dict with spec {
+                    if {$merge == 0} {
+                        set ::env($name) [join $value]
+                    } else {
+                        set ::env($name) [join [concat {*}$value $currentEnvVal] ":"]
+                    }
+                }
+
+            }
+
+            ## run 
+            try {
+                #puts "ENV: $::env(PATH)"
+                if {[llength $args]>1} {
+                    uplevel [list {*}$args]
+                } elseif {[llength $args]==1} {
+                    uplevel [lindex $args 0]
+                }
+                
+            } finally {
+                ## restore env
+                dict for {name v} $envBackup {
+                    set ::env($name) $v
+                }
+            }
+            
         }
 
 

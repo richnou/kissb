@@ -1,0 +1,7 @@
+{
+    "files.watcherExclude": {
+        "**/target": true
+    },
+    "metals.inlayHints.inferredTypes.enable": true,
+    
+}

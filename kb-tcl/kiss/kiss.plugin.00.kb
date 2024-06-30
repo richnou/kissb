@@ -82,6 +82,11 @@ namespace eval kiss {
             
         }
 
+        proc exists {name} {
+           return [dict exists $kiss::vars::_vars $name]
+        }
+
+
         
 
     }
@@ -201,20 +206,41 @@ namespace eval kiss {
 
         proc addSourceFolder {module path} {
             #set sources [lmap [kiss::utils::callIn [pwd] find $path -type f]
-            set sources [lmap f [glob -nocomplain -type f -path $path **/*] { file normalize $f} ]
+            set sources [concat [glob -tails -nocomplain -type f -directory $path **] [glob -tails -nocomplain -type f -directory $path **/*]]
+            #set sources [lmap f  { string $f} ]
             puts "Found sources: $sources"
-            dict lappend kiss::sources::src $module [list $path $sources]
+            dict lappend kiss::sources::src $module $path $sources
         }
 
         proc getSources module {
             if {[dict exists ${kiss::sources::src} $module]} {
+                ## Returns a list of pairs {basePath sources}
+                set allFolders [dict get ${kiss::sources::src} $module]
+                puts "Resolving sources: $allFolders"
+                set mergedFiles {}
+
+                foreach {baseDir sources} $allFolders {
+                    set mergedFiles [concat $mergedFiles [lmap pathSource $sources { join [list $baseDir $pathSource] /}]]
+                }
+                
+
+                return $mergedFiles 
+            } else {
+                return {}
+            }
+        }
+
+        proc getSourcesDict module {
+            if {[dict exists ${kiss::sources::src} $module]} {
+                return [dict get ${kiss::sources::src} $module]
                 set allPaths [dict get ${kiss::sources::src} $module]
-                return [join [lmap pathSources $allPaths { lindex $pathSources end}]]
+                return [join [lmap pathSources $allPaths { join [lindex $pathSources 0]/[lindex $pathSources end]}]]
                 #return [lindex [dict get ${kiss::sources::src} $module] end]
             } else {
                 return {}
             }
         }
+
         proc getSourceFolders module {
             if {[dict exists ${kiss::sources::src} $module]} {
                 set allPaths [dict get ${kiss::sources::src} $module]
@@ -223,12 +249,37 @@ namespace eval kiss {
                 return {}
             }
         }
+
+        proc getModules args {
+            return [dict keys ${kiss::sources::src} *]
+        }
     }
 
     ###############################
     namespace eval dependencies {
 
         set moduleDeps [dict create]
+        set modulesBom [dict create]
+
+        proc addBOM dict {
+        
+            set kiss::dependencies::modulesBom [dict merge $kiss::dependencies::modulesBom $dict]
+            #puts "BOM is now ${kiss::dependencies::modulesBom}"
+        }
+
+        proc resolveBOMModule {depModuleName} {
+        
+            if {[dict exists $kiss::dependencies::modulesBom $depModuleName]} {
+                return ${depModuleName}:[dict get $kiss::dependencies::modulesBom $depModuleName]
+            } else {
+                log.warn "Cannot find Dependency $depModuleName in BOM"
+                throw KISSB_DEPS_BOM.NOTFOUND "Cannot find Dependency $depModuleName in BOM"
+            }
+        }
+
+        proc searchBOMModules artifactName {
+            return [dict filter $kiss::dependencies::modulesBom key *:$artifactName]
+        }
 
         ## Adds dependencies to the current dict
         ## The passed dependencies is a dict with format: name {lib xxx sources xxx doc xxxx}
@@ -237,6 +288,24 @@ namespace eval kiss {
         }
 
         proc addDepSpec {module spec resolver} {
+
+            ## Resolve from BOM if needed
+            ## Resolve version if module if provided, or search for modules if only name is provided
+            set splitSpec [split $spec :]
+            if {[llength $splitSpec]==2} {
+                set depModuleName [lindex $splitSpec 0]:[lindex $splitSpec 1]
+                set spec [resolveBOMModule $depModuleName]
+            } elseif {[llength $splitSpec]==1} {
+                set candidates [searchBOMModules [lindex $splitSpec 0]]
+                if {[dict size $candidates]==0} {
+                    throw KISSB_DEPS.NOTFOUND "No candidates for artifact: $spec"
+                } elseif {[dict size $candidates]>1} {  
+                    throw KISSB_DEPS.NOTFOUND "Too many candidates for artifact: $spec -> $candidates"
+                } else {
+                    set spec [lindex $candidates 0]:[lindex $candidates end]
+                }
+            }
+
             set specDict [dict create $spec [dict create spec $spec resolved false resolver $resolver]]
             dict lappend kiss::dependencies::moduleDeps $module {*}$specDict
         }

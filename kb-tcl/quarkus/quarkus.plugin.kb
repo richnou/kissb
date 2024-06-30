@@ -81,7 +81,7 @@ namespace eval quarkus {
         proc generate {outPath} {
             
             ## Ensure resolved
-            #coursier::resolveModule main
+            coursier::resolveModule main
 
             ## Create dependencies
             set depsXml [join [lmap dep [kiss::dependencies::getDepsSpecs main] {

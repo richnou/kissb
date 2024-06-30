@@ -1,0 +1,6 @@
+
+
+#vars.set java.main kissb.ServerMain
+
+# Load Helidon Flow
+flow.load helidon/microprofile_scala_c1
