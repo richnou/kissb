@@ -204,12 +204,58 @@ namespace eval kiss {
 
         set src [dict create]
 
+        proc listFilesRecursive {dirs {files {}}} {
+
+            set nextDirs {}
+            foreach dir $dirs { 
+                set filesAndDirs [glob -tails -nocomplain -directory $dir *]
+                set foundFiles {}
+                foreach f $filesAndDirs {
+                    if {[file isdirectory $dir/$f]} {
+                        lappend nextDirs $dir/$f 
+                    } else {
+                        lappend foundFiles $dir/$f
+                    }
+                }
+                #puts "Found in files: $foundFiles"
+                #puts "Next dirs: $nextDirs"
+                set files [concat $files $foundFiles]
+            }
+
+            if {[llength $nextDirs] > 0 } {
+                return [tailcall listFilesRecursive $nextDirs $files]
+            } else {
+                return $files
+            }
+            
+
+        }
+
         proc addSourceFolder {module path} {
+
+            files.inDirectory $path {
+
+                set sources [listFilesRecursive . {}]
+
+                if {[llength $sources] == 0} {
+                    log.warn "No sources found in $path for module $module"
+                } else {
+                    dict lappend kiss::sources::src $module $path $sources
+                }
+            }
+
+
+            return 
             #set sources [lmap [kiss::utils::callIn [pwd] find $path -type f]
             set sources [concat [glob -tails -nocomplain -type f -directory $path **] [glob -tails -nocomplain -type f -directory $path **/*]]
             #set sources [lmap f  { string $f} ]
-            puts "Found sources: $sources"
-            dict lappend kiss::sources::src $module $path $sources
+            if {[llength $sources] == 0} {
+                log.warn "No sources found in $path for module $module"
+            } else {
+                dict lappend kiss::sources::src $module $path $sources
+            }
+            #puts "Found sources: $sources"
+            
         }
 
         proc getSources module {
@@ -244,7 +290,8 @@ namespace eval kiss {
         proc getSourceFolders module {
             if {[dict exists ${kiss::sources::src} $module]} {
                 set allPaths [dict get ${kiss::sources::src} $module]
-                return [join [lmap pathSources $allPaths { lindex $pathSources 0}]]
+                return [dict keys $allPaths]
+                #return [join [lmap pathSources $allPaths { lindex $pathSources 0}]]
             } else {
                 return {}
             }
