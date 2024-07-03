@@ -17,7 +17,7 @@ package ifneeded kissb.docker              1.0 [list source $dir/docker/docker.p
 
 ## Java and JEE Packages
 #####################
-
+package ifneeded kissb.java               1.0 [list source $dir/java/java.plugin.kb]
 package ifneeded kissb.coursier           1.0 [list source $dir/java/coursier/coursier.plugin.kb]
 package ifneeded kissb.gradle             1.0 [list source $dir/java/gradle/gradle.plugin.kb]
 package ifneeded kissb.maven              1.0 [list source $dir/java/maven/maven.plugin.kb]
