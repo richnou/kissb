@@ -55,23 +55,29 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
         puts "- $target"
     }
 } elseif {[llength $targets]>0} {
-    set target [lindex $targets 0]
 
-    ## Run Target or command
-    ###########
-    if {[string range $target 0 0]=="."} {
-
-        set cmd [string range $target 1 end]
-        log.info "Running command: $cmd"
-        [$cmd {*}$args]
-
-    } elseif {[string range $target 0 0]!="-"} {
-
+    foreach target $targets {
         
+        ## Run Target or command
+        ###########
+        if {[string range $target 0 0]=="."} {
 
-        # Run Target
-        kiss::targets::run $target {*}$args
+            set cmd [string range $target 1 end]
+            log.info "Running command: $cmd"
+            $cmd {*}$args
 
+        } elseif {[string range $target 0 0]!="-"} {
+
+            
+
+            # Run Target
+            kiss::targets::run $target {*}$args
+
+        }
+    
     }
+    #set target [lindex $targets 0]
+
+    
     
 }
