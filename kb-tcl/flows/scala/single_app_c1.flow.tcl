@@ -13,7 +13,7 @@ kiss::sources::addSourceFolder main/resources src/main/resources
 
 # Target JVM
 vars.set        main.jvm.target       21
-
+vars.set        main.jvm.target       21
 
 ## Setup Scalatest
 ###########

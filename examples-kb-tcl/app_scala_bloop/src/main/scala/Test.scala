@@ -1,7 +1,7 @@
 object Test {
 
     def main( args : Array[String]) = {
-        println("Hi2")
+        println("Hi2345")
 
     
     }

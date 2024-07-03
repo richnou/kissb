@@ -1,0 +1,9 @@
+package provide kissb.java 1.0
+
+namespace eval java {
+
+    proc getModuleBuildName module {
+        
+        return [vars.resolve ${module}.build.name [file tail [pwd]]]-[string map {/ -} $module]
+    }
+}

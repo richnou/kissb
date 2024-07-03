@@ -104,20 +104,65 @@ namespace eval quarkus {
                 #    maven.compiler.target           [vars.get jvm.target]
                 #}]]
 
+            ## Build plugins
+            set plugins [list plugin {
+                    groupId     \${quarkus.platform.group-id}
+                    artifactId  quarkus-maven-plugin
+                    version     \${quarkus.platform.version}
+                    executions {
+                        execution {
+                            goals {
+                                goal build
+                            }
+                        }
+                    }
+                } ]
+            #[list [concat [kotlin::maven::getMavenPlugin {
+           #             
+            #            compilerPlugins {
+             #               plugin all-open
+             #           }
+             #           pluginOptions {
+              #              option all-open:annotation=jakarta.ws.rs.Path
+              #          }
+               #     } -dependencies { dependency {
+              #              groupId     org.jetbrains.kotlin
+              #              artifactId  kotlin-maven-allopen
+              #              version     ${::kotlin.version}
+               #             } } ] { 
+               #         plugin {
+               #             groupId     \${quarkus.platform.group-id}
+               #             artifactId  quarkus-maven-plugin
+               #             version     \${quarkus.platform.version}
+               #             executions {
+              #                  execution {
+                #                    goals {
+                #                        goal build
+                ##                    }
+                #                }
+                #            }
+                 #       }
+                 #   }]]
+
+            ## Set Properties [concat [kotlin::maven::getMavenProperties]]
+            ###################
+            set properties [list [subst {
+                    
+                    quarkus.platform.artifact-id    quarkus-bom
+                    quarkus.platform.group-id       io.quarkus.platform
+                    quarkus.platform.version        [vars.get quarkus.version]
+                    maven.compiler.source           [vars.get main.jvm.source]
+                    maven.compiler.target           [vars.get main.jvm.target]
+                }]]
+
             ## Generate
+            ########
             maven.generate.spec $outPath {
                 artifactId [vars.get kissb.artifactId "default"]
                 groupId [vars.get kissb.groupId "default"]
                 version [vars.get kissb.version "0.0.1"]
              
-                properties [list [concat [kotlin::maven::getMavenProperties] [subst {
-                    
-                    quarkus.platform.artifact-id    quarkus-bom
-                    quarkus.platform.group-id       io.quarkus.platform
-                    quarkus.platform.version        [vars.get quarkus.version]
-                    maven.compiler.source           [vars.get jvm.source]
-                    maven.compiler.target           [vars.get jvm.target]
-                }]]]
+                properties $properties
             
                 dependencyManagement {
                     dependencies {
@@ -131,33 +176,8 @@ namespace eval quarkus {
                     }
                 }
                 build {
-                    sourceDirectory [kiss::sources::getSourceFolders main]
-                    plugins [list [concat [kotlin::maven::getMavenPlugin {
-                        
-                        compilerPlugins {
-                            plugin all-open
-                        }
-                        pluginOptions {
-                            option all-open:annotation=jakarta.ws.rs.Path
-                        }
-                    } -dependencies { dependency {
-                            groupId     org.jetbrains.kotlin
-                            artifactId  kotlin-maven-allopen
-                            version     ${::kotlin.version}
-                            } } ] { 
-                        plugin {
-                            groupId     \${quarkus.platform.group-id}
-                            artifactId  quarkus-maven-plugin
-                            version     \${quarkus.platform.version}
-                            executions {
-                                execution {
-                                    goals {
-                                        goal build
-                                    }
-                                }
-                            }
-                        }
-                    }]]
+                    sourceDirectory [lindex [kiss::sources::getSourceFolders main] 0]
+                    plugins [list $plugins]
                 }
                 dependencies {
                     $depsXml

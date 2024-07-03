@@ -87,6 +87,10 @@ namespace eval coursier::bom {
             # Artifact coordinates
             switch $type {
 
+                project {
+                    set coursier::bom::pom::state(current) PROJECT
+                    set coursier::bom::pom::state(parent)  $coursier::bom::pom::state(current)
+                }
                 parent {
                     set coursier::bom::pom::state(current) PARENT
                     set coursier::bom::pom::state(parent)  $coursier::bom::pom::state(current)
