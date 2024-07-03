@@ -57,7 +57,7 @@ kissb.extension vars {
     }
 
     ## Module based variable resolution
-    resolve spec {
+    resolve {spec {default ""}} {
 
         # Split at . MODULE/MODULE/MODULE.VAR.VAR.VAR , and take first result
         set module [lindex [split $spec .] 0]
@@ -80,7 +80,11 @@ kissb.extension vars {
             }
         }
 
-        return -error "Variable could not be resolved: $spec"
+        if {$default==""} {
+            return -error "Variable could not be resolved: $spec"
+        } else {
+            return $default
+        }
     }
 }
 
