@@ -135,7 +135,7 @@ namespace eval kiss::files {
         download {src {out ""}} {
             #exec wget -p $url -O $dir >@ stdout 2>@ stdout
             if {$out==""} {
-                kiss::terminal::execIn [pwd] wget -p $src
+                kiss::terminal::execIn [pwd] wget -p $src -O [lindex [split $src /] end]
             } else {
                 kiss::terminal::execIn [pwd] wget -p $src -O $out
             }
