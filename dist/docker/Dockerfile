@@ -14,9 +14,11 @@ from opensuse/tumbleweed
 #RUN pacman -Sy --noconfirm tcl unzip git base-devel
 
 #RUN git clone https://aur.archlinux.org/tcllib.git
-#RUN cd tcllib && su nobody -c "makepkg -si"
+#RUN cd tcllib && su nobody -c "makepkg -si" --non-interactive
 
-RUN zypper --non-interactive install unzip tcl tcllib
+RUN zypper addrepo https://download.opensuse.org/repositories/devel:languages:tcl/openSUSE_Tumbleweed/devel:languages:tcl.repo
+RUN zypper --gpg-auto-import-keys --non-interactive refresh
+RUN zypper --gpg-auto-import-keys --non-interactive install unzip tcl tcllib tclxml
 
 COPY dist.zip .
 RUN unzip dist.zip

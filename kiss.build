@@ -28,7 +28,8 @@ files.writeText "test.out" "Hi"
         file delete -force bin
         file copy -force $base/kb-tcl/bin .
 
-        foreach package {coursier gradle java-ivy kiss kotlin mkdocs python3 pkgIndex.tcl} {
+        # coursier gradle java-ivy  kotlin
+        foreach package {kiss docker flows builder java liquibase mkdocs netlify nodejs tclkit python3 pkgIndex.tcl} {
             file delete -force $package
             file copy -force $base/kb-tcl/$package .
         }
@@ -57,7 +58,7 @@ files.writeText "test.out" "Hi"
         rclone.run copy --s3-acl=public-read .kb/build/dist/dev.json ovhs3:kissb/kissb/dev/
         rclone.run copy --s3-acl=public-read scripts/linux/install.tcl ovhs3:kissb/kissb/dev/
 
-        log.success "Uploaded to S3"
+        log.success "Uploaded to S3: https://s3.de.io.cloud.ovh.net/kissb/dev/dist-${::version}.zip"
     }
 
 
@@ -84,5 +85,38 @@ files.writeText "test.out" "Hi"
         exec.run docker push ${::IMAGE_NAME}:${::IMAGE_TAG}
     }
     
+
+}
+
+@ dist-kit {
+
+    package require kissb.tclkit
+
+    # Make Zip release
+    set zipFile [> dist-zip]
+
+    # 
+    files.inDirectory .kb/build/dist-tclkit/ {
+        
+        make kissb/out/lib/kissb-${::version}/pkgIndex.tcl : $zipFile {
+            files.inDirectory kissb/out/lib/ {
+                file copy -force $zipFile dist.zip
+                files.extract dist.zip
+                files.delete dist.zip
+            }
+        }
+        #files.require kissb/out/lib/kissb-${::version}/pkgIndex.tcl {
+            
+        #} 
+        #exec.run ln -s kissb 
+        #files.writeText kissb/.success ""
+
+        set kitFile [tclkit::buildStarkitWithLibsAndMain {kissb} kissb-${::version} kissb/out/lib/kissb-${::version}/bin/kissb.tcl]
+        log.info "KIT File: $kitFile"
+
+        kissb.args.contains -s3 {
+            rclone.run copy --s3-acl=public-read $kitFile ovhs3:kissb/kissb/dev/
+        }
+    }
 
 }

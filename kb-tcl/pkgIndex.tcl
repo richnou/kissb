@@ -13,7 +13,9 @@ package ifneeded kissb.nodejs             1.0 [list source $dir/nodejs/nodejs.pl
 
 package ifneeded kissb.builder.podman     1.0 [list source $dir/builder/builder.podman.plugin.kb]
 package ifneeded kissb.builder.rclone     1.0 [list source $dir/builder/builder.rclone.plugin.kb]
-package ifneeded kissb.docker              1.0 [list source $dir/docker/docker.plugin.kb]
+package ifneeded kissb.docker             1.0 [list source $dir/docker/docker.plugin.kb]
+
+package ifneeded kissb.tclkit             1.0 [list source $dir/tclkit/tclkit.plugin.kb]
 
 ## Java and JEE Packages
 #####################

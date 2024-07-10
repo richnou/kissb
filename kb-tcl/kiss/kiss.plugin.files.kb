@@ -47,15 +47,21 @@ namespace eval kiss::files {
         }
 
         delete f {
-            file delete $f
+            if {[file isdirectory $f]} {
+                file delete -force $f
+            } else {
+                file delete $f
+            }
+            
         }
 
         ## Copy file to directory
         ## @arg files -> file or blob
-        cp {files dir} {
-            foreach f [glob $files] {
-                file copy -force  $f $dir
-            }
+        cp {f dir} {
+            file copy -force  $f $dir
+            #foreach f [glob $files] {
+            #    file copy -force  $f $dir
+            #}
             
         }
 

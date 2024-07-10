@@ -22,6 +22,11 @@ namespace eval builder::podman {
                 builder.podman.run $os $terminalScript
             }
         }
+
+        image.run {tag script} {
+            set terminalScript [uplevel [list subst $script]]
+            exec.run echo "$terminalScript" | ${builder::podman::runtimeCommand} run  -u [exec id -u] -i -v.:/build $tag /bin/bash
+        }
     }
 
     kissb.extension builder.podman {

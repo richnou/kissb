@@ -11,8 +11,8 @@ Kissb requires TCL 8 to be installed on your system:
 
 | OS | Installation | Requirements |
 |----|--------------| ------------- |
-| Ubuntu |  sudo apt install tcl tcllib tcl-tls       | |
-| Rocky Linux |  sudo dnf install tcl tcllib  tcltls     | Install EPEL: [https://wiki.rockylinux.org/rocky/repo/#notes-on-epel](https://wiki.rockylinux.org/rocky/repo/#notes-on-epel){target=_blank} |
+| Ubuntu |  sudo apt install tcl tcllib tcl-tls tclxml      | |
+| Rocky Linux |  sudo dnf install tcl tcllib  tcltls  tclxml   | Install EPEL: [https://wiki.rockylinux.org/rocky/repo/#notes-on-epel](https://wiki.rockylinux.org/rocky/repo/#notes-on-epel){target=_blank} |
 
 ### Install Using Install script
 

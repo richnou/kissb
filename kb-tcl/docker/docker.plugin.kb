@@ -8,6 +8,14 @@ namespace eval docker {
             exec.run docker {*}$args
         }
 
+        image.build {dockerFile tag} {
+            docker.run build -f $dockerFile -t $tag [pwd]
+        }
+
+        image.run {name script} {
+            docker.run 
+        }
+
         ## Runs the script with docker compose UP
         compose.withUP script {
 

@@ -13,6 +13,7 @@ proc build-image name {
 @ rocky {
 
     build-image rocky9
+    build-image rocky8
 }
 
 @ ubuntu {

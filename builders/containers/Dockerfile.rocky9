@@ -1,6 +1,6 @@
 FROM rockylinux:9
 
 RUN dnf -y update
-RUN dnf install -y gcc make automake autoconf zip
+RUN dnf install -y gcc gcc-c++ make automake autoconf zip findutils which patch bzip2 wget
 
 WORKDIR /build
