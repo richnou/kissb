@@ -62,13 +62,16 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
         ###########
         if {[string range $target 0 0]=="."} {
 
-            set cmd [string range $target 1 end]
-            log.info "Running command: $cmd"
-            $cmd {*}$args
+            set cmd  [split [string range $target 1 end] " "]
+            set bin  [lindex $cmd 0]
+            set cmdArgs {}
+            if {[llength $cmd]>1} {
+                set cmdArgs [lrange $cmd 1 end]
+            }
+            log.info "Running command $cmd: bin=$bin, args=$cmdArgs"
+            $bin {*}$cmdArgs
 
         } elseif {[string range $target 0 0]!="-"} {
-
-            
 
             # Run Target
             kiss::targets::run $target {*}$args
@@ -76,8 +79,5 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
         }
     
     }
-    #set target [lindex $targets 0]
-
-    
-    
+ 
 }
