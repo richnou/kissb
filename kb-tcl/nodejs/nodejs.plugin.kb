@@ -1,5 +1,4 @@
-package provide nodejs 1.0
-package require kiss
+package provide kissb.nodejs 1.0
 
 namespace eval nodejs {
     
@@ -9,6 +8,19 @@ namespace eval nodejs {
         kiss::terminal::execIn [pwd] nodejs {*}$args
     
     }
+
+    kissb.extension node {
+        run args {
+            exec.run nodejs {*}$args
+        }
+    }
+
+    kissb.extension npm {
+
+        install args {
+            npm::install $args
+        }
+    }
 }
 
 namespace eval npm {
@@ -16,7 +28,7 @@ namespace eval npm {
     proc install args {
         make package-lock.json < package.json {
             log.info "Updating Packages..."
-            kiss::terminal::execIn [pwd] npm i
+            exec.run npm i
         }
     }
     
