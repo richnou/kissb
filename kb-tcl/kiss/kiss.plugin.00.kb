@@ -1,5 +1,5 @@
 package provide kissb 1.0
-
+package require Tclx
 
 namespace eval kiss {
 
@@ -53,6 +53,11 @@ namespace eval kiss {
         proc ::env.unset name {
         
             array unset ::env $name
+        }
+
+        proc ::env.set {name v} {
+        
+            set ::env($name) $v
         }
 
     }
@@ -134,11 +139,18 @@ namespace eval kiss {
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent 0]
         }
+        proc hasTarget target {
+            return [dict exists $::kiss::targets::_targets $target]
+        }
 
         ## Run Target
         proc run {target args} {
             
             log.info "Running target: $target with args=$args"
+            if {![hasTarget $target]} {
+                log.warn "Target $target doesn't exist"
+                return
+            }
 
             set script [getScript $target]
             set reqTargets [getRequiredTargets $target]
