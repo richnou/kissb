@@ -52,7 +52,6 @@ namespace eval kiss::files {
             } else {
                 file delete $f
             }
-            
         }
 
         ## Copy file to directory
@@ -63,6 +62,11 @@ namespace eval kiss::files {
             #    file copy -force  $f $dir
             #}
             
+        }
+
+        mv {src dst} {
+            files.cp $src $dst
+            files.delete $src
         }
 
         cpSubst {files dir} {
