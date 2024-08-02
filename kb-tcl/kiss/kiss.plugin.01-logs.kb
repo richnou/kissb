@@ -54,6 +54,16 @@ namespace eval kiss::log {
         }
     }
 
+    proc log.withLogger {logger args} {
+        set __n [log.get.name]
+        log.set.name $logger
+        try {
+            uplevel {*}$args
+        } finally {
+            log.set.name ${__n}
+        }
+    }
+
     proc log.with {level args} {
         set l [log.get.level]
         log.set.level $level
@@ -143,7 +153,7 @@ namespace eval kiss::log {
     #puts "Export/Import log"
     namespace export log*
     namespace eval :: {
-        namespace import kiss::log::log*
+        namespace import kiss::log::log.*
     }
 
 }
