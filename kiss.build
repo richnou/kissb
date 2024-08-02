@@ -98,24 +98,37 @@ files.writeText "test.out" "Hi"
     # 
     files.inDirectory .kb/build/dist-tclkit/ {
         
-        make kissb/out/lib/kissb-${::version}/pkgIndex.tcl : $zipFile {
-            files.inDirectory kissb/out/lib/ {
+        ## Extract Kissb
+        make lib/kissb-${::version}/pkgIndex.tcl : $zipFile {
+            files.inDirectory lib {
                 file copy -force $zipFile dist.zip
                 files.extract dist.zip
                 files.delete dist.zip
             }
-        }
-        #files.require kissb/out/lib/kissb-${::version}/pkgIndex.tcl {
             
-        #} 
-        #exec.run ln -s kissb 
-        #files.writeText kissb/.success ""
+        }
 
-        set kitFile [tclkit::buildStarkitWithLibsAndMain {kissb} kissb-${::version} kissb/out/lib/kissb-${::version}/bin/kissb.tcl]
-        log.info "KIT File: $kitFile"
+        ## Download base kits
+        files.require tclkit-8.6.14_notk {
+            files.download https://kissb.s3.de.io.cloud.ovh.net/tclkit/8.6.14/tclkit-8.6.14_notk tclkit-8.6.14_notk
+        }
+        files.require tclkit-8.6.14_notk.exe {
+            files.download https://kissb.s3.de.io.cloud.ovh.net/tclkit/8.6.14/tclkit-8.6.14_notk.exe tclkit-8.6.14_notk.exe
+        }
+        exec.run chmod +x tclkit-8.6.14_notk
+
+        ## Run Starkit build
+        set startKitName kissb-${::version}
+        set resultKit [tclkit::buildStarkitWithLibsAndMainFromKit tclkit-8.6.14_notk tclkit-8.6.14_notk.exe ${startKitName}.exe lib/kissb-${::version}/bin/kissb.tcl lib/kissb-${::version}]
+        files.cp $resultKit ${startKitName}.exe
+
+        set resultKit [tclkit::buildStarkitWithLibsAndMainFromKit tclkit-8.6.14_notk tclkit-8.6.14_notk ${startKitName} lib/kissb-${::version}/bin/kissb.tcl lib/kissb-${::version}]
+        files.cp $resultKit ${startKitName}
+        
 
         kissb.args.contains -s3 {
-            rclone.run copy --s3-acl=public-read $kitFile ovhs3:kissb/kissb/dev/
+            rclone.run copy --s3-acl=public-read ${startKitName}.exe ovhs3:kissb/kissb/dev/
+            rclone.run copy --s3-acl=public-read ${startKitName} ovhs3:kissb/kissb/dev/
         }
     }
 
