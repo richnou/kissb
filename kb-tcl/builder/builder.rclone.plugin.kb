@@ -22,6 +22,8 @@ namespace eval rclone {
         
         if {[file exists rclone.conf]} {
             set rclone::localConfigFile [list --config [file normalize rclone.conf]]
+        } elseif {[file exists ../rclone.conf]} {
+            set rclone::localConfigFile [list --config [file normalize ../rclone.conf]]
         }
     }
     
