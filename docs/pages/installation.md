@@ -3,7 +3,19 @@
 - **Current Version:** {{ latest_dev_release() }}
 - **Latest Docker image push:** {{ latest_docker_push() }}
 
-## Manual Installation
+## Single File Runtime
+
+KISSB is available as a single executable containing the required TCL runtime and libraries. It is based on so called TCL Kits which we are building
+specifically to release KISSB.
+
+Download the kissb runtime:
+
+- For Windows: [Download KISSB kit](https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/kissb-{{ latest_dev_release() }}.exe)
+- For Linux: [Download KISSB kit](https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/kissb-{{ latest_dev_release() }})
+
+Place the downloaded file in a folder present in your PATH, for example .local/bin under linux, rename it to "kissb", then you can use the kissb command anywhere in your terminal.
+
+## Local Installation
 
 ### Install TCL and requirements
 
@@ -11,8 +23,8 @@ Kissb requires TCL 8 to be installed on your system:
 
 | OS | Installation | Requirements |
 |----|--------------| ------------- |
-| Ubuntu |  sudo apt install tcl tcllib tcl-tls tclxml      | |
-| Rocky Linux |  sudo dnf install tcl tcllib  tcltls  tclxml   | Install EPEL: [https://wiki.rockylinux.org/rocky/repo/#notes-on-epel](https://wiki.rockylinux.org/rocky/repo/#notes-on-epel){target=_blank} |
+| Ubuntu | sudo apt install tcl tcllib tcl-tls tdom | |
+| Rocky Linux | sudo dnf install tcl tcllib tcltls tdom | Install EPEL: [https://wiki.rockylinux.org/rocky/repo/#notes-on-epel](https://wiki.rockylinux.org/rocky/repo/#notes-on-epel){target=_blank} |
 
 ### Install Using Install script
 
