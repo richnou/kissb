@@ -5,7 +5,7 @@
 
 ## Specify version here
 kissbChannel=dev 
-kissbVersion=2024080301
+kissbVersion=2024080402
 
 
 kissbInstallFolder=.kissb/install/${kissbChannel}
