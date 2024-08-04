@@ -6,12 +6,44 @@ package require kissb.builder.rclone
 
 rclone.init
 
-set version [env CI_VERSION [clock format [clock seconds] -format %Y%m%d]]
+set version [env CI_VERSION [clock format [clock seconds] -format %Y%m%d]]02
 set track   [env CI_TRACK   dev]
 
 files.writeText "test.out" "Hi"
 
+@ certs {
 
+    set storeVersion 20240203
+    set certificatesSource "http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_${storeVersion}.tar.xz"
+    set certificateStore ${::kissb.home}/ca-certificates
+
+ 
+    files.delete kb-tcl/kiss/certs
+    exec cp -RfL /etc/ssl/certs/ kb-tcl/kiss/
+    return
+    
+    files.inDirectory .kb/build/certs/$storeVersion {
+
+        
+
+        files.download $certificatesSource
+        files.extract  ca-certificates_${storeVersion}.tar.xz --strip-components=1
+        files.delete ca-certificates_${storeVersion}.tar.xz
+
+        exec.run make clean all
+    }
+    files.mkdir kb-tcl/kiss/certs
+    files.delete kb-tcl/kiss/certs/*
+
+    #foreach cert [glob .kb/build/certs/$storeVersion/mozilla/*.crt] {
+    #    exec.run openssl x509 -in $cert -out kb-tcl/kiss/certs/[file tail ${cert}].pem -outform PEM
+    #}
+    #[file dirname [info script]]/certs
+
+    files.cp .kb/build/certs/$storeVersion/mozilla/*.crt kb-tcl/kiss/certs/
+    
+
+}
 
 @ dist-zip {
 
@@ -29,7 +61,7 @@ files.writeText "test.out" "Hi"
         file copy -force $base/kb-tcl/bin .
 
         # coursier gradle java-ivy  kotlin
-        foreach package {kiss docker flows builder java liquibase mkdocs netlify nodejs tclkit python3 pkgIndex.tcl} {
+        foreach package {kiss docker flows builder java liquibase mkdocs netlify nodejs tclkit python3 pkgIndex.tcl globals.tcl} {
             file delete -force $package
             file copy -force $base/kb-tcl/$package .
         }
@@ -55,7 +87,9 @@ files.writeText "test.out" "Hi"
         ## Push file
         #files.writeText .kb/build/dist/dev.ini "{version=${::version}}"
         json.write .kb/build/dist/dev.json {version ${::version}}
-        rclone.run copy --s3-acl=public-read .kb/build/dist/dev.json ovhs3:kissb/kissb/dev/
+        files.writeText .kb/build/dist/dev.txt "version ${::version}"
+        rclone.run copy --s3-acl=public-read .kb/build/dist/dev.json   ovhs3:kissb/kissb/dev/
+        rclone.run copy --s3-acl=public-read .kb/build/dist/dev.txt ovhs3:kissb/kissb/dev/
         rclone.run copy --s3-acl=public-read scripts/linux/install.tcl ovhs3:kissb/kissb/dev/
 
         log.success "Uploaded to S3: https://s3.de.io.cloud.ovh.net/kissb/dev/dist-${::version}.zip"

@@ -67,6 +67,12 @@ namespace eval tclkit {
                         exec.run chmod +x build.sh
                     }
 
+                    # Patch TCL TLS aclocal for proper TCL compilation setup
+                    files.inDirectory tls/patches/ {
+                        files.cp ${tclkit::packageFolder}/patches/tls-aclocal-fix.patch tls-aclocal-fix.diff 
+                        #catch {exec.run patch -sf build.sh -i ${tclkit::packageFolder}/patches/tls-aclocal-fix.patch}
+                    }
+
                     # Clean folders that are not includes in required packages
                     set packageAlwaysPresent [concat $kitPackages {tcl kitsh} ]
                     foreach libFolder [glob -type d *] {
@@ -93,6 +99,7 @@ namespace eval tclkit {
 
                     # If rebuild required, clean first
                     if {[lsearch $args -clean]!=-1} {
+                        # docker run -it -u $(id -u) -v .:/build kissb-tclkitbuilder:latest /bin/bash
                         builder.image.run kissb-tclkitbuilder:latest {
                             ./kitcreator clean
                         }

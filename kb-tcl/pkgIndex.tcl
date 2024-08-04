@@ -1,6 +1,7 @@
 set ::kissDir $dir
-package ifneeded kissb                    1.0 [list foreach f [concat [lsort [glob $dir/kiss/kiss.plugin*.kb]] [list $dir/info.tcl]] {source $f}]
-
+package ifneeded kissb                    1.0 [list foreach f [concat [lsort [glob $dir/kiss/kiss.plugin*.kb]] [list $dir/info.tcl] [list $dir/globals.tcl]] {source $f}]
+package ifneeded kissb.internal.update    1.0 [list source $dir/kiss/kiss.update.tcl]
+package ifneeded kissb.internal.tls       1.0 [list source $dir/kiss/kiss.tls.tcl]
 
 package ifneeded kissb.liquibase          1.0 [list source $dir/liquibase/liquibase.plugin.kb]
 

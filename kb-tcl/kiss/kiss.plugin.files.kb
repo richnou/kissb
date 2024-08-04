@@ -49,15 +49,26 @@ namespace eval kiss::files {
         delete f {
             if {[file isdirectory $f]} {
                 file delete -force $f
-            } else {
+            } elseif {[file exists $f]} {
                 file delete $f
+            } else {
+                foreach lf [glob -nocomplain $f] {
+                    file delete $lf
+                }
             }
         }
 
         ## Copy file to directory
         ## @arg files -> file or blob
         cp {f dir} {
-            file copy -force  $f $dir
+            if {[file exists $f]} {
+                file copy -force  $f $dir
+            } else {
+                foreach lf [glob -nocomplain $f] {
+                    file copy -force  $lf $dir
+                }
+            }
+            
             #foreach f [glob $files] {
             #    file copy -force  $f $dir
             #}
@@ -145,25 +156,25 @@ namespace eval kiss::files {
         download {src {out ""}} {
             #exec wget -p $url -O $dir >@ stdout 2>@ stdout
             if {$out==""} {
-                kiss::terminal::execIn [pwd] wget -p $src -O [lindex [split $src /] end]
+                kiss::terminal::execIn [pwd] wget --show-progress -p $src -O [lindex [split $src /] end]
             } else {
-                kiss::terminal::execIn [pwd] wget -p $src -O $out
+                kiss::terminal::execIn [pwd] wget --show-progress -p $src -O $out
             }
             
         }
 
         ## Unzip
-        unzip f {
-            exec.run unzip $f
+        unzip {f args} {
+            exec.run unzip {*}$args $f
         }
-        untar f {
-            exec.run tar xvaf $f
+        untar {f args} {
+            exec.run tar {*}$args -xvaf $f
         }
-        extract f {
+        extract {f args} {
             if {[string match *.tar.* $f]} {
-                files.untar $f
+                files.untar $f {*}$args
             } else {
-                files.unzip $f
+                files.unzip $f {*}$args
             }
         }
 

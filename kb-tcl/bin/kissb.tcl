@@ -1,7 +1,9 @@
 lappend auto_path [file dirname [info script]]/../
-package require kissb 
+package require kissb
 
-log.info "KISSB Version=${kissb.version}"
+#log.info "Script: [info script]"
+
+log.info "KISSB Version=${kissb.track}@${kissb.version}"
 
 set ::BASE [pwd]
 
@@ -11,7 +13,9 @@ set ::BASE [pwd]
 ## Targets are arguments without "-" as starter
 set targets {}
 set args {}
+set checkVersion false
 foreach arg $argv {
+    
     if {$arg == "--refresh"} {
         env KB_REFRESH 1
         env KB_REFRESH_ALL 1
@@ -19,22 +23,24 @@ foreach arg $argv {
         env KB_FORCE 1
     } elseif {$arg == "--debug"} {
         log.set.level DEBUG
-    } elseif {[string match -* $arg] || [file exists $arg]} {
+    } elseif {$arg == "--update"} {
+        set checkVersion true
+    } elseif {[string match -* $arg] || ([file exists $arg] && [llength $targets]>0)} {
         lappend args $arg
     } else {
         lappend targets $arg
     }
 }
 
-## Standard Arguments
-#kissb.args.contains --refresh {
-#    env KB_REFRESH 1
-#}
-#kissb.args.contains --force {
-#    env KB_FORCE 1
-#}
-#kissb.args.contains --debug {
-#    log.set.level DEBUG
+## Run update check
+if {$checkVersion} {
+    package require kissb.internal.update
+    kissb::internal::update::run
+    #source [file dirname [info script]]/update_check.tcl
+}
+
+#foreach {n v} [array get ::env] {
+#    puts "-env $n -> $v"
 #}
 
 ## Load local Kiss build
@@ -55,7 +61,7 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
         puts "- $target"
     }
 } elseif {[llength $targets]>0} {
-
+    
     foreach target $targets {
         
         ## Run Target or command
@@ -70,6 +76,11 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
             }
             log.info "Running command $cmd: bin=$bin, args=$cmdArgs"
             $bin {*}$cmdArgs
+
+        } elseif {[file exists $target]} {
+
+            # Run Target
+            source $target
 
         } elseif {[string range $target 0 0]!="-"} {
 

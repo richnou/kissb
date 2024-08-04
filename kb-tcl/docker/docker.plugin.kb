@@ -2,14 +2,35 @@ package provide kissb.docker 1.0
 
 namespace eval docker {
 
+    kissb.signal.onSIGINT {
+        log.debug "Killing Docker container on SIGINT"
+        catch {exec.run docker kill kiss-running}
+    }
+
     kissb.extension docker {
 
         run args {
-            exec.run docker {*}$args
+            exec.run docker run {*}$args
+        }
+
+        build args {
+            exec.run docker build {*}$args
+        }
+
+        run.script {image script} {
+            set terminalScript [uplevel [list subst $script]]
+            try {
+                files.writeText .dockerRun $terminalScript
+                set extraArgs [env KB_DOCKER_ARGS {}]
+                exec.run echo "$terminalScript" | docker run --rm --name kiss-running -u [exec id -u] -i -v.:/build {*}$extraArgs $image /bin/bash
+            } on error e {
+                catch {exec.run docker stop kiss-running}
+                catch {exec.run docker rm kiss-running}
+            }
         }
 
         image.build {dockerFile tag} {
-            docker.run build -f $dockerFile -t $tag [pwd]
+            docker.build -f $dockerFile -t $tag [pwd]
         }
 
         image.run {name script} {

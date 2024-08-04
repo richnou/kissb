@@ -22,3 +22,4 @@ mvnw*
 
 # Dist
 dist-*
+certs/

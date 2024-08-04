@@ -28,10 +28,10 @@ namespace eval builder::podman {
             try {
                 files.writeText .dockerRun $terminalScript
                 set extraArgs [env KB_DOCKER_ARGS {}]
-                exec.run echo "$terminalScript" | ${builder::podman::runtimeCommand} run --rm --name kiss-builder -u [exec id -u] -i -v.:/build {*}$extraArgs $tag /bin/bash
+                exec.run echo "$terminalScript" | ${builder::podman::runtimeCommand} run --rm --name kiss-running -u [exec id -u] -i -v.:/build {*}$extraArgs $tag /bin/bash
             } on error e {
-                catch {exec run ${builder::podman::runtimeCommand} stop kiss-builder}
-                catch {exec run ${builder::podman::runtimeCommand} rm kiss-builder}
+                catch {exec run ${builder::podman::runtimeCommand} stop kiss-running}
+                catch {exec run ${builder::podman::runtimeCommand} rm kiss-running}
             }
             
         }
