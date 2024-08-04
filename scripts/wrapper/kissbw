@@ -19,7 +19,14 @@ then
     mkdir -p ${kissbInstallFolder}
     wget -q --show-progress https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissbChannel}/kissb-${kissbVersion} -O ${kissbRuntimePath}
     chmod +x ${kissbRuntimePath}
-    chmod +x $0
+
+    ## Check if this script is running from file
+    if [[ $0 == '/bin/bash' ]]
+    then
+        echo "Downloading wrapper script..."
+        wget -q https://github.com/richnou/kissb/raw/main/scripts/wrapper/kissbw
+        chmod +x kissbw
+    fi
 fi
 
 export KISSB_WRAPPER=1
