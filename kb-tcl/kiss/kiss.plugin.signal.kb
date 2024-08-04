@@ -1,0 +1,27 @@
+package provide kissb.signal 1.0
+package require Tclx
+
+namespace eval kissb::signal {
+
+    set sigINTHandlers {}
+
+    proc onSIGINT args {
+        # Run handlers
+        foreach handler ${kissb::signal::sigINTHandlers} {
+            eval $handler
+        }
+        
+        # exit
+        log.warn "Interrupting KISSB after CTRL-C"
+        exit -1
+    }
+    signal trap SIGINT kissb::signal::onSIGINT
+
+    kissb.extension kissb.signal {
+
+        onSIGINT script {
+            lappend kissb::signal::sigINTHandlers $script
+        }
+
+    }
+}
