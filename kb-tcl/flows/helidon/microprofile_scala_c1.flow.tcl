@@ -21,13 +21,13 @@ kissb.extension helidon {
 flow.load scala/single_app_c1
 
 ## Load BOM
-coursier.bom.enforce io.helidon:helidon-dependencies:4.0.10
+coursier.bom.enforce io.helidon:helidon-dependencies:4.0.11
 
 puts "BOM: [dict filter $kiss::dependencies::modulesBom key *:helidon-microprofile-core]"
 
  
 ## Add dependencies
-dependencies.add main coursier helidon-microprofile-core helidon-microprofile-health helidon-microprofile-config
+dependencies.add main coursier helidon-microprofile-core helidon-microprofile-health helidon-microprofile-config helidon-microprofile-metrics helidon-webserver-observe-info helidon-webserver-observe-config
 #helidon.microprofile.bundles main 
 
 
