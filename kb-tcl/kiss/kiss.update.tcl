@@ -22,9 +22,9 @@ namespace eval kissb::internal::update {
 
 
         # Get latest version
-        set token [::http::geturl $versionInfo]
+        #set token [::http::geturl $versionInfo]
         #set token [exec.call wget -O - $versionInfo > /dev/null]
-        puts "Out: [lindex [array get $token body] 1]"
+        #puts "Out: [lindex [array get $token body] 1]"
         #set versionJson [split [lindex [array get $token body] 1]]
         
         if {[kiss::utils::isWindows]} {
