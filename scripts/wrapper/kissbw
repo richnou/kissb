@@ -15,11 +15,12 @@ then
     # Download
     echo "Downloading KISSB runtime..."
     # Prepare local install folder and clean it
+    rm -Rf .kissb/install/*
     mkdir -p ${kissbInstallFolder}
-    rm .kissb/install/*
     wget -q --show-progress https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissbChannel}/kissb-${kissbVersion} -O ${kissbRuntimePath}
     chmod +x ${kissbRuntimePath}
+    chmod +x $0
 fi
 
 export KISSB_WRAPPER=1
-KISSB_WRAPPER=1 ${kissbRuntimePath} $*
+${kissbRuntimePath} $*
