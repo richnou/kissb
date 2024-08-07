@@ -8,14 +8,14 @@ kissbChannel=dev
 kissbVersion=2024080402
 
 
-kissbInstallFolder=.kissb/install/${kissbChannel}
+kissbInstallFolder=.kb/install/${kissbChannel}
 kissbRuntimePath=${kissbInstallFolder}/kissb-${kissbVersion}
 if [[ ! -f ${kissbInstallFolder}/kissb-${kissbVersion} ]]
 then
     # Download
     echo "Downloading KISSB runtime..."
     # Prepare local install folder and clean it
-    rm -Rf .kissb/install/*
+    rm -Rf .kb/install/*
     mkdir -p ${kissbInstallFolder}
     wget -q --show-progress https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissbChannel}/kissb-${kissbVersion} -O ${kissbRuntimePath}
     chmod +x ${kissbRuntimePath}
