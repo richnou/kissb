@@ -3,6 +3,20 @@
 - **Current Version:** {{ latest_dev_release() }}
 - **Latest Docker image push:** {{ latest_docker_push() }}
 
+## Wrapper Script 
+
+To easily install kissb locally in a project and fix the build system version, you can use a wrapper script in the same fashion as with a Gradle or Maven wrapper script
+
+    project/folder $ wget -q -O - https://github.com/richnou/kissb/raw/main/scripts/wrapper/kissbw | /bin/bash
+
+Or just download the script and give it runtime permission
+
+Now just call the script to run kissb:
+
+    project/folder $ ./kissbw
+
+
+
 ## Single File Runtime
 
 KISSB is available as a single executable containing the required TCL runtime and libraries. It is based on so called TCL Kits which we are building
