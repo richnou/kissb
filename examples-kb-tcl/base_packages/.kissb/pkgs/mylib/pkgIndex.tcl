@@ -1,0 +1,1 @@
+package ifneeded hello 1.0 [list source $dir/mypackage.tcl]
