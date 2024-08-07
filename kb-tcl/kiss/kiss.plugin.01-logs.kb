@@ -87,10 +87,13 @@ namespace eval kiss::log {
         log.with DEBUG {*}$args
     }
     
-    proc log.fatal message {
+    proc log.fatal {message args} {
         try {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgred} }
             log FATA $message
+            kissb.args.ifContains -exit {
+                ::exit -1
+            }
             #::exit -1
             error $message  $message
         } finally {

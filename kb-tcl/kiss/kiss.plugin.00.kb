@@ -581,22 +581,7 @@ namespace eval kiss {
     }
 
 
-    ## Flows
-    ##############
-    proc ::kissb_search {name version} {
-        log.info "Searching for Package $name"
-        if {[string match flow::* $name]} {
-            
-            set flowFile $::kissDir/flows/[string map {flow:: "" + _} $name].flow.tcl
-            log.info "Searching for Flow in $flowFile"
-            if {[file exists $flowFile]} {
-                log.success "Found, providing"
-                package provide $name $version
-                source $flowFile
-            }
-        }
-    }
-    package unknown ::kissb_search
+    
 
 }
 

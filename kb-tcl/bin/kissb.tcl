@@ -1,5 +1,28 @@
 lappend auto_path [file dirname [info script]]/../
+#lappend auto_path .kissb/pkgs/mylib
+
+## Load KISSB
 package require kissb
+
+## Load Package folders
+set possiblePackageFolders [list ${kissb.home}/pkgs/*/pkgIndex.tcl .kissb/pkgs/*/pkgIndex.tcl]
+
+package require kissb.git
+set gitRoot [git.root]
+if {[file exists $gitRoot]} {
+    lappend possiblePackageFolders $gitRoot/.kissb/pkgs/*/pkgIndex.tcl
+}
+foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
+    
+    log.info "Found Package folder [file dirname $libFile]"
+    set dir [file dirname $libFile]
+    source $libFile
+    #lappend auto_path [file dirname $libFile]
+}
+
+
+
+log.info "Current GIT_ROOT=[git.root]"
 
 #log.info "Script: [info script]"
 
@@ -43,8 +66,20 @@ if {$checkVersion} {
 #    puts "-env $n -> $v"
 #}
 
+## Load Lib and packages from well-known folders
+foreach libFile [files.globFiles ${kissb.home}/lib/*.lib.tcl .kissb/*.lib.tcl *.lib.tcl ] {
+    log.info "Loading lib file: $libFile"
+    source $libFile
+}
+
+foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tcl *.pkg.tcl ] {
+    log.info "Loading package file: $packageFile"
+    kiss::packages::loadLocalPackageFile $packageFile
+    #source $libFile
+}
+
 ## Load local Kiss build
-foreach buildFile {kiss.b kiss.kb kiss.build} {
+foreach buildFile {kiss.build kissb.build.tcl build.tcl} {
     if {[file exists $buildFile]} {
         source $buildFile
         break

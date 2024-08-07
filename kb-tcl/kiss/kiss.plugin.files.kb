@@ -203,6 +203,11 @@ namespace eval kiss::files {
         joinWithPathSeparator args {
             return [join {*}$args [kiss::files::pathSeparator]]
         }
+
+        ## Globbing
+        globFiles args {
+            return [join [lmap pattern $args {lsort [glob -nocomplain -type f $pattern]}]]
+        }
     }
 
 

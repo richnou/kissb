@@ -1,0 +1,42 @@
+package provide kissb.git 1.0
+
+namespace eval git {
+
+    # os version means we are using locally installed git
+    set version "os"
+
+    kiss::toolchain::register git {
+
+        # Check OS version is installed
+        if {$::git::version =="os"} {
+            try {
+                exec.run git --version
+            } on error msg {
+                log.fatal "GIT check not successful, is GIT installed?" -exit
+            }
+            
+        }
+
+    }
+
+    kissb.extension git {
+
+        init args {
+            kiss::toolchain::init git
+        }
+
+        root args {
+
+            try {
+                return [exec.call git rev-parse --show-toplevel]
+            } on error msg {
+                return false
+            }
+        }
+
+        clone {address {folder ""}} {
+            exec.run git clone $address
+        }
+
+    }
+}

@@ -1,0 +1,65 @@
+package provide kiss.packages 1.0
+
+
+namespace eval kiss::packages {
+
+
+    ## Common Package resolution if a package is not found
+    ##############
+    proc ::kissb_search {name version} {
+        log.info "Searching for Package $name"
+        if {[string match flow::* $name]} {
+            
+            set flowFile $::kissDir/flows/[string map {flow:: "" + _} $name].flow.tcl
+            log.info "Searching for Flow in $flowFile"
+            if {[file exists $flowFile]} {
+                log.success "Found, providing"
+                package provide $name $version
+                source $flowFile
+            }
+        } elseif {[string match "git:*" $name]} {
+            
+            set gitAddress [string map {git: ""} $name]
+            set gitProjectName [lindex [split $name /] end]
+
+            log.info "Getting package from git $gitAddress, version=$version"
+            set gitFolder ${::kissb.projectFolder}/.kb/git-packages
+
+            package require kissb.git
+            git.init 
+
+            files.inDirectory $gitFolder {
+                if {![file exists $gitProjectName]} {
+                    git.clone $gitAddress
+                }
+                foreach tclIndex [files.globFiles {pkgIndex.tcl tcl/pkgIndex.tcl lib/pkgIndex.tcl}] {
+                    set dir [file dirname $tclIndex]
+                    source $tclIndex
+                }
+                package provide $name 0
+            }
+        }
+    }
+    package unknown ::kissb_search
+
+    ## Scan a local package file and create a package ifneeded call for the defined package in the file
+    proc loadLocalPackageFile f {
+        
+        set chan [open $f]
+        try {
+            while {[gets $chan line] >= 0} {
+                #puts "[incr lineNumber]: $line"
+                if {[string match "package*provide*" $line]} {
+                    ## If we replace provide by ifneeded in the line, we are getting the required command to register the package
+                    set preLine [split [string map {provide ifneeded} $line]]
+                    {*}$preLine [list source [file normalize $f]]
+                }
+            }
+        } finally {
+            close $chan
+        }
+        
+        
+        
+    }
+}
