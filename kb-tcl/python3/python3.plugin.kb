@@ -1,7 +1,7 @@
 package provide kissb.python3 1.0
 package require kissb 
 
-puts "Loading python3"
+#puts "Loading python3"
 
 ## This package assumes python3 is installed already
 namespace eval python3 {
@@ -67,5 +67,61 @@ namespace eval python3 {
     ## Run folder is the current folder! 
     proc ::python3.venv.run {script args} {
         ::python3::venv.runBin python3 $script {*}$args
+    }
+
+    ################
+    ## KISSB Extension
+    ###################
+    kissb.extension python3.venv {
+
+        init args {
+            ## Create venv folder
+            file mkdir $python3::venvPath
+
+            ## Install venv
+            if {![file exists $python3::venvPath/pyvenv.cfg]} {
+                kiss::terminal::execIn $python3::venvPath python3 -m venv .
+                return true
+            } else {
+                return false
+            }
+        }
+
+        hasBin name {
+            return [file exists $python3::venvPath/bin/$name]
+        }
+
+        withNotBinOrRefresh {bin key script} {
+            if {[refresh.is $key] || ![python3.venv.hasBin $bin]} {
+                uplevel [list eval $script]
+            }
+        }
+        
+        run {bin args} {
+            exec.run $python3::venvPath/bin/$bin {*}$args
+        }
+
+        call {bin args} {
+            exec.call $python3::venvPath/bin/$bin {*}$args
+        }
+
+        run.script {script args} {
+            python3.venv.run python3 $script {*}$args
+        }
+
+        install.pip {packages args} {
+            foreach p $packages {
+                python3.venv.run pip install $p
+            }
+        }
+
+        install.requirements {files args} {
+            foreach rFile [concat $files $args] {
+                if {[file exists $rFile]} {
+                    python3.venv.run pip install -r $rFile
+                }
+                
+            }
+        }
     }
 }
