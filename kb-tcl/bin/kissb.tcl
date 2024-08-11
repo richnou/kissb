@@ -42,6 +42,8 @@ foreach arg $argv {
     if {$arg == "--refresh"} {
         env KB_REFRESH 1
         env KB_REFRESH_ALL 1
+    } elseif {[string match "--refresh-*" $arg]} {
+        env KB_REFRESH_[string toupper [string map {--refresh- ""} $arg]] 1
     } elseif {$arg == "--force"} {
         env KB_FORCE 1
     } elseif {$arg == "--debug"} {
@@ -66,6 +68,8 @@ if {$checkVersion} {
 #    puts "-env $n -> $v"
 #}
 
+try {
+
 ## Load Lib and packages from well-known folders
 foreach libFile [files.globFiles ${kissb.home}/lib/*.lib.tcl .kissb/*.lib.tcl *.lib.tcl ] {
     log.info "Loading lib file: $libFile"
@@ -81,7 +85,7 @@ foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tc
 ## Load local Kiss build
 foreach buildFile {kiss.build kissb.build.tcl build.tcl} {
     if {[file exists $buildFile]} {
-        source $buildFile
+        source $buildFile  
         break
     }
 }
@@ -126,4 +130,14 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
     
     }
  
+}
+
+
+
+} on error {msg options} {
+
+    set stack [dict get $options -errorinfo]
+    #puts "Caught error: $msg -> $stack"
+    #puts "Stack: [info errorstack]"
+    kiss::errors::prettyv1 $msg $options
 }
