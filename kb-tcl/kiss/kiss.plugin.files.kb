@@ -132,8 +132,8 @@ namespace eval kiss::files {
                 uplevel [list files.require $f $script]
             }
         }
-        requireOrRefresh {f script} {
-            if {[env KB_REFRESH 0]==1} {
+        requireOrRefresh {f key script} {
+            if {[refresh.is $key]} {
                 uplevel [list eval $script]
             } else {
                 uplevel [list files.require $f $script]
