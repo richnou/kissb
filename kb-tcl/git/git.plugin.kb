@@ -38,5 +38,27 @@ namespace eval git {
             exec.run git clone $address
         }
 
+        switch branch {
+            if {[string match "detach:*" $branch]} {
+                exec.run git switch --detach [string map {detach: ""} $branch]
+            } else {
+                exec.run git switch $branch
+            }
+            
+        }
+        pull args {
+            exec.run git pull
+        }
+        isDetached args {
+            switch [exec.call git rev-parse --abbrev-ref HEAD] {
+                HEAD {
+                    return true
+                }
+                default {
+                    return false
+                }
+            }
+        }
+
     }
 }
