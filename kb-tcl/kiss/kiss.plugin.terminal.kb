@@ -44,10 +44,10 @@ namespace eval kiss::terminal {
             return [exec {*}${args}]
         } on error {output options} {
             if {[dict get $options -errorcode]!= "NONE"} {
-                log.error "Error running command $args"
-                log.error "- res: $options"
+                #log.error "Error running command $args"
+                #log.error "- res: $options"
 
-                log.error "Error running command $args ($options)"
+                #log.error "Error running command $args ($options)"
                 throw e "Error running command $args ($options)"
                 
             } else {
