@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 KISSB 2024
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 package require kissb.mkdocs
 package require kissb.netlify
 

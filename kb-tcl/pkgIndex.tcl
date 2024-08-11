@@ -20,6 +20,9 @@ package ifneeded kissb.docker               1.0 [list source $dir/docker/docker.
 
 package ifneeded kissb.tclkit               1.0 [list source $dir/tclkit/tclkit.plugin.kb]
 
+package ifneeded kissb.reuse               1.0 [list source $dir/licensing/reuse.plugin.tcl]
+
+
 ## HDL Packages 
 ####################
 package ifneeded kissb.cocotb               1.0 [list source $dir/hdl/cocotb/cocotb.plugin.tcl] 

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 KISSB 2024
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 package provide kissb 1.0
 package require Tclx
 

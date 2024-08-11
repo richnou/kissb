@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 KISSB 2024
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 package provide kissb.internal.tls 1.0
 
 set localCertDir [string map {/ \\} [file normalize ${::kissb.home}/ca-certificates]]

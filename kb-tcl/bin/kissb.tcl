@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 KISSB 2024
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 lappend auto_path [file dirname [info script]]/../
 #lappend auto_path .kissb/pkgs/mylib
 
