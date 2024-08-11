@@ -13,16 +13,56 @@ namespace eval kiss {
     ############################
     ## Extension to help ease write extension procedures
     ##############################
-    proc ::kissb.extension {extName functions} {
+    namespace eval extensions {
         
-        set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
-        
-        #log.info "Functions no comments: $functionsNoComments"
-        foreach {procName procArgs procScript} $functionsNoComments {
-            log.debug "Extension $extName.$procName with args $procArgs"
-            proc ::${extName}.${procName} $procArgs $procScript
+        set extensionsLocations [dict create]
+
+        proc findLocationOf name {
+            if {[dict exists ${kiss::extensions::extensionsLocations} $name]} {
+                return [dict get ${kiss::extensions::extensionsLocations} $name]
+            } else {
+                return false
+            }
         }
+
+        proc ::kissb.extension {extName functions} {
+        
+            set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
+            
+            ## Split functions as string to find functions lines
+            set functionsLines [lmap line [split "$functions" \n] { string trim $line}]
+
+            #log.info "Functions no comments: $functionsNoComments"
+            foreach {procName procArgs procScript} $functionsNoComments {
+                log.debug "Extension $extName.$procName with args $procArgs"
+
+                ## Find Definition file
+                set __cframe [info frame]
+                #puts "frame: $__cframe"
+                set callerFrame [info frame [expr ${__cframe} - 1]]
+                #puts "caller: $callerFrame"
+                if {[dict get $callerFrame type] == "source"} {
+                    set fline 0
+                    foreach searchLine $functionsLines {
+                        #puts "search $procName in $searchLine"
+                        if {[string match "$procName *" $searchLine]} {
+                            break
+                        }
+                        incr fline
+                    }
+                    set line [dict get $callerFrame line]
+                    set file [dict get $callerFrame file]
+                    dict set kiss::extensions::extensionsLocations $extName.$procName [list $file [expr $line+$fline-1]]
+                    #puts "$extName.$procName is at: $file:[expr $line+$fline]"
+                }
+                
+                #exit
+                proc ::${extName}.${procName} $procArgs $procScript
+            }
+        }
+    
     }
+    
 
     #####################
     ## Context
@@ -482,6 +522,48 @@ namespace eval kiss {
     }
 
     
+    #####################
+    ## Errors
+    #####################
+    namespace eval errors {
+    
+        proc prettyv1 {msg options} {
+            set errorInfo [dict get $options -errorinfo]
+            set lines [split $errorInfo \n]
+            set filesPath {}
+            set procedures {}
+            set errLines {}
+            set prevLine ""
+            foreach l $lines {
+                set l [string trim $l]
+                
+                #puts "testing line: $l"
+                if {[regexp {\(\s*file\s+\"([\w\.\-\_\/]+)\"\s+line\s+([0-9]+)\s*\)} $l -> file line]==1} {
+                    lappend filesPath [list $file $line]
+                    lappend errLines "- at $file:$line"
+                } elseif {[regexp {\(\s*procedure\s+\"([\w\.\-\_\/]+)\"\s+line\s+([0-9]+)\s*\)} $l -> proc line]==1} {
+
+                    ## Try to get location
+                    set __procLoc [kiss::extensions::findLocationOf $proc]
+                    if {${__procLoc}!=false} {
+                        lappend errLines "- at $proc, [lindex ${__procLoc} 0]:[expr [lindex ${__procLoc} 1]+$line] : $prevLine"
+                    } else {
+                        lappend errLines "- at $proc, line $line : $prevLine"
+                    }
+                    
+                }
+
+                set prevLine $l
+            }
+            log.error $msg
+            #foreach filePath $filesPath {
+            #    log.error "- at [lindex $filePath 0]:[lindex $filePath 1]"
+            #}
+            foreach errLine $errLines {
+                log.error $errLine
+            }
+        }
+    }
 
     
     ############################
