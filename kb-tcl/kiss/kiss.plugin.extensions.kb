@@ -1,6 +1,6 @@
 
 ############################
-## Core extension
+## Core extension -> language
 ##############################
 
 kissb.extension kissb {
@@ -23,6 +23,22 @@ kissb.extension kissb {
         }
     }
 
+    args.get {v default {to ""} {varname ""}} {
+        set localArgs [uplevel {set args}]
+        
+        # Get default or val from args
+        set __val $default
+        if {[lsearch -exact $localArgs $v]!=-1} {
+            set __val [lindex $localArgs [lsearch -exact $localArgs $v]+1]
+        } 
+
+        # set to requested varname
+        if {$to!=""} {
+            uplevel [list set $varname ${__val}]
+        }
+        return ${__val}
+    }
+
 
     onRefresh script {
         if {[kiss::ifRefresh]} {
@@ -42,6 +58,7 @@ kissb.extension kissb {
             uplevel [list eval $script]
         }
     }
+
 }
 
 ##############################
@@ -49,12 +66,15 @@ kissb.extension kissb {
 ##############################
 kissb.extension vars {
 
-    set {name v} {
-        ::kiss::vars::set $name $v
+    set {name args} {
+        ::kiss::vars::set $name $args
     }
 
-    append {name v} {
-        ::kiss::vars::append $name $v
+    append {name args} {
+        foreach v $args {
+             ::kiss::vars::append $name $v
+        }
+       
     }
 
     get {name {v ""}} {
@@ -98,6 +118,16 @@ kissb.extension vars {
 }
 
 ##############################
+## env extension
+##############################
+kissb.extension env {
+
+    isDefined name {
+        return [expr [llength [array get ::env $name]] > 0 ? true : false]
+    }
+}
+
+##############################
 ## Dependencies extension
 ##############################
 kissb.extension dependencies {
@@ -117,5 +147,19 @@ kissb.extension dependencies {
             }
         }
 
+    }
+}
+
+
+#####################
+## Asserts
+#####################
+
+kissb.extension assert {
+
+    isFile {path msg} {
+        if {![file isfile $path]} {
+            error "File doesn't exist:$path , $msg"
+        }
     }
 }

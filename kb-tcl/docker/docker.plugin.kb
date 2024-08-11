@@ -17,15 +17,34 @@ namespace eval docker {
             exec.run docker build {*}$args
         }
 
-        run.script {image script} {
+        run.script {image args} {
+            set script [lindex $args end]
             set terminalScript [uplevel [list subst $script]]
             try {
                 files.writeText .dockerRun $terminalScript
                 set extraArgs [env KB_DOCKER_ARGS {}]
-                exec.run echo "$terminalScript" | docker run --rm --name kiss-running -u [exec id -u] -i -v.:/build {*}$extraArgs $image /bin/bash
-            } on error e {
-                catch {exec.run docker stop kiss-running}
-                catch {exec.run docker rm kiss-running}
+
+                ## Gather parameters
+                kissb.args.get -workdir "." -> __workdir
+                kissb.args.get -workdirPath /build -> __workdirPath
+                kissb.args.get -args {} -> passedArgs
+                kissb.args.get -cmdArgs {} -> cmdArgs
+                
+                foreach {name value} [kissb.args.get -env {}] {
+                    lappend extraArgs -e ${name}=$value
+                }
+                puts "ENV: [kissb.args.get -env {}]"
+
+                ## Run
+                exec.run echo "$terminalScript" | docker run --rm --name kiss-running -u [exec id -u]:[exec id -g] -i -v${__workdir}:${__workdirPath} {*}$passedArgs  {*}$extraArgs --entrypoint /bin/bash {*}$cmdArgs $image 
+            
+            } on error {err options} {
+                catch {exec.call docker kill kiss-running}
+                #puts "ERR: $options"
+                #error $err $options
+                
+                #catch {exec.run docker rm kiss-running}
+                return -options $options $err
             }
         }
 
