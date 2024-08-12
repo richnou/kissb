@@ -1,6 +1,6 @@
 # Getting Started
 
-If you haven't installed KISSB yet, visit the [installation.md](Installation) page and select your preferred method.
+If you haven't installed KISSB yet, visit the [Installatino](installation.md) page and select your preferred method.
 
 We are recommending to use the Wrapper script which will use a single file runtime of Kissb, which is the easiest way to use KISSB.
 

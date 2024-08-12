@@ -16,7 +16,7 @@ namespace eval cocotb {
             python3.venv.init
 
             python3.venv.withNotBinOrRefresh cocotb-config COCOTB {
-                python3.venv.install.pip cocotb 
+                python3.venv.install.pip cocotb pytest
                 python3.venv.install.requirements requirements.txt
             }
 
@@ -28,7 +28,7 @@ namespace eval cocotb {
             switch $name {
                 verilator {
                     set ::cocotb::simulator verilator
-                    verilator.init
+                    package require kissb.verilator
                 }
 
                 default {
@@ -36,7 +36,9 @@ namespace eval cocotb {
                 }
             }
         }
-
+        select.module name {
+            env.set MODULE $name
+        }
         settings.trace args {
             
             vars.append cocotb.compile.args --trace --trace-fst --trace-structs

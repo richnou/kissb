@@ -1,0 +1,4 @@
+title: Hardware Design (HDL)
+nav:
+    - cocotb.md
+    - verilator.md

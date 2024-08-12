@@ -27,11 +27,15 @@ plugins:
 
 repo_url: https://github.com/richnou/kissb
 edit_uri: edit/main/docs/pages/
-repo_name: Repository
+repo_name: KISSB
 extra_css:
+  - stylesheets/extra.css
 theme:
   name: material
+  logo: images/kissb-logo-512-inverted.svg
   #custom_dir: custom_theme/
+  palette:
+    primary: custom
   font:
     text: Baloo Chettan 2
   features:
@@ -47,7 +51,6 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.tabbed
   - abbr
   - pymdownx.snippets
   - footnotes
@@ -57,6 +60,8 @@ markdown_extensions:
       use_pygments: true
       linenums: true
       linenums_style: pymdownx.table
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

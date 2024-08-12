@@ -1,23 +1,25 @@
 package require kissb.cocotb
-package require kissb.verilator
 
-cocotb.init
-
+# Init Cocotb and select verilator
+cocotb.init 
 cocotb.simulator verilator
 
-#verilator.root /home/rleys/git/promd/kissbuild/kb-tcl/hdl/verilator/builder/build/verilator-stable
-
+# By Default, verilator will run using docker
+# Switch to a local installation 
+# You must have perl installed locally
+verilator.runtime.kissb
 verilator.run --version
 
-
+# Enable tracing
 cocotb.settings.trace
-cocotb.settings.traceFile out
 
-
-#vars.set cocotb.args.verilator
+# Set Verilog sources
 vars.set cocotb.sources counter.sv
-#vars.set cocotb/verilator.compile.args --trace --trace-fst --trace-structs
 
-env.set MODULE sim
-#env.set COCOTB_LOG_LEVEL DEBUG
-cocotb.run 
+# Set the name of the python simulation module
+# if your testbench is located in "sim.py"
+cocotb.select.module sim 
+
+
+## Run!
+cocotb.run
