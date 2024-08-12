@@ -88,8 +88,16 @@ namespace eval kiss::terminal {
             kiss::terminal::execIn [pwd] {*}$args
         }
 
+        run.in {pwd args} {
+            kiss::terminal::execIn $pwd {*}$args
+        }
+
         call args {
             return [kiss::terminal::callIn [pwd] {*}$args]
+        }
+
+        call.in {pwd args} {
+            return [kiss::terminal::callIn $pwd {*}$args]
         }
 
         ## Runs a command and returns a dict of env based on export lines

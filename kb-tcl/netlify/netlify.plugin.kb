@@ -17,11 +17,12 @@ namespace eval netlify {
         set netlify::netlifyCliPath $toolchainFolder/node_modules/.bin/netlify
 
         ## Install venv
-        if {![file exists $netlify::netlifyCliPath]} {
-            kiss::terminal::execIn $toolchainFolder npm i netlify-cli
-        } elseif {[env KB_REFRESH 0] == 1} {
+        files.require $netlify::netlifyCliPath {
+            exec.run.in $toolchainFolder npm i --save netlify-cli
+        }
+        refresh.with NETLIFY {
             log.info "Updating Netlify CLI"
-            kiss::terminal::execIn $toolchainFolder npm update --save
+            exec.run.in $toolchainFolder npm update --save
         }
 
     }
@@ -30,7 +31,11 @@ namespace eval netlify {
     }
 
     proc run args {
-        kiss::terminal::execIn [pwd] $netlify::netlifyCliPath {*}$args
+        exec.run $netlify::netlifyCliPath {*}$args
     }
+
+    #kissb.extension {
+    #
+    #}
 
 }

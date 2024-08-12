@@ -43,18 +43,6 @@ kissb.extension kissb {
     }
 
 
-    onRefresh script {
-        if {[kiss::ifRefresh]} {
-            uplevel [list eval $script]
-        } 
-    }
-
-    withIfRefresh script {
-        if {[kiss::ifRefresh]} {
-            uplevel [list eval $script]
-        } 
-    }
-
     each {lst script} {
         foreach v $lst {
             uplevel [list set it $v]

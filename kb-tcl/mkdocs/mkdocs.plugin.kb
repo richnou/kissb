@@ -6,8 +6,6 @@ package provide kissb.mkdocs 1.0
 package require kissb.python3
 package require zipfile::mkzip
 
-puts "Loading mkdocs"
-
 namespace eval mkdocs {
 
     set pluginFolder [file dirname [file normalize [info script]]]
@@ -20,10 +18,10 @@ namespace eval mkdocs {
         log.info "Initializing mkdocs..."
 
         ## Ensure venv
-        kiss::toolchain::init python3-venv
+        python3.venv.init
 
         ## Ensure mkdocs
-        kiss::withIfRefreshOrNot [python3::venv.hasBin mkdocs] {
+        python3.venv.withNotBinOrRefresh mkdocs MKDOCS {
             lappend reqFiles $mkdocs::pluginFolder/mkdocs.base.requirements
             if {[lsearch $args -material]!=-1} {
                 lappend reqFiles $mkdocs::pluginFolder/mkdocs.material.requirements
@@ -34,7 +32,7 @@ namespace eval mkdocs {
             if {[file exists [pwd]/requirements.txt]} {
                 lappend reqFiles [file normalize [pwd]/requirements.txt]
             }
-            python3::venv.requirements $reqFiles
+            python3.venv.install.requirements $reqFiles
         }
 
         ## Ensure build directory
@@ -43,7 +41,7 @@ namespace eval mkdocs {
     }
 
     proc serve args {
-        python3::venv.runBin mkdocs --color serve 
+        python3.venv.run mkdocs --color serve 
     }
 
     proc buildFolder args {
@@ -52,7 +50,7 @@ namespace eval mkdocs {
     proc build args {
         set htmlOutputFolder $mkdocs::buildDir/${::build.name}
 
-        python3::venv.runBin mkdocs --color build -c -d $htmlOutputFolder
+        python3.venv.run mkdocs --color build -c -d $htmlOutputFolder
         kissb.args.contains -zip {
             kiss::files::inDirectory $htmlOutputFolder {
                 cd ..

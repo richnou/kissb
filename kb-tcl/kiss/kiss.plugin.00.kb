@@ -21,6 +21,26 @@ namespace eval kiss {
         
         set extensionsLocations [dict create]
 
+        rename ::proc ::__proc
+        ::__proc ::proc {name args} {
+            set fqdn [string range [uplevel {namespace current}]::$name 2 end]
+            #puts "Defining $fqdn $args"
+            set callerFrame [info frame [expr [info frame] - 1]]
+            #puts "caller: $callerFrame"
+            if {$name=="netlify::init"} {
+                exit
+            }
+
+            if {[dict exists $callerFrame file]} {
+                set line [dict get $callerFrame line]
+                set file [dict get $callerFrame file]
+                dict set kiss::extensions::extensionsLocations $fqdn [list $file [expr $line-1]]
+            }
+            
+
+            uplevel [list  __proc $name {*}$args] 
+        }
+
         proc findLocationOf name {
             if {[dict exists ${kiss::extensions::extensionsLocations} $name]} {
                 return [dict get ${kiss::extensions::extensionsLocations} $name]
@@ -470,47 +490,7 @@ namespace eval kiss {
     ############################
     ## Utils and build logic
     ##############################
-    if {[llength [array get ::env KB_REFRESH]] >0} {
-        set ::refresh true
-    } else {
-        set ::refresh false
-    }
 
-    ## Runs the script if condition is not satistifed or refresh is requested
-    ## Useful to install libs only if not present or global refresh is required
-    proc ifRefreshOrNot v {
-        if {$v == true || [llength [array get ::env KB_REFRESH]] >0} {
-            return true 
-        } else {
-            return false
-        }
-    }
-    proc ifRefresh args {
-        if {[llength [array get ::env KB_REFRESH]] >0} {
-            return true 
-        } else {
-            return false
-        }
-    }
-    proc withIfRefreshOrNot {v script} {
-        if {[ifRefreshOrNot $v]} {
-            uplevel [list eval $script]
-        } 
-    }
-    proc withIfRefresh {script} {
-        if {[ifRefresh]} {
-            uplevel [list eval $script]
-        } 
-    }
-
-    proc ::withArgsContains {v script {else ""} {elseScript {}}} {
-        set localArgs [uplevel {set args}]
-        if {[lsearch -exact $localArgs $v]!=-1} {
-            uplevel [list eval $script]
-        } else {
-            uplevel [list eval $elseScript]
-        }
-    }
 
     proc ::assert {res message} {
         if {!$res} {
@@ -545,9 +525,10 @@ namespace eval kiss {
                 if {[regexp {\(\s*file\s+\"([\w\.\-\_\/]+)\"\s+line\s+([0-9]+)\s*\)} $l -> file line]==1} {
                     lappend filesPath [list $file $line]
                     lappend errLines "- at $file:$line"
-                } elseif {[regexp {\(\s*procedure\s+\"([\w\.\-\_\/]+)\"\s+line\s+([0-9]+)\s*\)} $l -> proc line]==1} {
+                } elseif {[regexp {\(\s*procedure\s+\"([\w\.\-\_\/:]+)\"\s+line\s+([0-9]+)\s*\)} $l -> proc line]==1} {
 
                     ## Try to get location
+                    #puts "- searching for proc $proc"
                     set __procLoc [kiss::extensions::findLocationOf $proc]
                     if {${__procLoc}!=false} {
                         lappend errLines "- at $proc, [lindex ${__procLoc} 0]:[expr [lindex ${__procLoc} 1]+$line] : $prevLine"
@@ -621,56 +602,8 @@ namespace eval kiss {
             return [uplevel [list expr \[ lsearch -exact \$argv $argName\] > -1]]
         }
 
-        proc download {url dir} {
-            exec wget -p $url -O $dir >@ stdout 2>@ stdout
-        }
-
-        ## Exec redirecting outputs to console
-        proc execIn {folder args} {
-            set pwd [pwd]
-            file mkdir $folder
-            cd $folder 
-            try {
-                return [exec {*}${args} >@ stdout 2>@ stdout]
-            } finally {
-                cd $pwd
-            }
-            
-        }
-
-         ## Exec redirecting outputs to console
-        proc forkIn {folder args} {
-            set pwd [pwd]
-            file mkdir $folder
-            cd $folder 
-            try {
-                return [exec {*}${args} >@ stdout 2>@ stdout &]
-            } finally {
-                cd $pwd
-            }
-            
-        }
-
-        ## Exec returning stdout as function result
-        proc callIn {folder args} {
-            set pwd [pwd]
-            file mkdir $folder
-            cd $folder 
-            try {
-                return [exec {*}${args}]
-            } finally {
-                cd $pwd
-            }
-            
-        }
-
     }
 
 
-    
-
 }
 
-
-## Load installation info 
-#source [file dirname [info script]]/../info.tcl

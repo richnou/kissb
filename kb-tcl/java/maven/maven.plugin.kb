@@ -11,7 +11,7 @@ namespace eval maven {
 
     kiss::toolchain::register maven-wrapper {
 
-        files.requireOrRefresh mvnw {
+        files.requireOrRefresh mvnw MAVEN {
             
             log.info "Setting up maven wrapper"
 
