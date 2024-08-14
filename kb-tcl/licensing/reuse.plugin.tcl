@@ -20,10 +20,13 @@ namespace eval reuse {
             }
         }
 
-        download {name args} {
-            files.require LICENSES/${name}.txt {
-                python3.venv.run reuse download $name {*}$args
+        download {licenses args} {
+            foreach l $licenses {
+                files.require LICENSES/${l}.txt {
+                    python3.venv.run reuse download ${l} {*}$args
+                }
             }
+            
             
         }
 
