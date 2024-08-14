@@ -6,25 +6,34 @@ package provide kissb.verilator 1.0
 
 namespace eval verilator {
 
-    set runtime "docker"
+    set runtime "local"
     set version  "v5.024"
     
     kiss::toolchain::register kissb-verilator {
-        set ::verilator::tcFolder $toolchainFolder/verilator-${verilator::version}
-        files.require ${::verilator::tcFolder}/bin/verilator {
-            files.inDirectory $toolchainFolder {
-                files.download https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-${verilator::version}.zip
-                files.extract verilator-${verilator::version}.zip
-                files.delete verilator-${verilator::version}.zip
+
+        if {${verilator::runtime}=="local"} {
+            set ::verilator::tcFolder $toolchainFolder/verilator-${verilator::version}
+            files.require ${::verilator::tcFolder}/bin/verilator {
+                files.inDirectory $toolchainFolder {
+                    files.download https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-${verilator::version}.zip
+                    files.extract verilator-${verilator::version}.zip
+                    files.delete verilator-${verilator::version}.zip
+                }
             }
+            verilator.root ${::verilator::tcFolder}
+
         }
+
+        
+        
     }
 
     kissb.extension verilator {
         
         init args {
-            verilator.runtime.kissb
+            kiss::toolchain::init kissb-verilator
         }
+
         root path {
             assert.isFile $path/bin/verilator "Verilator Root doesn't point to a valid root install, bin/verilator is missing"
             set verilator::runtime "local"
@@ -37,7 +46,7 @@ namespace eval verilator {
             package require kissb.docker
         }
 
-        runtime.kissb args {
+        runtime.local args {
             set verilator::runtime "local"
             kiss::toolchain::init kissb-verilator
             verilator.root ${::verilator::tcFolder}
@@ -51,7 +60,7 @@ namespace eval verilator {
             }
         }
 
-        run args {
+        verilate args {
             if {${verilator::runtime} == "docker"} {
                 package require kissb.docker
 
@@ -68,13 +77,30 @@ namespace eval verilator {
             }
         }
 
-        binary args {
-            verilator.run --binary {*}$args
+        # Run simulation from exe located in obj_dir
+        simulate {name args} {
+
+            set fullPath ./obj_dir/$name
+            if {![file exists $fullPath]} {
+                log.error "Cannot run verilated design $fullPath, file not found"
+                return
+            }
+
+            if {${verilator::runtime} == "docker"} {
+                verilator.image.run {
+                    cd /build
+                    $fullPath $args
+                }
+            } elseif {${verilator::runtime} == "local"} {
+                
+                exec.run $fullPath {*}$args
+            }
+            
         }
 
         
         image.run script {
-            docker.run.script verilator/verilator:${verilator::version} $script /work -e CCACHE_DIR=/work/.ccache
+            docker.run.script verilator/verilator:${verilator::version} -e CCACHE_DIR=/work/.ccache $script 
         }
     }
 

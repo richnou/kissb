@@ -1,6 +1,6 @@
 Version,System,URL
-GIT master,linux,https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-master.zip
-GIT stable (v5.026),linux,https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-stable.zip
-v5.024,linux,https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.024.zip
-v5.022,linux,https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.022.zip
-v5.020,linux,https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.020.zip
+GIT master,linux,[https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-master.zip](https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-master.zip)
+GIT stable (v5.026),linux,[https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-stable.zip](https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-stable.zip)
+v5.024,linux,[https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.024.zip](https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.024.zip)
+v5.022,linux,[https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.022.zip](https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.022.zip)
+v5.020,linux,[https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.020.zip](https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.020.zip)
