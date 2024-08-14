@@ -1,1 +1,2 @@
 requests
+mkdocs-git-committers-plugin-2

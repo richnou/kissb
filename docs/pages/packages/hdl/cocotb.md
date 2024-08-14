@@ -1,3 +1,11 @@
+---
+tags:
+  - HDL
+  - Verilog
+  - VHDL
+  - Verification
+  - Python
+---
 # CocoTB
 
 !!! note "Useful Links"

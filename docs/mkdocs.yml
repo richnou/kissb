@@ -1,7 +1,6 @@
 site_name: KISSB Documentation
 site_url: https://www.kissb.dev
-nav:
-  - ...
+copyright: Copyright &copy; 2024 Richard Leys
 
 docs_dir: pages
 plugins:
@@ -17,13 +16,19 @@ plugins:
       allow_missing_files: True
   - kroki
   - git-revision-date
+  - git-committers:
+      repository: richnou/kissb
+      branch: main
   - awesome-pages
   - include-markdown
   - mkdocstrings
   - glightbox
-  - macros
+  - macros:
+      include_yaml:
+        - data/packages.variables.yml
   - social
   - privacy
+  - tags
 
 repo_url: https://github.com/richnou/kissb
 edit_uri: edit/main/docs/pages/

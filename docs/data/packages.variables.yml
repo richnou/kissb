@@ -1,0 +1,18 @@
+id: "packages.variable"
+verilator:
+    runtime: "kissb"
+    version: "v5.024"
+cocotb:
+    simulator: "-"
+    workdir: ".kb/work/cocotb"
+quarkus:
+    cliJar: ""
+    version: "3.13.0"
+    cliCP: ""
+coursier:
+    repositories: "ivy2Local central sonatype:releases https://oss.sonatype.org/content/groups/public/"
+    buildFolder: ".kb/coursier"
+    outputFolder: "repository"
+    binPath: ""
+    currentDeps: ""
+    tcFolder: ".kb/toolchain/coursier"

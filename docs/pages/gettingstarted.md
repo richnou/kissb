@@ -1,3 +1,8 @@
+---
+tags:
+  - TCL
+  - KISSB
+---
 # Getting Started
 
 If you haven't installed KISSB yet, visit the [Installatino](installation.md) page and select your preferred method.
