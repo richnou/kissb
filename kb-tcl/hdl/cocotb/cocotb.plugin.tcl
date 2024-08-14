@@ -29,6 +29,7 @@ namespace eval cocotb {
                 verilator {
                     set ::cocotb::simulator verilator
                     package require kissb.verilator
+                    verilator.init
                 }
 
                 default {
@@ -56,9 +57,6 @@ namespace eval cocotb {
 
                 switch ${::cocotb::simulator} {
                     verilator {
-                        
-                        ## Compile
-                        package require kissb.verilator 
 
                         
                         if {[verilator.isDockerRuntime]} {
@@ -82,7 +80,7 @@ namespace eval cocotb {
                             log.warn "Build refresh requested, cleaning workdir"
                             files.delete ${cocotb::workdir}
                         }
-                        verilator.run --cc --exe -Mdir ${cocotb::workdir}  -DCOCOTB_SIM=1 --vpi --public-flat-rw --prefix Vtop -o Vtop -LDFLAGS "-Wl,-rpath,$libDir -L$libDir -lcocotbvpi_verilator" {*}$compileArgs {*}$sources
+                        verilator.verilate --cc --exe -Mdir ${cocotb::workdir}  -DCOCOTB_SIM=1 --vpi --public-flat-rw --prefix Vtop -o Vtop -LDFLAGS "-Wl,-rpath,$libDir -L$libDir -lcocotbvpi_verilator" {*}$compileArgs {*}$sources
                         
                         if {[verilator.isDockerRuntime]} {
                             verilator.image.run {

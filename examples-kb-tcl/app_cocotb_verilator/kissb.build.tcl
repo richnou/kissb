@@ -7,8 +7,8 @@ cocotb.simulator verilator
 # By Default, verilator will run using docker
 # Switch to a local installation 
 # You must have perl installed locally
-verilator.runtime.kissb
-verilator.run --version
+verilator.runtime.local
+verilator.verilate --version
 
 # Enable tracing
 cocotb.settings.trace
