@@ -20,10 +20,9 @@ files.writeText "test.out" "Hi"
 
     reuse.download GPL-3.0-or-later
 
-    #reuse.annotate -c "KISSB 2024" --merge-copyrights -l GPL-3.0-or-later kb-tcl/bin/kissb.tcl
+    
     reuse.annotate.globs {kb-tcl/**/*.tcl kb-tcl/**/**/*.tcl kb-tcl/**/*.kb kb-tcl/**/**/*.kb} --style python -c "KISSB 2024" --merge-copyrights -l GPL-3.0-or-later
 
-    #reuse.lint
 }
 
 @ certs {
