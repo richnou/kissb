@@ -172,7 +172,7 @@ namespace eval kiss {
         set _targets [dict create]
 
         proc @ {name args} {
-            log.info "Registering target $name, size of args=[llength $args]"
+            log.fine "Registering target $name, size of args=[llength $args]"
             set script [lindex $args end]
             #log.info "Script is: $script"
             set reqTargets {}
@@ -180,7 +180,7 @@ namespace eval kiss {
                 set requiredTargets [lrange $args 0 end-1]
                 foreach requiredTarget $requiredTargets {
                     if {$requiredTarget!=":" && $requiredTarget!="<-" } {
-                        log.info "- Required target: $requiredTarget"
+                        log.fine "- Required target: $requiredTarget"
                         lappend reqTargets $requiredTarget
                     }
                 }
@@ -210,7 +210,7 @@ namespace eval kiss {
         ## Run Target
         proc run {target args} {
             
-            log.info "Running target: $target with args=$args"
+            log.fine "Running target: $target with args=$args"
             if {![hasTarget $target]} {
                 log.warn "Target $target doesn't exist"
                 return
