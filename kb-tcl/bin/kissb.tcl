@@ -87,7 +87,7 @@ foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tc
 }
 
 ## Load local Kiss build
-foreach buildFile {kiss.build kissb.build.tcl build.tcl} {
+foreach buildFile {kiss.build kissb.build.tcl kiss.build.tcl build.tcl} {
     if {[file exists $buildFile]} {
         source $buildFile  
         break
