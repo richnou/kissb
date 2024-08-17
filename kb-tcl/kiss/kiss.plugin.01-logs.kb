@@ -5,6 +5,8 @@
 package provide kissb.log 1.0
 catch {package require term::ansi::send}
 
+fconfigure stdout -translation binary
+
 namespace eval kiss::log {
 
 
@@ -91,6 +93,35 @@ namespace eval kiss::log {
         log.with DEBUG {*}$args
     }
     
+    proc log.message {level message {color "::term::ansi::send::sda_fgdefault"} {icon ""} {prefix ""} {postfix ""} } {
+        
+        
+        if {[isColorTerm]} {
+                try {
+                    $color
+                    puts "${level}.${::kiss.log.name} ${icon}${prefix}${message}${postfix}"
+                } finally {
+                    ::term::ansi::send::sda_fgdefault
+                } 
+            } else {
+                puts "${level}.${::kiss.log.name} ${prefix}${message}${postfix}"
+            }
+            return
+        uplevel [subst {
+            if {[isColorTerm]} {
+                try {
+                    $color
+                    puts "$message"
+                    #puts "${level}.${::kiss.log.name} ${icon}${prefix}${message}${postfix}"
+                } finally {
+                    ::term::ansi::send::sda_fgdefault
+                } 
+            } else {
+                puts "${level}.${::kiss.log.name} ${prefix}${message}${postfix}"
+            }
+        }]
+    }
+
     proc log.fatal {message args} {
         try {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgred} }
@@ -107,18 +138,24 @@ namespace eval kiss::log {
     }
     proc log.error message {
         
+        #puts $message
+        set args [list ERRO $message ::term::ansi::send::sda_fgred "\xE2\x9D\x8C " "" "" ]
+        uplevel [list log.message {*}$args]
+        return
         try {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgred} }
-            log ERRO $message
+            log ERRO "\xE2\x9D\x8C $message"
         } finally {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
         }
         
     }
     proc log.warn message {
+        uplevel [list log.message WARN $message ::term::ansi::send::sda_fgyellow "\xE2\x9A\xA0 " "" "" ]
+        return
         try {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgyellow} }
-            log WARN $message
+            log WARN "\xE2\x9A\xA0 $message"
         } finally {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
         }
@@ -126,6 +163,8 @@ namespace eval kiss::log {
     }
 
     proc log.success message {
+        uplevel [list log.message SUCC $message ::term::ansi::send::sda_fggreen "\xE2\x98\x91 " "" "" ]
+        return
         try {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fggreen} }
             log SUCC $message
@@ -136,7 +175,8 @@ namespace eval kiss::log {
     }
 
     proc log.info message {
-
+        uplevel [list log.message INFO $message ::term::ansi::send::sda_fgcyan "" "" "" ]
+        return
         try {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgcyan} }
             log INFO $message
@@ -147,12 +187,13 @@ namespace eval kiss::log {
     }
     proc log.fine message {
         if {[log.get.level] == "FINE" || [log.get.level] == "DEBUG"} {
-            log FINE $message
+            uplevel [list log.message FINE $message ::term::ansi::send::sda_fgdefault "" "" "" ]
+            return
         }   
     }
     proc log.debug message {
         if {[log.get.level] == "DEBUG"} {
-            log DEBUG $message
+            uplevel [list log.message DBUG $message ::term::ansi::send::sda_fgdefault "" "" "" ]
         }   
     }
     
