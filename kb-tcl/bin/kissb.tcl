@@ -18,7 +18,7 @@ if {[file exists $gitRoot]} {
 }
 foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
     
-    log.info "Found Package folder [file dirname $libFile]"
+    log.fine "Found Package folder [file dirname $libFile]"
     set dir [file dirname $libFile]
     source $libFile
     #lappend auto_path [file dirname $libFile]
@@ -26,11 +26,15 @@ foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
 
 
 
-log.info "Current GIT_ROOT=[git.root]"
+
 
 #log.info "Script: [info script]"
 
 log.info "KISSB Version=${kissb.track}@${kissb.version}"
+if {[file exists $gitRoot]} {
+    log.info "Current GIT_ROOT=[git.root]"
+}
+
 
 set ::BASE [pwd]
 
@@ -99,7 +103,7 @@ foreach buildFile {kiss.build kissb.build.tcl kiss.build.tcl build.tcl} {
 
 ## Run target
 if {[llength $targets] == 0 && [llength $args] == 0 } {
-    log.warn "No targets provided"
+    log.warn "No build target or command provided"
     foreach target [kiss::targets::listTargets] {
         puts "- $target"
     }
@@ -120,7 +124,7 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
             log.info "Running command $cmd: bin=$bin, args=$cmdArgs"
             $bin {*}$cmdArgs
 
-        } elseif {[file exists $target]} {
+        } elseif {[file exists $target] && ![file isdirectory $target]} {
 
             # Run Target
             source $target
