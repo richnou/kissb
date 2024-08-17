@@ -19,14 +19,22 @@ namespace eval reuse {
                 python3.venv.install.requirements requirements.txt
             }
         }
+        run args {
+            python3.venv.run reuse {*}$args
+        }
 
         download {licenses args} {
             foreach l $licenses {
                 files.require LICENSES/${l}.txt {
-                    python3.venv.run reuse download ${l} {*}$args
+                    python3.venv.run reuse download ${l}
                 }
             }
             
+            kissb.args.contains -github {
+                log.info "Setting up LICENSE file for [lindex $licenses 0]"
+                files.delete LICENSE
+                reuse.run download -o LICENSE [lindex $licenses 0] 
+            }
             
         }
 
