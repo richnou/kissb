@@ -30,3 +30,8 @@ mkdocs::init -kissv1
     netlify::run link
     netlify::run deploy -d [mkdocs::buildFolder] {*}$args
 }
+
+@ deploy.prod {
+
+    > deploy --prod
+}
