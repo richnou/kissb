@@ -156,6 +156,19 @@ namespace eval kiss::files {
 
         }
 
+        inBuildDirectory {d script} {
+            set __p ${::kissb.buildDir}/$d
+            file mkdir ${__p} 
+            set tmpDir [pwd]
+            cd ${__p}
+            try {
+                uplevel $script
+            } finally {
+                cd $tmpDir
+            }
+
+        }
+
         ## Download
         download {src {out ""}} {
             #exec wget -p $url -O $dir >@ stdout 2>@ stdout

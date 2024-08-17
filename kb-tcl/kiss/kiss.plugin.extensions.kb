@@ -26,6 +26,14 @@ kissb.extension kissb {
         }
     }
 
+    args.withValue {v varname script} {
+        set args [uplevel {set args}]
+        kissb.args.ifContains $v {
+            uplevel [list set $varname [lindex $args [expr [lsearch -exact $args $v]+1]]]
+            uplevel [list eval $script]
+        }
+    }
+
     args.get {v default {to ""} {varname ""}} {
         set localArgs [uplevel {set args}]
         
@@ -139,8 +147,26 @@ kissb.extension dependencies {
         }
 
     }
+
+    getDeps {module args} {
+        return [kiss::dependencies::getDeps $module]
+    }
+
+    resolve {module type args} {
+        return [kiss::dependencies::resolveDeps $module $type]
+    }
 }
 
+##############################
+## Dependencies extension
+##############################
+kissb.extension sources {
+
+    ## Save provided dict in bom
+    add {module folder} {
+        kiss::sources::addSourceFolder $module $folder
+    }
+}
 
 #####################
 ## Asserts
