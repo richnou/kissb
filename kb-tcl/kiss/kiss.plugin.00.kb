@@ -213,6 +213,11 @@ namespace eval kiss {
             log.fine "Running target: $target with args=$args"
             if {![hasTarget $target]} {
                 log.warn "Target $target doesn't exist"
+                foreach ptarget [listTargets] {
+                    if {[string match -nocase ${target}* ${ptarget}]} {
+                        log.warn "- Did you mean: $ptarget ?"
+                    }
+                }
                 return
             }
 
