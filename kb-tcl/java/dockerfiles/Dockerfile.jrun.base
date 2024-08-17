@@ -1,0 +1,28 @@
+
+# Copy Java from Temurin
+ARG JAVA_VERSION=21
+FROM eclipse-temurin:${JAVA_VERSION} AS base
+
+
+# Provide base opensus image${LEAP_VERSION}
+ARG LEAP_VERSION=15.5
+FROM opensuse/leap:latest
+
+
+ENV JAVA_HOME=/opt/temurin/openjdk
+COPY --from=base /opt/java/openjdk $JAVA_HOME
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+
+# Copy work folder to app
+WORKDIR /opt/app
+ARG APP_PATH=.
+COPY ${APP_PATH} .
+
+# Set permissions
+RUN chmod +x app_runner
+
+# Running
+ENV JAVA_OPTS=
+#CMD ["java",  "-jar", "/opt/app/$JAR"]
+CMD ["./app_runner"]

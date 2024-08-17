@@ -50,10 +50,12 @@ namespace eval scala {
             vars.set ${module}.jvm.name         21
 
             ## Add Folders
-            kiss::sources::addSourceFolder $module src/main/scala
+            #kiss::sources::addSourceFolder $module src/main/scala
+            sources.add $module src/main/scala
             
             ## Add Stdlib
-            kiss::dependencies::addDepSpec $module org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version] coursier
+            #kiss::dependencies::addDepSpec $module org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version] coursier
+            dependencies.add $module coursier org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version]
         }
 
         ## Selects the runtime JVM
@@ -70,11 +72,11 @@ namespace eval scala {
         compile {module args} {
 
             ##
-            puts "Module $module scala version: [vars.resolve ${module}.scala.version]"
+            log.fine "Module $module scala version: [vars.resolve ${module}.scala.version]"
 
             ## Load scala with PATH
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.resolve ${module}.jvm.name] --apps scala:[vars.resolve ${module}.scala.version],scalac:[vars.resolve ${module}.scala.version]]
-            log.info "Scala compile Env: $compileEnv"
+            log.fine "Scala compile Env: $compileEnv"
             exec.withEnv $compileEnv exec.run scala --version
             #exec.run scala --version
             #exec.run PATH=/home/rleys/.local/share/coursier/bin:$::env(PATH) scala --version
@@ -92,8 +94,9 @@ namespace eval scala {
                 return
             }
 
-            # params
+            # Classes output -> directory or jar
             set classesOut [vars.resolve ${module}.build.directory]/classes
+            
 
             # Resources
             set resources [kiss::sources::getSourcesDict ${module}/resources]
@@ -134,7 +137,7 @@ namespace eval scala {
 
             ## Load scala with PATH
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.get ${module}.jvm.name] --apps scala:[vars.get ${module}.scala.version],scalac:[vars.get ${module}.scala.version]]
-            log.info "Scala compile Env: $compileEnv"
+            log.fine "Scala compile Env: $compileEnv"
 
             ## deps = deps + build folder
             set deps [files.joinWithPathSeparator [concat [kiss::dependencies::resolveDeps $module lib] [vars.get ${module}.build.directory]/classes ]]

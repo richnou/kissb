@@ -3,3 +3,4 @@ vars.set kissb.home $::env(HOME)/.kissb
 files.mkdir ${kissb.home}
 
 vars.set kissb.projectFolder [pwd]
+vars.set kissb.buildDir ${kissb.projectFolder}/.kb

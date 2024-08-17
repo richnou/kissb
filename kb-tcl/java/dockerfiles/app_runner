@@ -1,0 +1,6 @@
+#!/bin/bash
+
+
+source .env 
+
+java $JAVA_OPTS $JAVA_ARGS

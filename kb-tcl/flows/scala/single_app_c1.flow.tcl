@@ -58,6 +58,13 @@ scalatest.init main
     scala.run main [vars.resolve java.main]
 }
 
+@ jar {
+    java.jar main example.jar -mainClass [vars.resolve java.main]
+}
+
+@ docker {
+    java.docker main [vars.resolve image.name]:[vars.resolve image.tag]  -mainClass [vars.resolve java.main]
+}
 
 
 
