@@ -85,10 +85,14 @@ namespace eval python3 {
             ## Install venv
             if {![file exists $python3::venvPath/pyvenv.cfg]} {
                 kiss::terminal::execIn $python3::venvPath python3 -m venv .
-                return true
+                set res true
             } else {
-                return false
+                set res false
             }
+
+            ## run script 
+            uplevel [list eval [lindex $args end]]
+            return $res 
         }
 
         hasBin name {
