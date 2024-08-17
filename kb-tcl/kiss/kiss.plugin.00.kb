@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2024 KISSB 2024
+# SPDX-FileCopyrightText: 2024 KISSB
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: Apache-2.0
 
 package provide kissb 1.0
 package require Tclx
@@ -39,6 +39,10 @@ namespace eval kiss {
             
 
             uplevel [list  __proc $name {*}$args] 
+        }
+
+        proc ::fun {name args} {
+            uplevel [list ::proc $name {*}$args]
         }
 
         proc findLocationOf name {

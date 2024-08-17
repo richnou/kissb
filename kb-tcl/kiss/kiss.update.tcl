@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2024 KISSB 2024
+# SPDX-FileCopyrightText: 2024 KISSB
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.internal.update 1.0
 package require kissb.internal.tls
