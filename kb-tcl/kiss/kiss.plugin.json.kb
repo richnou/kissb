@@ -89,6 +89,23 @@ namespace eval kiss::json {
             close $o
         }
 
+        # Reads a json text, then add spaces around : and , to normalize, and parse as list
+        readAsList inFile {
+
+            # Read full kson
+            set json [files.read $inFile]
+
+            # Normalize
+            set jsonNormalized [string map {: " " , " "} $json]
+            #puts "NORM Json: $jsonNormalized"
+            #puts "index 0: [lindex $jsonNormalized 0]"
+            #foreach {k v} [lindex $jsonNormalized 0] {
+            #    puts "$k -> $v"
+            #}
+            #return [split $jsonNormalized]
+            return [lindex $jsonNormalized 0]
+        }
+
 
     }
 }
