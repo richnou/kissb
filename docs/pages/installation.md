@@ -1,7 +1,7 @@
 # Installation
 
 - **Current Version:** {{ latest_dev_release() }}
-- **Latest Docker image push:** {{ latest_docker_push() }}
+- **Latest Docker image push (dev):** {{ latest_docker_push() }} , [https://hub.docker.com/r/rleys/kissb](https://hub.docker.com/r/rleys/kissb) { target=_blank }
 
 ## Wrapper Script 
 
@@ -76,7 +76,7 @@ export PATH="~/.kissb/dist/current/bin:$PATH"
 You can use our docker image to run kissb quickly, by running the image and mapping the current folder to the container's /cwd folder.
 For example, setup an alias in your terminal to run the image with your user id:
 
-> alias kissb="docker run -v .:/cwd -u $(id -u ${USER}) --rm -it rleys/kissb:latest"
+> alias kissb="docker run -v .:/cwd -u $(id -u ${USER}) --rm -it rleys/kissb:dev"
 
 The following image tags are recommended: *latest* for the latest release, and *dev* for the most up to date version.
 
