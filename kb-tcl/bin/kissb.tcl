@@ -45,9 +45,12 @@ set ::BASE [pwd]
 set targets {}
 set args {}
 set checkVersion false
+set stopArgs false
 foreach arg $argv {
     
-    if {$arg == "--refresh"} {
+    if {$stopArgs} {
+        lappend args $arg
+    } elseif {$arg == "--refresh"} {
         env KB_REFRESH 1
         env KB_REFRESH_ALL 1
     } elseif {[string match "--refresh-*" $arg]} {
@@ -58,6 +61,9 @@ foreach arg $argv {
         log.set.level DEBUG
     } elseif {$arg == "--update"} {
         set checkVersion true
+    } elseif {$arg == "--"} {
+        # -- means stopping argument processing, all remaining args are added to the args variable to be passed to the targets
+        set stopArgs true
     } elseif {[string match -* $arg] || ([file exists $arg] && [llength $targets]>0)} {
         lappend args $arg
     } else {
@@ -121,8 +127,8 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
             if {[llength $cmd]>1} {
                 set cmdArgs [lrange $cmd 1 end]
             }
-            log.info "Running command $cmd: bin=$bin, args=$cmdArgs"
-            $bin {*}$cmdArgs
+            log.info "Running command $cmd: bin=$bin, args=$cmdArgs $args"
+            $bin {*}$cmdArgs {*}$args
 
         } elseif {[file exists $target] && ![file isdirectory $target]} {
 
