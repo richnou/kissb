@@ -128,11 +128,14 @@ namespace eval kiss::terminal {
 
         ## Env
         ###########
-        withEnv {envDict args} {
 
+        ## Env dict format: {VARNAME {merge 0/1 value VAL}}
+        withEnv {envDict args} {
+            
             ## Update env
             set envBackup [dict create]
             dict for {name spec} $envDict {
+                
                 ## Save env var value before merging or updating
                 set currentEnvVal ""
                 if {[llength [array get ::env $name]]!=0} {
@@ -152,7 +155,7 @@ namespace eval kiss::terminal {
 
             ## run 
             try {
-                #puts "ENV: $::env(PATH)"
+                log.debug "PATH= $::env(PATH)"
                 if {[llength $args]>1} {
                     uplevel [list {*}$args]
                 } elseif {[llength $args]==1} {
