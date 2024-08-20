@@ -3,27 +3,118 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.nodejs 1.0
+package require kissb.json
 
 namespace eval nodejs {
     
+    set version [vars.set nodejs.version 20.16.0]
 
-    proc run args {
-    
-        kiss::terminal::execIn [pwd] nodejs {*}$args
-    
+    kiss::toolchain::register nodejs {
+
+        set _version [vars.get nodejs.version]
+        files.inDirectory $toolchainFolder/ {
+
+            if {[os.isLinux64]} {
+                
+                log.info "Downloading NodeJS to: [pwd]"
+                
+                set archiveBaseName node-v${_version}-linux-x64
+                set archiveName ${archiveBaseName}.tar.xz
+
+                # If npm is not detected, we need to install
+                files.require $archiveBaseName/bin/npm {
+                    # Download and extract
+                    files.download          https://nodejs.org/dist/v${_version}/$archiveName
+                    files.extractAndDelete  $archiveName
+                }
+                
+                # Save env for later command running
+                vars.set nodejs.env [dict create PATH [list value $toolchainFolder/$archiveBaseName/bin merge 1 ]]
+
+            } else {
+                log.error "NodeJS Toolchain Download only supported on Linux64"
+            }
+            
+        }
+
+        
     }
 
     kissb.extension node {
+
+        init args {
+            kiss::toolchain::init nodejs
+        }
+
+        withEnv script {
+            uplevel [list exec.withEnv [vars.get nodejs.env] $script]
+        }
+
         run args {
-            exec.run nodejs {*}$args
+            #log.info "Node ENV: [lindex [vars.get nodejs.env] 0]"
+            #set nenv [vars.get nodejs.env]
+
+            #exec.withEnv $nenv {
+            #    exec.run node {*}$args
+            #}
+
+            node.withEnv {
+                exec.run node {*}$args
+            }
+            
         }
     }
 
     kissb.extension npm {
 
         install args {
-            npm::install $args
+            make package-lock.json < package.json {
+                log.info "Updating Packages..."
+                npm.exec i
+                #node.withEnv { exec.run npm i }
+            }
         }
+
+        exec args {
+            node.withEnv [list exec.run npm {*}$args ]
+        }
+
+        run args {
+            npm.exec run {*}$args
+        }
+
+        ## Checks a package is defined in package file, and is installed
+        package.present {name {version ""} args} {
+            log.info "Ensuring ${name}:${version} is defined "
+            set packageJson [json.readAsList package.json]
+            #puts $packageJson
+
+            if {[dict exists $packageJson dependencies $name]} {
+                log.info "- Actual version: [dict get $packageJson dependencies $name]"
+            }
+
+            if {[dict exists $packageJson dependencies $name] && ([string match "${version}*" [dict get $packageJson dependencies $name]] || $version=="")} {
+                return true
+            } else {
+                # install
+                log.info "- Installing"
+                if {$version==""} {
+                    npm.exec i --save $name
+                } else {
+                    npm.exec i --save $name@$version
+                }
+                
+            }
+            #puts "Nuxt v: [dict get $packageJson dependencies nuxt2]"
+        }
+    }
+
+    kissb.extension npx {
+
+        run args {
+            node.withEnv [list exec.run npx {*}$args ]
+        }
+
     }
 }
 
