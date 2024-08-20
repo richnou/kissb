@@ -194,6 +194,13 @@ namespace eval kiss::files {
                 files.unzip $f {*}$args
             }
         }
+        extractAndDelete {f args} {
+            try {
+                files.extract $f
+            } finally {
+                files.delete $f
+            }
+        }
 
         ## Files writer
         withWriter {outPath script} {
@@ -224,6 +231,20 @@ namespace eval kiss::files {
         ## Globbing
         globFiles args {
             return [join [lmap pattern $args {lsort [glob -nocomplain -type f $pattern]}]]
+        }
+
+        ## Permissions
+        isExecutable f {
+            if {[os.isLinux]} {
+                exec.call stat -c %A someFile
+            }
+        }
+        makeExecutable f {
+            if {[os.isLinux]} {
+                exec.run chmod +x $f
+            } else {
+                log.error "only supported on linux"
+            }
         }
     }
 
