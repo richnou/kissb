@@ -47,3 +47,11 @@ package ifneeded kissb.scala                1.0 [list source $dir/java/scala/sca
 package ifneeded kissb.proguard             1.0 [list source $dir/java/proguard/proguard.plugin.kb]
 
 package ifneeded kissb.quarkus              1.0 [list source $dir/java/quarkus/quarkus.plugin.kb]
+
+## Native
+###############
+package ifneeded kissb.rust 1.0 [list source $dir/native/rust/rust.plugin.tcl ]
+
+## UI Frameworks
+#############
+package ifneeded kissb.tauri 1.0 [list source $dir/tauri/tauri.plugin.tcl]
