@@ -66,14 +66,14 @@ kissb.extension kissb {
 kissb.extension vars {
 
     set {name args} {
-        ::kiss::vars::set $name $args
+        ::kiss::vars::set $name {*}$args
+        return [vars.get $name]
     }
 
     append {name args} {
         foreach v $args {
              ::kiss::vars::append $name $v
         }
-       
     }
 
     get {name {v ""}} {
@@ -178,5 +178,52 @@ kissb.extension assert {
         if {![file isfile $path]} {
             error "File doesn't exist:$path , $msg"
         }
+    }
+}
+
+
+#####################
+## OS
+######################
+
+kissb.extension os {
+
+    isWindows  args {
+        if {$::tcl_platform(platform)=="windows"} {
+            return true 
+        } else {
+            return false
+        } 
+    }
+    isWindows64  args {
+        if {$::tcl_platform(platform)=="windows" && $::tcl_platform(machine) == "amd64"} {
+            return true 
+        } else {
+            return false
+        } 
+    }
+
+    isLinux  args {
+        if {$::tcl_platform(platform)=="unix"} {
+            return true 
+        } else {
+            return false
+        } 
+    }
+
+    isLinux64  args {
+        if {$::tcl_platform(platform)=="unix" && $::tcl_platform(machine) == "x86_64"} {
+            return true 
+        } else {
+            return false
+        } 
+    }
+
+    isLinuxWSL  args {
+        if {$::tcl_platform(platform)=="unix" && [string match *WSL2* [exec uname -a]]} {
+            return true 
+        } else {
+            return false
+        } 
     }
 }
