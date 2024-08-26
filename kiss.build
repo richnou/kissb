@@ -9,7 +9,6 @@ rclone.init
 set version [env CI_VERSION [clock format [clock seconds] -format %Y%m%d]]02
 set track   [env CI_TRACK   dev]
 
-files.writeText "test.out" "Hi"
 
 
 @ reuse {
@@ -18,11 +17,13 @@ files.writeText "test.out" "Hi"
 
     reuse.init
 
-    reuse.download GPL-3.0-or-later
-
+    reuse.download Apache-2.0 -github
     
-    reuse.annotate.globs {kb-tcl/**/*.tcl kb-tcl/**/**/*.tcl kb-tcl/**/*.kb kb-tcl/**/**/*.kb} --style python -c "KISSB 2024" --merge-copyrights -l GPL-3.0-or-later
 
+    kissb.args.contains -headers {
+        reuse.annotate.globs {kb-tcl/**/*.tcl kb-tcl/**/**/*.tcl kb-tcl/**/*.kb kb-tcl/**/**/*.kb} --style python -c "KISSB" --merge-copyrights -l Apache-2.0
+    }
+    
 }
 
 @ certs {
@@ -95,7 +96,7 @@ files.writeText "test.out" "Hi"
 
     ## Push to S3 - push the install script alone
     ########
-    kissb.args.contains -s3 {
+    kissb.args.contains -push {
         rclone.run copy --s3-acl=public-read $base/dist-${::version}.zip ovhs3:kissb/kissb/dev/
 
         ## Push file
@@ -174,7 +175,7 @@ files.writeText "test.out" "Hi"
         files.cp $resultKit ${startKitName}
         
 
-        kissb.args.contains -s3 {
+        kissb.args.contains -push {
             rclone.run copy --s3-acl=public-read ${startKitName}.exe ovhs3:kissb/kissb/dev/
             rclone.run copy --s3-acl=public-read ${startKitName} ovhs3:kissb/kissb/dev/
         }
