@@ -13,7 +13,9 @@ namespace eval kiss::terminal {
         file mkdir $folder
         cd $folder 
         try {
-            return [exec {*}${args} >@ stdout 2>@ stdout]
+            #<@ stdin
+            #puts "Exec: {*}${args}"
+            return [exec {*}${args} >@ stdout 2>@ stderr <@ stdin ] 
         } on error e {
             #log.error "Error running command $args ($e)"
             throw e "Error running command $args ($e)"
