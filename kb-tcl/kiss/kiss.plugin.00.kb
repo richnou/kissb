@@ -146,6 +146,11 @@ namespace eval kiss {
             dict set kiss::vars::_vars $name $v
             ::set ::${name} $v
         }
+        proc define {name v} {
+            if {![dict exists $kiss::vars::_vars $name]} {
+                kiss::vars::set $name $v
+            }
+        }
         proc get {name {default ""}} {
             if {[dict exists $kiss::vars::_vars $name]} {
                 return [dict get $kiss::vars::_vars $name]
@@ -324,9 +329,9 @@ namespace eval kiss {
 
                 if {[llength $sources] == 0} {
                     log.warn "No sources found in $path for module $module"
-                } else {
-                    dict lappend kiss::sources::src $module $path $sources
-                }
+                } 
+                dict lappend kiss::sources::src $module $path $sources
+                
             }
 
 
@@ -465,11 +470,13 @@ namespace eval kiss {
 
         proc resolveDeps {module classifier} {
             set currentDeps [getDeps $module]
-
+            log.debug "Resolve deps for $module, return $classifier for $currentDeps"
             set res {}
             foreach {name resolutionDict} $currentDeps {
                 dict with resolutionDict {
-                    if {$resolved!=false} {
+                    if {[dict exists $resolutionDict $classifier]} {
+                            lappend res [dict get $resolutionDict $classifier]
+                    } elseif {$resolved!=false} {
                         dict for {resolvedSpec resolvedDict} $resolved {
                             if {[dict exists $resolvedDict $classifier]} {
                                 lappend res [dict get $resolvedDict $classifier]
@@ -478,7 +485,6 @@ namespace eval kiss {
                                 #string cat ""
                             }
                         }
-                       
                     }
                 }
 
