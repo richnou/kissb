@@ -2,6 +2,25 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+
+############################
+## Modules
+##############################
+kissb.extension kissb {
+
+    module.path path {
+        
+        set path [file normalize $path]
+        if {![file exists $path]} {
+            log.warn "module.path $path doesn't not exist"
+        } elseif {[file exists $path/pkgIndex.tcl]} {
+            set dir $path
+            source $path/pkgIndex.tcl
+        }
+        #lappend kiss::packages::modulepaths $path
+    }
+
+}
 ############################
 ## Core extension -> language
 ##############################
@@ -65,9 +84,23 @@ kissb.extension kissb {
 ##############################
 kissb.extension vars {
 
+    define {name args} {
+        ::kiss::vars::define $name {*}$args
+        return [vars.get $name]
+    }
+
     set {name args} {
         ::kiss::vars::set $name {*}$args
         return [vars.get $name]
+    }
+
+    ## This method will set the var if not set
+    ensure {name args} {
+        if {![vars.exists $name]} {
+            return [vars.set $name {*}$args]
+        } else {
+            return [vars.get $name]
+        }
     }
 
     append {name args} {
