@@ -90,8 +90,18 @@ namespace eval python3 {
                 set res false
             }
 
-            ## run script 
-            uplevel [list eval [lindex $args end]]
+            ## run script
+            if {$res==true || [refresh.is VENV] } {
+                uplevel [list eval [lindex $args end]]
+            }
+
+            ## Requirements
+            make $python3::venvPath/kissb.requirements.timestamp < requirements.txt {
+                python3.venv.install.requirements requirements.txt
+                files.writeText $python3::venvPath/kissb.requirements.timestamp DONE
+                
+            }
+            
             return $res 
         }
 
