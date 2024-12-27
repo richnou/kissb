@@ -1,0 +1,92 @@
+package provide kissb.i18n 1.0
+package require kissb.files
+
+namespace eval kissb::i18n {
+
+    proc normalizeList {translations {prefix ""}} {
+    
+        set res {}
+        foreach {key maps} $translations {
+            #log.info "I18N key $key -> $maps"
+            if {[string index $key end]=="/"} {
+                log.info "-Normalizing group $key"
+                set normalizedgroup  [kissb::i18n::normalizeList $maps $prefix$key]
+                #log.info "- normallized keys: $normalizedgroup"
+                #lappend res [list $key [concat $res [kissb::i18n::normalizeList $maps $key]]]
+                #lappend res $normalizedgroup
+                set res [concat $res $normalizedgroup]
+            } else {
+                
+                # maps contains locales
+                lappend res  [string map {/ _ . _} $prefix$key] $maps
+            }
+        }
+
+        return $res
+    }
+
+    kissb.extension i18n {
+
+
+        generateCompose {translations defaultLocale basePath suffix} {
+            
+            #puts "Base: $translations"
+            set normalizedList [kissb::i18n::normalizeList $translations]
+            #puts "Translated: $normalizedList"
+            set localeFiles [dict create]
+            foreach {key translations} $normalizedList {
+                log.info "Compose: Key: $key"
+                foreach {locale value} $translations {
+
+                    ## if locale ends with "+" it is a plural variant, remove + from locale ID
+                    set plural false
+                    #if {![string is alnum $value] && [llength $value]>1} {
+                    #    set plural true
+                    #}
+                    #puts "$value , plural=$plural, [string is list $value] , [llength $value]"
+                    if {[string index $locale end]=="+"} {
+                        set locale [string range $locale 0 end-1]
+                        set plural true
+                    }
+
+                    ## Check folder for locale is present
+                    set targetFolder ""
+                    if {$defaultLocale==$locale} {
+                        files.mkdir $basePath/values
+                        set targetFolder $basePath/values
+                    } else {
+                        files.mkdir $basePath/values-$locale
+                        set targetFolder $basePath/values-$locale
+                    }
+                    
+                    # Create stream for locale
+                    if {![dict exists $localeFiles $locale]} {
+                        set stringsFile $targetFolder/strings${suffix}.xml
+                        log.info "Opening $stringsFile to put values"
+                        set o [open $targetFolder/strings${suffix}.xml w+] 
+                        dict append localeFiles $locale $o
+                        puts $o "<resources>"
+                    }
+
+                    # Write to resources
+                    if {$plural} {
+                        puts [dict get $localeFiles $locale] "    <plurals name=\"$key\">"
+                        puts [dict get $localeFiles $locale] "        <item quantity=\"one\">[lindex $value 0]</item>"
+                        puts [dict get $localeFiles $locale] "        <item quantity=\"other\">[lindex $value 1]</item>"
+                        puts [dict get $localeFiles $locale] "    </plurals>"
+                    } else {
+                        puts [dict get $localeFiles $locale] "    <string name=\"$key\">$value</string>"
+                    }
+                    
+                }
+            }
+
+            # Close files
+            foreach {locale stream} $localeFiles {
+                puts $stream "</resources>"
+                close $stream
+            }
+        }
+    }
+
+}

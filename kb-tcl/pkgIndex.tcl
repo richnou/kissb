@@ -3,6 +3,9 @@ package ifneeded kissb                      1.0 [list foreach f [concat [lsort [
 package ifneeded kissb.internal.update      1.0 [list source $dir/kiss/kiss.update.tcl]
 package ifneeded kissb.internal.tls         1.0 [list source $dir/kiss/kiss.tls.tcl]
 
+
+package ifneeded kissb.i18n                 1.0 [list source $dir/i18n/i18n.plugin.kb]
+
 package ifneeded kissb.git                  1.0 [list source $dir/git/git.plugin.kb]
 
 package ifneeded kissb.liquibase            1.0 [list source $dir/liquibase/liquibase.plugin.kb]
