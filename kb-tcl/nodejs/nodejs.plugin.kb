@@ -7,7 +7,8 @@ package require kissb.json
 
 namespace eval nodejs {
     
-    set version [vars.set nodejs.version 20.16.0]
+    # Default: current LTS
+    set version [vars.set nodejs.version 22.12.0]
 
     kiss::toolchain::register nodejs {
 
