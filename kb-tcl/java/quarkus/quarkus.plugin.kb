@@ -9,18 +9,20 @@ package require kissb.maven
 
 namespace eval quarkus {
 
-    set version 3.13.0
+    set version 3.17.0
     set cliJar ""
     set cliCP ""
 
     kiss::toolchain::register quarkus {
 
         ## Get Classpth for quarkus CLI cached
+        set qv [vars.get quarkus.version]
+        log.info "Quarkus version: $qv"
         refresh.with QUARKUS {
-            files.delete quarkus/cli-cp-${quarkus::version}.txt
+            files.delete quarkus/cli-cp-${qv}.txt
         }
-        kissb.cached.fileOrElse quarkus/cli-cp-${quarkus::version}.txt -> ::quarkus::cliCP {
-            kissb.cached.writeFile quarkus/cli-cp-${quarkus::version}.txt [join [coursier.fetch.classpath.of io.quarkus:quarkus-cli:$quarkus::version  runner jar]]
+        kissb.cached.fileOrElse quarkus/cli-cp-${qv}.txt -> ::quarkus::cliCP {
+            kissb.cached.writeFile quarkus/cli-cp-${qv}.txt [join [coursier.fetch.classpath.of io.quarkus:quarkus-cli:$qv  runner jar]]
         }
 
         ## OLD
@@ -32,7 +34,7 @@ namespace eval quarkus {
 
         set ::quarkus::cliCP [coursier.fetch.classpath.of io.quarkus:quarkus-cli:$quarkus::version runner jar]
 
-        log.info "Quarkus version: $quarkus::version"
+        
         files.inDirectory $toolchainFolder/$quarkus::version {
 
             # 
@@ -42,10 +44,11 @@ namespace eval quarkus {
     kissb.extension quarkus {
 
         init args {
-            coursier.init 
+            coursier.init
+            vars.ensure quarkus.version ${quarkus::version}
             kiss::toolchain::init quarkus
             kiss::toolchain::init maven-wrapper
-            vars.set quarkus.version ${quarkus::version}
+            
         }
 
         run args {
