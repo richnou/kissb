@@ -237,6 +237,10 @@ namespace eval coursier {
             return [exec.call ${coursier::binPath} setup {*}$args]
         }
 
+        resolve module {
+            coursier::resolveModule $module
+        }
+
         fetch.classpath.of {dep {classifier ""} {type ""} args} {
 
             if {$classifier!=""} {
