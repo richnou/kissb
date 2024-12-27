@@ -6,7 +6,7 @@ package require kissb.builder.rclone
 
 rclone.init
 
-set version [env CI_VERSION [clock format [clock seconds] -format %Y%m%d]]02
+set version [env CI_VERSION [clock format [clock seconds] -format %Y%m%d]]01
 set track   [env CI_TRACK   dev]
 
 
