@@ -85,7 +85,7 @@ namespace eval kotlin::maven {
 
             ## Add Kotlin
             files.appendLine $o <properties>
-            files.appendLine $o "    <kotlin.version>2.0.0</kotlin.version>"
+            files.appendLine $o "    <kotlin.version>[vars.resolve kotlin.version]</kotlin.version>"
             files.appendLine $o "    <kotlin.compiler.jvmTarget>[kiss::vars::get jvm.target]</kotlin.compiler.jvmTarget>"
             files.appendLine $o "    <maven.compiler.source>[kiss::vars::get jvm.source]</maven.compiler.source>"
             files.appendLine $o "    <maven.compiler.target>[kiss::vars::get jvm.target]</maven.compiler.target>"
@@ -123,6 +123,7 @@ namespace eval kotlin::maven {
 
             ## Add Dependencies
             files.appendLine $o <dependencies>
+            
             foreach dep [kiss::dependencies::resolveDeps main spec] {
                 files.appendLine $o <dependency>
 

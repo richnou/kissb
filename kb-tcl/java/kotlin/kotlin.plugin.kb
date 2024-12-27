@@ -11,7 +11,9 @@ namespace eval kotlin {
     set baseBuildFolder ".kb/build/kotlin"
     #set baseBuildFolder ".kb/build/kotlin"
 
-    set kotlinVersion "2.0.0"
+    #set kotlinVersion "2.0.0"
+
+    vars.define kotlin.version 2.1.0
 
     proc _buildirForModule module {
         return [kiss::vars::get kotlin.compiler.buildDir]/$module/classes
@@ -19,10 +21,7 @@ namespace eval kotlin {
 
     proc init module {
 
-        kotlin.dependencies.add $module org.jetbrains.kotlin:kotlin-stdlib:${kotlin::kotlinVersion}
-        #coursier::fetchAll $module {
-        #    + org.jetbrains.kotlin:kotlin-stdlib:${kotlin::kotlinVersion}
-        #}
+        kotlin.dependencies.add $module org.jetbrains.kotlin:kotlin-stdlib:[vars.resolve kotlin.version]
     }
 
     proc compile module {
@@ -136,7 +135,7 @@ namespace eval kotlin {
         kiss::vars::append kotlin.compiler.args -language-version 2.0
         kiss::vars::append kotlin.compiler.args -Xenable-incremental-compilation
 
-        kiss::vars::set kotlin.version ${kotlin::kotlinVersion}
+        #kiss::vars::set kotlin.version ${kotlin::kotlinVersion}
 
         ## Set JVM target/source from java
         kiss::vars::set jvm.target 1.8
