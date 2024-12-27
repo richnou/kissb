@@ -75,12 +75,10 @@ foreach arg $argv {
 if {$checkVersion} {
     package require kissb.internal.update
     kissb::internal::update::run
-    #source [file dirname [info script]]/update_check.tcl
+   
 }
 
-#foreach {n v} [array get ::env] {
-#    puts "-env $n -> $v"
-#}
+
 
 try {
 
@@ -97,10 +95,21 @@ foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tc
 }
 
 ## Load local Kiss build
+set foundLocalBuildFile false
 foreach buildFile {kiss.build kissb.build.tcl kiss.build.tcl build.tcl} {
     if {[file exists $buildFile]} {
         source $buildFile  
         break
+    }
+}
+
+set targetStack tcl
+if {!$foundLocalBuildFile} {
+    log.warn "No Local build file, trying to load stack"
+    if {[llength [glob -type f -nocomplain *.py ]]>0} {
+        log.success "Loading Python Stack"
+        package require kissb.python3
+        set targetStack python
     }
 }
 #source kiss.kb
@@ -132,8 +141,23 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
 
         } elseif {[file exists $target] && ![file isdirectory $target]} {
 
-            # Run Target
-            source $target
+            # Provided Target is a file
+            if {$targetStack=="tcl"} {
+                source $target
+            } else {
+                python3.venv.init
+                if {[file exists ../python]} {
+                    log.warn "Adding folder ../python to python path"
+                    exec.withEnv {PYTHONPATH {merge 1 value ../python/}} {
+                        python3.venv.run.script $target {*}$args
+                    }
+
+                } else {
+                    python3.venv.run.script $target {*}$args
+                }
+                  
+            }
+            
 
         } elseif {[string range $target 0 0]!="-"} {
 
