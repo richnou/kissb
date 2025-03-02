@@ -15,7 +15,9 @@ set buildImage verilator-rhel8-builder:latest
 
 @ all {
 
-    set buildBranches {master stable detach:v5.024 detach:v5.022 detach:v5.020 detach:v4.228}
+    #set buildBranches {master stable detach:v5.024 detach:v5.022 detach:v5.020 detach:v4.228}
+    set buildBranches {master stable detach:v5.032 detach:v5.030 detach:v5.028 detach:v5.026 }
+    
     #
     files.mkdir build
 
@@ -39,7 +41,7 @@ set buildImage verilator-rhel8-builder:latest
 
             # Build in docker image
             files.require $outputDirectory/bin/verilator {
-                docker.run.script $buildImage {
+                docker.run.script $::buildImage {
                     cd /build
                     autoconf
                     ./configure --prefix=/build/install

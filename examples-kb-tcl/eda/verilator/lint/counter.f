@@ -1,0 +1,1 @@
+${::PWD}/counter.sv

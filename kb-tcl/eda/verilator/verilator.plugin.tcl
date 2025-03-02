@@ -2,30 +2,54 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-package provide kissb.verilator 1.0
+package provide kissb.eda.verilator 1.0
+package require kissb.eda.f 
 
 namespace eval verilator {
 
     set runtime "local"
     set version  "v5.024"
+
+    vars.set verilator.version "v5.024"
+
+    kissb.packages.handler kissb.eda.verilator.local {
+
+        log.info "Setting Local Verilator to version $version"
+        if {![string match v* $version]} {
+            set version v$version
+        }
+        vars.set verilator.version $version
+        verilator.runtime.local
+
+    }
+    
+    kissb.packages.handler kissb.eda.verilator.docker {
+
+        log.info "Setting Docker Verilator to version $version"
+        if {![string match v* $version]} {
+            set version v$version
+        }
+        vars.set verilator.version $version
+        verilator.runtime.docker
+
+    }
     
     kiss::toolchain::register kissb-verilator {
 
+        set vVersion [vars.resolve verilator.version]
+
         if {${verilator::runtime}=="local"} {
-            set ::verilator::tcFolder $toolchainFolder/verilator-${verilator::version}
+            set ::verilator::tcFolder $toolchainFolder/verilator-${vVersion}
             files.require ${::verilator::tcFolder}/bin/verilator {
                 files.inDirectory $toolchainFolder {
-                    files.download https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-${verilator::version}.zip
-                    files.extract verilator-${verilator::version}.zip
-                    files.delete verilator-${verilator::version}.zip
+                    files.download https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-${vVersion}.zip
+                    files.extract verilator-${vVersion}.zip
+                    files.delete verilator-${vVersion}.zip
                 }
             }
             verilator.root ${::verilator::tcFolder}
 
         }
-
-        
-        
     }
 
     kissb.extension verilator {
@@ -98,6 +122,10 @@ namespace eval verilator {
             
         }
 
+        lint args {
+            #-f $fFile
+            verilator.verilate {*}$args  --lint-only --no-decoration 
+        }
         
         image.run script {
             docker.run.script verilator/verilator:${verilator::version} -e CCACHE_DIR=/work/.ccache $script 

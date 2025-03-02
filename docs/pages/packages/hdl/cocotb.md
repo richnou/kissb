@@ -28,7 +28,7 @@ The KISSB CoCotb Package installs cocotb using a python virtual environment, and
 
     ~~~~tcl
 
-    package require kissb.cocotb
+    package require kissb.eda.cocotb
 
     # Init Cocotb and select verilator
     cocotb.init 
@@ -107,7 +107,7 @@ INFO.cocotb Run args: --trace
 
 To refresh the cocotb installation and check for updates:
 
-    $ kissb --refresh-cocotb
+    $ kissb --refresh-cocotb (or --refresh to refresh everything)
 
 ## Application Requirements
 

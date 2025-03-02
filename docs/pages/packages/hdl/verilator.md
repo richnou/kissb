@@ -17,10 +17,11 @@ tags:
 
 
 ## Initialisation 
+
 To use verilator, load the **kissb.verilator** package in your build file: 
 
 ~~~tcl 
-package require kissb.verilator
+package require kissb.eda.verilator
 ~~~
 
 Then you can init the toolchain:
@@ -30,6 +31,21 @@ verilator.init
 ~~~
 
 The default runtime will be a pre-build binary downloaded to the toolchain folders.
+
+## Specifying Verilator version
+
+To quickly load the verilator runtime at a specific version, you can load the following package:
+
+~~~tcl 
+# This package downloads a local binary version of verilator
+package require kissb.eda.verilator.local VERSION
+
+# For example:
+package require kissb.eda.verilator.local 5.032
+
+# To use the official verilator docker image
+package require kissb.eda.verilator.docker 5.032
+~~~
 
 ## Compilation
 

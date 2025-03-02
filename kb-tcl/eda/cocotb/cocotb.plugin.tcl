@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-package provide kissb.cocotb 1.0
+package provide kissb.eda.cocotb 1.0
 package require kissb.python3
 
 namespace eval cocotb {
