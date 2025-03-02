@@ -26,10 +26,11 @@ package ifneeded kissb.tclkit               1.0 [list source $dir/tclkit/tclkit.
 package ifneeded kissb.reuse               1.0 [list source $dir/licensing/reuse.plugin.tcl]
 
 
-## HDL Packages 
+## EDA Packages 
 ####################
-package ifneeded kissb.cocotb               1.0 [list source $dir/hdl/cocotb/cocotb.plugin.tcl] 
-package ifneeded kissb.verilator            1.0 [list source $dir/hdl/verilator/verilator.plugin.tcl] 
+package ifneeded kissb.eda.f                1.0 [list source $dir/eda/eda.f.plugin.tcl] 
+package ifneeded kissb.eda.cocotb           1.0 [list source $dir/eda/cocotb/cocotb.plugin.tcl] 
+package ifneeded kissb.eda.verilator        1.0 [list source $dir/eda/verilator/verilator.plugin.tcl] 
 
 ## Java and JEE Packages
 #####################

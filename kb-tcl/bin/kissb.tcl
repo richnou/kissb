@@ -37,6 +37,7 @@ if {[file exists $gitRoot]} {
 
 
 set ::BASE [pwd]
+set ::PWD [pwd]
 
 ## Process Arguments
 ##############
@@ -98,6 +99,7 @@ foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tc
 set foundLocalBuildFile false
 foreach buildFile {kiss.build kissb.build.tcl kiss.build.tcl build.tcl} {
     if {[file exists $buildFile]} {
+        set foundLocalBuildFile true
         source $buildFile  
         break
     }
@@ -120,7 +122,7 @@ if {!$foundLocalBuildFile} {
 if {[llength $targets] == 0 && [llength $args] == 0 } {
     log.warn "No build target or command provided"
     foreach target [kiss::targets::listTargets] {
-        puts "- $target"
+        puts "- $target - [kiss::targets::getDoc $target]"
     }
 } elseif {[llength $targets]>0} {
     

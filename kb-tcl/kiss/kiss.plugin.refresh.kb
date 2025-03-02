@@ -10,7 +10,7 @@ namespace eval kissb::refresh {
     kissb.extension refresh {
 
         is name {
-            if {[env.isDefined KB_REFRESH_[string toupper $name]]} {
+            if {[env.isDefined KB_REFRESH_[string toupper $name]] || [env.isDefined KB_REFRESH_ALL] } {
                 return true
             } else {
                 return false 

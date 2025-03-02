@@ -6,12 +6,34 @@ package provide kiss.packages 1.0
 
 
 namespace eval kiss::packages {
+ 
 
+    set modulepaths {}
+
+    set extrahandlers [dict create]
+    
+    kissb.extension kissb.packages {
+
+        handler {name script} {
+            dict set kiss::packages::extrahandlers $name $script
+        }
+    }
 
     ## Common Package resolution if a package is not found
     ##############
     proc ::kissb_search {name version} {
         log.info "Searching for Package $name"
+
+        ## Load extra module paths
+        #foreach mp ${kiss::packages::modulepaths} {
+        #    log.info "Loading index at $mp"
+        #    if {[file exists $mp/pkgIndex.tcl]} {
+        #        set dir $mp
+        #        source $mp/pkgIndex.tcl
+        #       set reloaded [catch {package require $name $version}]
+        #    }
+        #}
+
         if {[string match flow::* $name]} {
             
             set flowFile $::kissDir/flows/[string map {flow:: "" + _} $name].flow.tcl
@@ -42,6 +64,11 @@ namespace eval kiss::packages {
                 }
                 package provide $name 0
             }
+        } elseif {[dict exists $kiss::packages::extrahandlers $name]} {
+            # If a handler for the package name is provided, call it
+            package provide $name $version
+            eval [dict get $kiss::packages::extrahandlers $name]
+
         }
     }
     package unknown ::kissb_search

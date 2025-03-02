@@ -182,6 +182,15 @@ namespace eval kiss {
 
         proc @ {name args} {
             log.fine "Registering target $name, size of args=[llength $args]"
+
+            # Split Name from doc
+            set targetName [lindex $name 0]
+            set targetDoc ""
+            if {[llength $name] > 1} {
+                set targetDoc [lindex $name 1]
+            }
+            #puts "target $name doc: $targetDoc"
+ 
             set script [lindex $args end]
             #log.info "Script is: $script"
             set reqTargets {}
@@ -195,7 +204,7 @@ namespace eval kiss {
                 }
             } 
             #dict append kiss::targets::_targets $name {*}$args
-            dict lappend kiss::targets::_targets $name $reqTargets $script 
+            dict lappend kiss::targets::_targets $targetName $reqTargets $targetDoc $script 
         }
 
         proc listTargets args {
@@ -207,6 +216,13 @@ namespace eval kiss {
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent end]
         }
+
+        proc getDoc target {
+            set targetcontent [dict get $::kiss::targets::_targets $target]
+            #log.info "Returning $target script: [lindex $targetcontent end]"
+            return [lindex $targetcontent 1]
+        }
+
         proc getRequiredTargets target {
             set targetcontent [dict get $::kiss::targets::_targets $target]
             #log.info "Returning $target script: [lindex $targetcontent end]"

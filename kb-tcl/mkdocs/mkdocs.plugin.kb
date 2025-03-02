@@ -32,7 +32,7 @@ namespace eval mkdocs {
             if {[file exists [pwd]/requirements.txt]} {
                 lappend reqFiles [file normalize [pwd]/requirements.txt]
             }
-            python3.venv.install.requirements $reqFiles
+            python3.venv.install.requirements {*}$reqFiles
         }
 
         ## Ensure build directory

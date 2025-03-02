@@ -10,17 +10,17 @@ mkdocs::init -kissv1
 
 
 
-@ configure {
+@ {configure "Run Netlify Configure command to link site"} {
 
 }
-@ build {
+@ {build "Build Mkdoc site and zip it"} {
     mkdocs::build -zip
 }
-@ serve {
+@ {serve "Run mkdocs development server"} {
     mkdocs::serve
 }
 
-@ deploy {
+@ {deploy "Builds the site and deploys to netlify (in preview)"} {
     
     log.success "Deploying Site to netlify (args=$args)"
     
@@ -31,7 +31,7 @@ mkdocs::init -kissv1
     netlify::run deploy -d [mkdocs::buildFolder] {*}$args
 }
 
-@ deploy.prod {
+@ {deploy.prod "Runs the deploy target to production"} {
 
     > deploy --prod
 }

@@ -34,8 +34,11 @@ namespace eval netlify {
         exec.run $netlify::netlifyCliPath {*}$args
     }
 
-    #kissb.extension {
-    #
-    #}
+    kissb.extension netlify {
+        
+        run args {
+           exec.run $netlify::netlifyCliPath {*}$args 
+        }
+    }
 
 }
