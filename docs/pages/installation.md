@@ -1,7 +1,7 @@
 # Installation
 
 - **Current Version:** {{ latest_dev_release() }}
-- **Latest Docker image push (dev):** {{ latest_docker_push() }} , [https://hub.docker.com/r/rleys/kissb](https://hub.docker.com/r/rleys/kissb) { target=_blank }
+- **Latest Docker image push (dev):** {{ latest_docker_push() }} , <https://hub.docker.com/r/rleys/kissb>{ target=_blank }
 
 ## Wrapper Script 
 
