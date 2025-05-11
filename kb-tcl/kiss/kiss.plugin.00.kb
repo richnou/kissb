@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb 1.0
-package require Tclx
+
 
 namespace eval kiss {
 
@@ -34,7 +34,7 @@ namespace eval kiss {
             if {[dict exists $callerFrame file]} {
                 set line [dict get $callerFrame line]
                 set file [dict get $callerFrame file]
-                dict set kiss::extensions::extensionsLocations $fqdn [list $file [expr $line-1]]
+                dict set ::kiss::extensions::extensionsLocations $fqdn [list $file [expr $line-1]]
             }
             
 
@@ -46,8 +46,8 @@ namespace eval kiss {
         }
 
         proc findLocationOf name {
-            if {[dict exists ${kiss::extensions::extensionsLocations} $name]} {
-                return [dict get ${kiss::extensions::extensionsLocations} $name]
+            if {[dict exists ${::kiss::extensions::extensionsLocations} $name]} {
+                return [dict get ${::kiss::extensions::extensionsLocations} $name]
             } else {
                 return false
             }
@@ -80,7 +80,7 @@ namespace eval kiss {
                     }
                     set line [dict get $callerFrame line]
                     set file [dict get $callerFrame file]
-                    dict set kiss::extensions::extensionsLocations $extName.$procName [list $file [expr $line+$fline-1]]
+                    dict set ::kiss::extensions::extensionsLocations $extName.$procName [list $file [expr $line+$fline-1]]
                     #puts "$extName.$procName is at: $file:[expr $line+$fline]"
                 }
                 
@@ -139,21 +139,9 @@ namespace eval kiss {
 
         set _vars [dict create]
 
-        proc append {name args} {
-            dict lappend kiss::vars::_vars $name {*}$args
-        }
-        proc set {name v} {
-            dict set kiss::vars::_vars $name $v
-            ::set ::${name} $v
-        }
-        proc define {name v} {
-            if {![dict exists $kiss::vars::_vars $name]} {
-                kiss::vars::set $name $v
-            }
-        }
         proc get {name {default ""}} {
-            if {[dict exists $kiss::vars::_vars $name]} {
-                return [dict get $kiss::vars::_vars $name]
+            if {[dict exists $::kiss::vars::_vars $name]} {
+                return [dict get $::kiss::vars::_vars $name value]
             } else {
                 return $default
             }
@@ -161,8 +149,53 @@ namespace eval kiss {
         }
 
         proc exists {name} {
-           return [dict exists $kiss::vars::_vars $name]
+           return [dict exists $::kiss::vars::_vars $name]
         }
+
+        proc append {name args} {
+            dict lappend ::kiss::vars::_vars $name {*}$args
+        }
+        proc set {name v} {
+            if {[dict exists $::kiss::vars::_vars $name]} {
+                dict set ::kiss::vars::_vars $name previous [get $name]
+            }
+            dict set ::kiss::vars::_vars $name value $v
+            ::set ::${name} $v
+        }
+        proc revert {name} {
+            if {[dict exists $::kiss::vars::_vars $name previous]} {
+                set $name [dict get $::kiss::vars::_vars $name previous]
+            }   
+        }
+        ## Define variable
+        proc define {name args} {
+
+          
+            if {[llength $args]>0  } {
+            
+                ::set defaultVal [lindex $args end]
+            }
+
+            # If env variable is defined, use as default value
+            ::set envName [string map {. _} [string toupper $name]]
+            if {[llength [array names ::env -exact $envName]]>0} {
+                ::set defaultVal $::env($envName)
+                log.info "Default value for $name from ENV $envName=$defaultVal"
+            }
+           
+            # Set in dictionarry if not set yet
+            if {![dict exists $::kiss::vars::_vars $name]} {
+                ::kiss::vars::set $name $defaultVal
+            }
+
+            # Take documentation
+            kissb.args.withValue -doc doc {
+                dict set ::kiss::vars::_vars $name doc $doc
+            }
+
+           
+        }
+        
 
 
         
@@ -174,7 +207,7 @@ namespace eval kiss {
     #############################
 
     proc ::@ {name args} {
-        kiss::targets::@ $name {*}$args
+       ::kiss::targets::@ $name {*}$args
     }
     namespace eval targets {
 
@@ -203,8 +236,8 @@ namespace eval kiss {
                     }
                 }
             } 
-            #dict append kiss::targets::_targets $name {*}$args
-            dict lappend kiss::targets::_targets $targetName $reqTargets $targetDoc $script 
+            #dict append::kiss::targets::_targets $name {*}$args
+            dict lappend ::kiss::targets::_targets $targetName $reqTargets $targetDoc $script 
         }
 
         proc listTargets args {
@@ -250,7 +283,7 @@ namespace eval kiss {
             set reqTargets [getRequiredTargets $target]
             
             foreach reqTarget $reqTargets {
-                uplevel #0 [list kiss::targets::run $reqTarget {*}$args]
+                uplevel #0 [list ::kiss::targets::run $reqTarget {*}$args]
             }
             #array set env [array get ::env]
             #if {[llength $args]>0} {
@@ -266,11 +299,19 @@ namespace eval kiss {
             #return [dict keys $::kiss::targets::_targets]
         }
 
+        # Call target without merging calling target args
         proc > {target args} {
+            log.info "Call target: $target with args=$args"
+            ::kiss::targets::run $target {*}$args
+            #uplevel #0 [list ::kiss::targets::run $target {*}$mergedArgs]
+        }
+
+        # Call target passing calling target args through
+        proc >> {target args} {
             set mergedArgs [concat $args [uplevel [list set args]]]
             log.info "Call target: $target with args=$mergedArgs"
-            kiss::targets::run $target {*}$mergedArgs
-            #uplevel #0 [list kiss::targets::run $target {*}$mergedArgs]
+            ::kiss::targets::run $target {*}$mergedArgs
+            #uplevel #0 [list ::kiss::targets::run $target {*}$mergedArgs]
         }
 
     }
@@ -290,16 +331,16 @@ namespace eval kiss {
         set globalInstallFolder $::env(HOME)/.kissb/toolchains
 
         proc register {name args} {
-            array set kiss::toolchain::tc [list $name {*}$args]
+            array set ::kiss::toolchain::tc [list $name {*}$args]
         }
 
         ## Init a toolchain of a given name
         ## The init closure is passed a $toolchainFolder variable pointing to a global folder so that scripts can share toolchain installations
         proc init {name} {
             
-            set toolchainFolder $kiss::toolchain::globalInstallFolder/$name
+            set toolchainFolder $::kiss::toolchain::globalInstallFolder/$name
             file mkdir $toolchainFolder
-            set script [lindex [array get  kiss::toolchain::tc $name] 1]
+            set script [lindex [array get  ::kiss::toolchain::tc $name] 1]
             return [eval $script]
         }
     }
@@ -346,28 +387,28 @@ namespace eval kiss {
                 if {[llength $sources] == 0} {
                     log.warn "No sources found in $path for module $module"
                 } 
-                dict lappend kiss::sources::src $module $path $sources
+                dict lappend ::kiss::sources::src $module $path $sources
                 
             }
 
 
             return 
-            #set sources [lmap [kiss::utils::callIn [pwd] find $path -type f]
+            #set sources [lmap [::kiss::utils::callIn [pwd] find $path -type f]
             set sources [concat [glob -tails -nocomplain -type f -directory $path **] [glob -tails -nocomplain -type f -directory $path **/*]]
             #set sources [lmap f  { string $f} ]
             if {[llength $sources] == 0} {
                 log.warn "No sources found in $path for module $module"
             } else {
-                dict lappend kiss::sources::src $module $path $sources
+                dict lappend ::kiss::sources::src $module $path $sources
             }
             #puts "Found sources: $sources"
             
         }
 
         proc getSources module {
-            if {[dict exists ${kiss::sources::src} $module]} {
+            if {[dict exists ${::kiss::sources::src} $module]} {
                 ## Returns a list of pairs {basePath sources}
-                set allFolders [dict get ${kiss::sources::src} $module]
+                set allFolders [dict get ${::kiss::sources::src} $module]
                 puts "Resolving sources: $allFolders"
                 set mergedFiles {}
 
@@ -383,19 +424,19 @@ namespace eval kiss {
         }
 
         proc getSourcesDict module {
-            if {[dict exists ${kiss::sources::src} $module]} {
-                return [dict get ${kiss::sources::src} $module]
-                set allPaths [dict get ${kiss::sources::src} $module]
+            if {[dict exists ${::kiss::sources::src} $module]} {
+                return [dict get ${::kiss::sources::src} $module]
+                set allPaths [dict get ${::kiss::sources::src} $module]
                 return [join [lmap pathSources $allPaths { join [lindex $pathSources 0]/[lindex $pathSources end]}]]
-                #return [lindex [dict get ${kiss::sources::src} $module] end]
+                #return [lindex [dict get ${::kiss::sources::src} $module] end]
             } else {
                 return {}
             }
         }
 
         proc getSourceFolders module {
-            if {[dict exists ${kiss::sources::src} $module]} {
-                set allPaths [dict get ${kiss::sources::src} $module]
+            if {[dict exists ${::kiss::sources::src} $module]} {
+                set allPaths [dict get ${::kiss::sources::src} $module]
                 return [dict keys $allPaths]
                 #return [join [lmap pathSources $allPaths { lindex $pathSources 0}]]
             } else {
@@ -404,7 +445,7 @@ namespace eval kiss {
         }
 
         proc getModules args {
-            return [dict keys ${kiss::sources::src} *]
+            return [dict keys ${::kiss::sources::src} *]
         }
     }
 
@@ -416,14 +457,14 @@ namespace eval kiss {
 
         proc addBOM dict {
         
-            set kiss::dependencies::modulesBom [dict merge $kiss::dependencies::modulesBom $dict]
-            #puts "BOM is now ${kiss::dependencies::modulesBom}"
+            set ::kiss::dependencies::modulesBom [dict merge $::kiss::dependencies::modulesBom $dict]
+            #puts "BOM is now ${::kiss::dependencies::modulesBom}"
         }
 
         proc resolveBOMModule {depModuleName} {
         
-            if {[dict exists $kiss::dependencies::modulesBom $depModuleName]} {
-                return ${depModuleName}:[dict get $kiss::dependencies::modulesBom $depModuleName]
+            if {[dict exists $::kiss::dependencies::modulesBom $depModuleName]} {
+                return ${depModuleName}:[dict get $::kiss::dependencies::modulesBom $depModuleName]
             } else {
                 log.warn "Cannot find Dependency $depModuleName in BOM"
                 throw KISSB_DEPS_BOM.NOTFOUND "Cannot find Dependency $depModuleName in BOM"
@@ -431,13 +472,13 @@ namespace eval kiss {
         }
 
         proc searchBOMModules artifactName {
-            return [dict filter $kiss::dependencies::modulesBom key *:$artifactName]
+            return [dict filter $::kiss::dependencies::modulesBom key *:$artifactName]
         }
 
         ## Adds dependencies to the current dict
         ## The passed dependencies is a dict with format: name {lib xxx sources xxx doc xxxx}
         proc addDeps {module depsDict} {
-            dict lappend kiss::dependencies::moduleDeps $module {*}$depsDict
+            dict lappend ::kiss::dependencies::moduleDeps $module {*}$depsDict
         }
 
         proc addDepSpec {module spec resolver} {
@@ -460,18 +501,18 @@ namespace eval kiss {
             }
 
             set specDict [dict create $spec [dict create spec $spec resolved false resolver $resolver]]
-            dict lappend kiss::dependencies::moduleDeps $module {*}$specDict
+            dict lappend ::kiss::dependencies::moduleDeps $module {*}$specDict
         }
 
         proc mergeDeps {module inputDict} {
-            set actualDepsDict [dict get $kiss::dependencies::moduleDeps $module]
+            set actualDepsDict [dict get $::kiss::dependencies::moduleDeps $module]
             set merged [dict merge $actualDepsDict $inputDict]
-            dict set kiss::dependencies::moduleDeps $module $merged
+            dict set ::kiss::dependencies::moduleDeps $module $merged
         }
 
         proc getDeps module {
-            if {[dict exists $kiss::dependencies::moduleDeps $module]} {
-                return [dict get $kiss::dependencies::moduleDeps $module]
+            if {[dict exists $::kiss::dependencies::moduleDeps $module]} {
+                return [dict get $::kiss::dependencies::moduleDeps $module]
             } else {
                 return {}
             }
@@ -560,7 +601,7 @@ namespace eval kiss {
 
                     ## Try to get location
                     #puts "- searching for proc $proc"
-                    set __procLoc [kiss::extensions::findLocationOf $proc]
+                    set __procLoc [::kiss::extensions::findLocationOf $proc]
                     if {${__procLoc}!=false} {
                         lappend errLines "- at $proc, [lindex ${__procLoc} 0]:[expr [lindex ${__procLoc} 1]+$line] : $prevLine"
                     } else {
