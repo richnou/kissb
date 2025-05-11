@@ -8,7 +8,7 @@ package require kissb.json
 namespace eval nodejs {
     
     # Default: current LTS
-    set version [vars.set nodejs.version 22.12.0]
+    set version [vars.set nodejs.version 22.15.0]
 
     kiss::toolchain::register nodejs {
 
@@ -17,13 +17,16 @@ namespace eval nodejs {
 
             if {[os.isLinux64]} {
                 
-                log.info "Downloading NodeJS to: [pwd]"
+                
                 
                 set archiveBaseName node-v${_version}-linux-x64
                 set archiveName ${archiveBaseName}.tar.xz
 
                 # If npm is not detected, we need to install
                 files.require $archiveBaseName/bin/npm {
+
+                    log.info "Installing NodeJS v${_version} to: [pwd]"
+
                     # Download and extract
                     files.download          https://nodejs.org/dist/v${_version}/$archiveName
                     files.extractAndDelete  $archiveName
@@ -48,10 +51,24 @@ namespace eval nodejs {
         }
 
         withEnv script {
+            node.init
             uplevel [list exec.withEnv [vars.get nodejs.env] $script]
         }
 
         run args {
+            #log.info "Node ENV: [lindex [vars.get nodejs.env] 0]"
+            #set nenv [vars.get nodejs.env]
+
+            #exec.withEnv $nenv {
+            #    exec.run node {*}$args
+            #}
+
+            node.withEnv {
+                exec.run node {*}$args
+            }
+            
+        }
+        exec args {
             #log.info "Node ENV: [lindex [vars.get nodejs.env] 0]"
             #set nenv [vars.get nodejs.env]
 
@@ -73,6 +90,9 @@ namespace eval nodejs {
                 log.info "Updating Packages..."
                 npm.exec i
                 #node.withEnv { exec.run npm i }
+            }
+            files.requireOrRefresh node_modules NPM {
+                npm.exec i
             }
         }
 
