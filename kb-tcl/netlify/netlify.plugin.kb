@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.netlify 1.0
-
+package require kissb.nodejs
 
 namespace eval netlify {
 
@@ -14,30 +14,38 @@ namespace eval netlify {
 
         log.info "Loading Netlify CLI in: $toolchainFolder"
 
-        set netlify::netlifyCliPath $toolchainFolder/node_modules/.bin/netlify
+        set ::netlify::netlifyCliPath $toolchainFolder/node_modules/.bin/netlify
 
         ## Install venv
-        files.require $netlify::netlifyCliPath {
-            exec.run.in $toolchainFolder npm i --save netlify-cli
+        files.require $::netlify::netlifyCliPath {
+            files.inDirectory $toolchainFolder {
+                npm.exec i --save netlify-cli
+            }
+            #exec.run.in $toolchainFolder npm i --save netlify-cli
         }
         refresh.with NETLIFY {
             log.info "Updating Netlify CLI"
-            exec.run.in $toolchainFolder npm update --save
+            files.inDirectory $toolchainFolder {
+                npm.exec update --save
+            }
+           # exec.run.in $toolchainFolder npm update --save
         }
 
     }
     proc init args {
+        node.init
         kiss::toolchain::init netlify-cli
+        
     }
 
     proc run args {
-        exec.run $netlify::netlifyCliPath {*}$args
+        node.withEnv { exec.run $::netlify::netlifyCliPath {*}$args }
     }
 
     kissb.extension netlify {
         
         run args {
-           exec.run $netlify::netlifyCliPath {*}$args 
+           node.withEnv { exec.run $::netlify::netlifyCliPath {*}$args }
         }
     }
 
