@@ -2,11 +2,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+
 lappend auto_path [file dirname [info script]]/../
-#lappend auto_path .kissb/pkgs/mylib
+
 
 ## Load KISSB
 package require kissb
+log.info "TCL version: $tcl_version"
 
 ## Load Package folders
 set possiblePackageFolders [list ${kissb.home}/pkgs/*/pkgIndex.tcl .kissb/pkgs/*/pkgIndex.tcl]
@@ -91,13 +93,13 @@ foreach libFile [files.globFiles ${kissb.home}/lib/*.lib.tcl .kissb/*.lib.tcl *.
 
 foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tcl *.pkg.tcl ] {
     log.info "Loading package file: $packageFile"
-    kiss::packages::loadLocalPackageFile $packageFile
+    ::kiss::packages::loadLocalPackageFile $packageFile
     #source $libFile
 }
 
 ## Load local Kiss build
 set foundLocalBuildFile false
-foreach buildFile {kiss.build kissb.build.tcl kiss.build.tcl build.tcl} {
+foreach buildFile {kiss.build kissb.build.tcl kiss.build.tcl build.tcl kissb.tcl} {
     if {[file exists $buildFile]} {
         set foundLocalBuildFile true
         source $buildFile  
@@ -121,7 +123,7 @@ if {!$foundLocalBuildFile} {
 ## Run target
 if {[llength $targets] == 0 && [llength $args] == 0 } {
     log.warn "No build target or command provided"
-    foreach target [kiss::targets::listTargets] {
+    foreach target [lsort [kiss::targets::listTargets]] {
         puts "- $target - [kiss::targets::getDoc $target]"
     }
 } elseif {[llength $targets]>0} {
@@ -164,7 +166,7 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
         } elseif {[string range $target 0 0]!="-"} {
 
             # Run Target
-            kiss::targets::run $target {*}$args
+            ::kiss::targets::run $target {*}$args
 
         }
     
@@ -176,8 +178,8 @@ if {[llength $targets] == 0 && [llength $args] == 0 } {
 
 } on error {msg options} {
 
-    set stack [dict get $options -errorinfo]
+    #set stack [dict get $options -errorinfo]
     #puts "Caught error: $msg -> $stack"
     #puts "Stack: [info errorstack]"
-    kiss::errors::prettyv1 $msg $options
+    ::kiss::errors::prettyv1 $msg $options
 }
