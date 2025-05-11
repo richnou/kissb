@@ -17,7 +17,7 @@ kissb.extension kissb {
             set dir $path
             source $path/pkgIndex.tcl
         }
-        #lappend kiss::packages::modulepaths $path
+        #lappend ::kiss::packages::modulepaths $path
     }
 
 }
@@ -28,7 +28,7 @@ kissb.extension kissb {
 kissb.extension kissb {
 
     args.contains {v script {else ""} {elseScript {}}} {
-        set localArgs [uplevel {set args}]
+        set localArgs [uplevel {::set args}]
         if {[lsearch -exact $localArgs $v]!=-1} {
             uplevel [list eval $script]
         } else {
@@ -37,7 +37,7 @@ kissb.extension kissb {
     }
 
     args.ifContains {v script {else ""} {elseScript {}}} {
-        set localArgs [uplevel {set args}]
+        set localArgs [uplevel {::set args}]
         if {[lsearch -exact $localArgs $v]!=-1} {
             uplevel [list eval $script]
         } else {
@@ -46,15 +46,15 @@ kissb.extension kissb {
     }
 
     args.withValue {v varname script} {
-        set args [uplevel {set args}]
+        set args [uplevel {::set args}]
         kissb.args.ifContains $v {
-            uplevel [list set $varname [lindex $args [expr [lsearch -exact $args $v]+1]]]
+            uplevel [list ::set $varname [lindex $args [expr [lsearch -exact $args $v]+1]]]
             uplevel [list eval $script]
         }
     }
 
     args.get {v default {to ""} {varname ""}} {
-        set localArgs [uplevel {set args}]
+        set localArgs [uplevel {::set args}]
         
         # Get default or val from args
         set __val $default
@@ -64,7 +64,7 @@ kissb.extension kissb {
 
         # set to requested varname
         if {$to!=""} {
-            uplevel [list set $varname ${__val}]
+            uplevel [list ::set $varname ${__val}]
         }
         return ${__val}
     }
@@ -84,14 +84,23 @@ kissb.extension kissb {
 ##############################
 kissb.extension vars {
 
+     ## Define a variable, with documentation, default value also extracted from environment variable
     define {name args} {
         ::kiss::vars::define $name {*}$args
         return [vars.get $name]
     }
 
+    ## Set value for a variable
     set {name args} {
         ::kiss::vars::set $name {*}$args
         return [vars.get $name]
+    }
+
+    revert {args} {
+        foreach n $args {
+            ::kiss::vars::revert $n
+        }
+        
     }
 
     ## This method will set the var if not set
@@ -149,6 +158,14 @@ kissb.extension vars {
     }
 }
 
+## Standard set extensions
+proc ::set.ifEmpty {varName value} {
+    set vVal [string trim [uplevel [list set $varName]]]
+    if {$vVal eq ""} {
+        uplevel [list set $varName $value]
+    }
+}
+
 ##############################
 ## env extension
 ##############################
@@ -167,7 +184,7 @@ kissb.extension dependencies {
     ## Save provided dict in bom
     bom dict {
         #log.info "Adding BOM: $spec"
-        kiss::dependencies::addBOM $dict
+        ::kiss::dependencies::addBOM $dict
     }
 
     add {module resolver args} {
@@ -175,18 +192,18 @@ kissb.extension dependencies {
         foreach dSpecs $args {
             foreach dSpec $dSpecs {
                 log.info "Adding Dependency: $dSpec"
-                kiss::dependencies::addDepSpec $module $dSpec $resolver
+                ::kiss::dependencies::addDepSpec $module $dSpec $resolver
             }
         }
 
     }
 
     getDeps {module args} {
-        return [kiss::dependencies::getDeps $module]
+        return [::kiss::dependencies::getDeps $module]
     }
 
     resolve {module type args} {
-        return [kiss::dependencies::resolveDeps $module $type]
+        return [::kiss::dependencies::resolveDeps $module $type]
     }
 }
 
@@ -197,7 +214,7 @@ kissb.extension sources {
 
     ## Save provided dict in bom
     add {module folder} {
-        kiss::sources::addSourceFolder $module $folder
+        ::kiss::sources::addSourceFolder $module $folder
     }
 }
 
