@@ -6,8 +6,8 @@ package require kissb.builder.rclone
 
 rclone.init
 
-set version [env CI_VERSION [clock format [clock seconds] -format %Y%m%d]]01
-set track   [env CI_TRACK   dev]
+vars.define version 250501
+vars.set track   [env CI_TRACK   dev]
 
 
 
@@ -28,6 +28,14 @@ set track   [env CI_TRACK   dev]
 
 @ certs {
 
+    # Use CA Cert from CURL
+    set url https://curl.se/ca/cacert.pem
+
+    files.delete kb-tcl/kiss/certs
+    files.mkdir  kb-tcl/kiss/certs
+    files.download $url kb-tcl/kiss/certs/cacert.pem
+
+    return 
     set storeVersion 20240203
     set certificatesSource "http://archive.ubuntu.com/ubuntu/pool/main/c/ca-certificates/ca-certificates_${storeVersion}.tar.xz"
     set certificateStore ${::kissb.home}/ca-certificates
@@ -62,14 +70,15 @@ set track   [env CI_TRACK   dev]
 
 @ dist-zip {
 
-    package require zipfile::mkzip
+    
 
  
     ## Create dist by copying all files to the build directory
     ## Overwrite the info.tcl file in the package folder to overwrite version
     set base [pwd]
     
-    kiss::files::inDirectory .kb/build/dist/kissb-${::version} {
+    files.inDirectory .kb/build/dist/kissb-${::version} {
+        
         puts "Base dir: $base - cwd: [pwd]"
         #file delete -force *
         file delete -force bin
@@ -89,25 +98,25 @@ set track   [env CI_TRACK   dev]
     # Create Files
     #-zipkit -directory 
     #::zipfile::mkzip::mkzip $base/dist-${version}.zip -comment "KISSB version=$version" -directory .kb/build/dist/$version/
-    kiss::files::inDirectory .kb/build/dist/ {
+    files.inDirectory .kb/build/dist/ {
         file delete -force $base/dist-${::version}.zip
-        kiss::terminal::execIn [pwd] zip -r $base/dist-${::version}.zip  kissb-$::version
+        exec.run zip -r $base/dist-${::version}.zip  kissb-$::version
     }
 
     ## Push to S3 - push the install script alone
     ########
     kissb.args.contains -push {
-        rclone.run copy --s3-acl=public-read $base/dist-${::version}.zip ovhs3:kissb/kissb/dev/
+        rclone.run copy --s3-acl=public-read $base/dist-${::version}.zip ovhs3:kissb/kissb/${::track}/
 
         ## Push file
         #files.writeText .kb/build/dist/dev.ini "{version=${::version}}"
-        json.write .kb/build/dist/dev.json {version ${::version}}
-        files.writeText .kb/build/dist/dev.txt "version ${::version}"
-        rclone.run copy --s3-acl=public-read .kb/build/dist/dev.json   ovhs3:kissb/kissb/dev/
-        rclone.run copy --s3-acl=public-read .kb/build/dist/dev.txt ovhs3:kissb/kissb/dev/
-        rclone.run copy --s3-acl=public-read scripts/linux/install.tcl ovhs3:kissb/kissb/dev/
+        json.write .kb/build/dist/${::track}.json {version ${::version}}
+        files.writeText .kb/build/dist/${::track}.txt "version ${::version}"
+        rclone.run copy --s3-acl=public-read .kb/build/dist/${::track}.json   ovhs3:kissb/kissb/${::track}/
+        rclone.run copy --s3-acl=public-read .kb/build/dist/${::track}.txt ovhs3:kissb/kissb/${::track}/
+        rclone.run copy --s3-acl=public-read scripts/linux/install.tcl ovhs3:kissb/kissb/${::track}/
 
-        log.success "Uploaded to S3: https://s3.de.io.cloud.ovh.net/kissb/dev/dist-${::version}.zip"
+        log.success "Uploaded to S3: https://s3.de.io.cloud.ovh.net/kissb/${::track}/dist-${::version}.zip"
     }
 
 
@@ -139,7 +148,7 @@ set track   [env CI_TRACK   dev]
 
 @ dist-kit {
 
-    package require kissb.tclkit
+    package require kissb.tcl9.kit
 
     # Make Zip release
     set zipFile [> dist-zip]
@@ -148,14 +157,35 @@ set track   [env CI_TRACK   dev]
     files.inDirectory .kb/build/dist-tclkit/ {
         
         ## Extract Kissb
-        make lib/kissb-${::version}/pkgIndex.tcl : $zipFile {
-            files.inDirectory lib {
+        make dist/kissb-${::version}/pkgIndex.tcl : $zipFile {
+            files.inDirectory dist {
                 file copy -force $zipFile dist.zip
                 files.extract dist.zip
                 files.delete dist.zip
             }
             
         }
+
+        ## Linux
+        set kitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250501/tcl9-dist1kit-x86_64-redhat-linux-rhel8-9.0.1-250501 tclkit]
+
+        exec.run chmod +x $kitFile
+        exec.run ./$kitFile dist/kissb-${::version}/tclkit/packager_run.tcl --continue --kit --name kissb-${::version}
+
+        #set kitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250501/tcl9-dist1kit-x86_64-redhat-linux-rhel8-9.0.1-250501 tclkit]
+
+        #exec.run chmod +x $kitFile
+        #exec.run ./$kitFile dist/kissb-${::version}/tclkit/packager_run.tcl --continue --kit --name kissb-${::version}
+        
+
+        
+
+        kissb.args.contains --release {
+            rclone.run copy --s3-acl=public-read kissb-${::version} ovhs3:kissb/kissb/${{::track}/
+            #rclone.run copy --s3-acl=public-read ${startKitName} ovhs3:kissb/kissb/dev/
+        }
+
+        return
 
         ## Download base kits
         files.require tclkit-8.6.14_notk {
@@ -164,6 +194,7 @@ set track   [env CI_TRACK   dev]
         files.require tclkit-8.6.14_notk.exe {
             files.download https://kissb.s3.de.io.cloud.ovh.net/tclkit/8.6.14/tclkit-8.6.14_notk.exe tclkit-8.6.14_notk.exe
         }
+
         exec.run chmod +x tclkit-8.6.14_notk
 
         ## Run Starkit build
