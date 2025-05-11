@@ -1,0 +1,8 @@
+nav:
+    - index.md
+    - gettingstarted.md
+    - installation.md
+    - licenses.md
+    - packages.md 
+    - toolchains.md
+    - tcl-packages
