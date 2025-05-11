@@ -12,6 +12,8 @@ namespace eval python3 {
 
     set venvPath [file normalize ".kb/build/python3-venv"]
 
+    vars.set python3.pythonExe python3.12
+
     ## Register a venv toolchain
     kiss::toolchain::register python3-venv { 
 
@@ -20,7 +22,7 @@ namespace eval python3 {
 
         ## Install venv
         if {![file exists $python3::venvPath/pyvenv.cfg]} {
-            kiss::terminal::execIn $python3::venvPath python3 -m venv .
+            kiss::terminal::execIn $python3::venvPath ${::python3.pythonExe} -m venv .
             return true
         } else {
             return false
@@ -52,8 +54,6 @@ namespace eval python3 {
         foreach rFile [concat $files $args] {
             kiss::terminal::execIn $python3::venvPath ./bin/pip install -r $rFile
         }
-        #set rArgs [join $args -r]
-        #kiss::terminal::execIn $python3::venvPath ./bin/pip install -r {*}$rArgs
     }
 
     ## Returns true if an exe is in the bin folder
@@ -70,7 +70,7 @@ namespace eval python3 {
     ## Runs a specific script
     ## Run folder is the current folder! 
     proc ::python3.venv.run {script args} {
-        ::python3::venv.runBin python3 $script {*}$args
+        ::python3::venv.runBin ${::python3.pythonExe} $script {*}$args
     }
 
     ################
@@ -84,7 +84,7 @@ namespace eval python3 {
 
             ## Install venv
             if {![file exists $python3::venvPath/pyvenv.cfg]} {
-                kiss::terminal::execIn $python3::venvPath python3 -m venv .
+                kiss::terminal::execIn $python3::venvPath ${::python3.pythonExe} -m venv .
                 set res true
             } else {
                 set res false
