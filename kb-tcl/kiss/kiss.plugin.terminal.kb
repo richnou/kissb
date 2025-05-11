@@ -5,17 +5,27 @@
 package provide kissb.terminal 1.0
  
 
-namespace eval kiss::terminal {
+namespace eval ::kiss::terminal {
 
     ## Exec redirecting outputs to console
     proc execIn {folder args} {
         set pwd [pwd]
         file mkdir $folder
-        cd $folder 
+        cd $folder
+
+        set __ioArgs {}
+        if {(">@" ni $args) && (">" ni $args)} {
+            lappend __ioArgs >@ stdout
+        }
+        if {"2>@" ni $args && "2>" ni $args} {
+            lappend __ioArgs 2>@ stderr
+        }
+        lappend __ioArgs <@ stdin
+        
         try {
             #<@ stdin
             #puts "Exec: {*}${args}"
-            return [exec {*}${args} >@ stdout 2>@ stderr <@ stdin ] 
+            return [exec {*}${args} {*}${__ioArgs} ] 
         } on error e {
             #log.error "Error running command $args ($e)"
             throw e "Error running command $args ($e)"
@@ -70,36 +80,36 @@ namespace eval kiss::terminal {
 
     ## Fork Xterm in the give folder with provided command
     proc xterm-in {folder args} {
-        kiss::terminal::forkIn $folder xterm -fa "Noto Mono" -fs 12 -e {*}$args
+        ::kiss::terminal::forkIn $folder xterm -fa "Noto Mono" -fs 12 -e {*}$args
     }
 
     ## Fork Xterm in the give folder with provided command
     proc xterm args {
-        kiss::terminal::forkIn . xterm -fa "Noto Mono" -fs 12 -e {*}$args
+        ::kiss::terminal::forkIn . xterm -fa "Noto Mono" -fs 12 -e {*}$args
     }
 
 
     namespace export xterm* call* fork* exec*
     namespace eval :: {
-        namespace import kiss::terminal::xterm* kiss::terminal::call* kiss::terminal::fork* kiss::terminal::exec*
+        namespace import ::kiss::terminal::xterm* ::kiss::terminal::call* ::kiss::terminal::fork* ::kiss::terminal::exec*
     }
 
     kissb.extension exec {
 
         run args {
-            kiss::terminal::execIn [pwd] {*}$args
+            ::kiss::terminal::execIn [pwd] {*}$args
         }
 
         run.in {pwd args} {
-            kiss::terminal::execIn $pwd {*}$args
+            ::kiss::terminal::execIn $pwd {*}$args
         }
 
         call args {
-            return [kiss::terminal::callIn [pwd] {*}$args]
+            return [::kiss::terminal::callIn [pwd] {*}$args]
         }
 
         call.in {pwd args} {
-            return [kiss::terminal::callIn $pwd {*}$args]
+            return [::kiss::terminal::callIn $pwd {*}$args]
         }
 
         ## Runs a command and returns a dict of env based on export lines
