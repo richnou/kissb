@@ -16,20 +16,22 @@ namespace eval netlify {
 
         set ::netlify::netlifyCliPath $toolchainFolder/node_modules/.bin/netlify
 
-        ## Install venv
-        files.require $::netlify::netlifyCliPath {
+        ## Install netlify
+        files.requireOrRefresh $::netlify::netlifyCliPath NETLIFY {
             files.inDirectory $toolchainFolder {
+                log.info "Installing Netlify CLI"
+                files.delete node_modules package.json package-lock.json
                 npm.exec i --save netlify-cli
             }
             #exec.run.in $toolchainFolder npm i --save netlify-cli
         }
-        refresh.with NETLIFY {
-            log.info "Updating Netlify CLI"
-            files.inDirectory $toolchainFolder {
-                npm.exec update --save
-            }
-           # exec.run.in $toolchainFolder npm update --save
-        }
+        #refresh.with NETLIFY {
+        #    log.info "Updating Netlify CLI"
+        #    files.inDirectory $toolchainFolder {
+        #        npm.exec update --save
+        #    }
+        #   # exec.run.in $toolchainFolder npm update --save
+        #}
 
     }
     proc init args {
