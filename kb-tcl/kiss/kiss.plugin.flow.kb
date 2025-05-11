@@ -4,7 +4,7 @@
 
 package provide kissb.flow 1.0
 
-namespace eval kiss::flow  {
+namespace eval ::kiss::flow  {
 
 
     proc ::flow.load {desc args} {

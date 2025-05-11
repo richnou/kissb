@@ -4,7 +4,7 @@
 
 package provide kissb.cached 1.0
 
-namespace eval kiss::cached {
+namespace eval ::kiss::cached {
 
     set cacheFolder ".kb/cached"
 
@@ -18,7 +18,7 @@ namespace eval kiss::cached {
 
         ## Return existing file from local cache or run script with $file variable containing file path
         fileOrElse {name noarg varname script} {
-            set name [kiss::cached::cleanName $name]
+            set name [::kiss::cached::cleanName $name]
             set file ${::kiss::cached::cacheFolder}/$name
             if {![file exists $file]} {
                 uplevel [list eval $script]
@@ -37,7 +37,7 @@ namespace eval kiss::cached {
         }
 
         writeFile {name content} {
-            set name [kiss::cached::cleanName $name]
+            set name [::kiss::cached::cleanName $name]
             set file [file normalize ${::kiss::cached::cacheFolder}/$name]
             file mkdir [file dirname $file]
             files.writeText $file $content

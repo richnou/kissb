@@ -7,7 +7,7 @@ catch {package require term::ansi::send}
 
 fconfigure stdout -translation binary
 
-namespace eval kiss::log {
+namespace eval ::kiss::log {
 
 
     ## Utils
@@ -201,7 +201,7 @@ namespace eval kiss::log {
     #puts "Export/Import log"
     namespace export log*
     namespace eval :: {
-        namespace import kiss::log::log.*
+        namespace import ::kiss::log::log.*
     }
 
 }

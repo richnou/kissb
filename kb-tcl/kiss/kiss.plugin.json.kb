@@ -5,18 +5,18 @@
 package provide kissb.json 1.0
 
 
-namespace eval kiss::json {
+namespace eval ::kiss::json {
 
     set indent 0
 
     proc incrIndent args {
-        incr kiss::json::indent
+        incr ::kiss::json::indent
     }
     proc decrIndent args {
-        incr kiss::json::indent  -1
+        incr ::kiss::json::indent  -1
     }
     proc getIndent args {
-        return [string repeat " " [expr 4*${kiss::json::indent}]]
+        return [string repeat " " [expr 4*${::kiss::json::indent}]]
     }
     proc write {outFile spec} {
 
@@ -78,13 +78,13 @@ namespace eval kiss::json {
     kissb.extension json {
 
         toString spec {
-            return "\{\n[kiss::json::objToString $spec]\n\}"
+            return "\{\n[::kiss::json::objToString $spec]\n\}"
         }
         write {outFile spec} {
 
             set o [open $outFile w+]
             puts $o "\{"
-            puts $o [kiss::json::objToString $spec]
+            puts $o [::kiss::json::objToString $spec]
             puts $o "\}"
             close $o
         }
