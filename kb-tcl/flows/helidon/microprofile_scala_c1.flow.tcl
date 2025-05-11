@@ -28,7 +28,7 @@ flow.load scala/single_app_c1
 ## Load BOM
 coursier.bom.enforce io.helidon:helidon-dependencies:4.0.11
 
-#puts "BOM: [dict filter $kiss::dependencies::modulesBom key *:helidon-microprofile-core]"
+#puts "BOM: [dict filter $::kiss::dependencies::modulesBom key *:helidon-microprofile-core]"
 
  
 ## Add dependencies
