@@ -51,31 +51,16 @@ namespace eval nodejs {
         }
 
         withEnv script {
-            node.init
             uplevel [list exec.withEnv [vars.get nodejs.env] $script]
         }
 
         run args {
-            #log.info "Node ENV: [lindex [vars.get nodejs.env] 0]"
-            #set nenv [vars.get nodejs.env]
-
-            #exec.withEnv $nenv {
-            #    exec.run node {*}$args
-            #}
-
             node.withEnv {
                 exec.run node {*}$args
             }
             
         }
         exec args {
-            #log.info "Node ENV: [lindex [vars.get nodejs.env] 0]"
-            #set nenv [vars.get nodejs.env]
-
-            #exec.withEnv $nenv {
-            #    exec.run node {*}$args
-            #}
-
             node.withEnv {
                 exec.run node {*}$args
             }
