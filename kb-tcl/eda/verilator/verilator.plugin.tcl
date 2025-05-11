@@ -12,6 +12,8 @@ namespace eval verilator {
 
     vars.set verilator.version "v5.024"
 
+    vars.set verilator.verilate.args {}
+
     kissb.packages.handler kissb.eda.verilator.local {
 
         log.info "Setting Local Verilator to version $version"
@@ -84,6 +86,9 @@ namespace eval verilator {
             }
         }
 
+        
+        
+
         verilate args {
             if {${verilator::runtime} == "docker"} {
                 package require kissb.docker
@@ -96,7 +101,7 @@ namespace eval verilator {
                     set exe [vars.get verilator.root]/bin/verilator
                 }
 
-                exec.run $exe {*}$args
+                exec.run $exe {*}$args {*}[vars.resolve verilator.verilate.args]
                 
             }
         }
@@ -125,6 +130,14 @@ namespace eval verilator {
         lint args {
             #-f $fFile
             verilator.verilate {*}$args  --lint-only --no-decoration 
+        }
+
+        coverage.enable args {
+            vars.append verilator.verilate.args --coverage
+        }
+
+        coverage.toInfo {coverageDat coverageInfo} {
+            exec.run [vars.get verilator.root]/bin/verilator_coverage $coverageDat --write-info $coverageInfo
         }
         
         image.run script {

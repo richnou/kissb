@@ -1,1 +1,6 @@
 .ccache
+lcov*
+report-*
+coverage*
+results.xml
+dump*

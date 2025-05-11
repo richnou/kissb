@@ -28,7 +28,7 @@ namespace eval cocotb {
             switch $name {
                 verilator {
                     set ::cocotb::simulator verilator
-                    package require kissb.verilator
+                    package require kissb.eda.verilator
                     verilator.init
                 }
 
@@ -95,7 +95,11 @@ namespace eval cocotb {
                         set runArgs [vars.resolve cocotb/${::cocotb::simulator}.args]
                         log.info "Run args: $runArgs"
                         #exec.withEnv [list LD_LIBRARY_PATH [list value [python3.venv.call cocotb-config --lib-dir] merge 1 ]] {
+
+                        ## Set Python .so file location to handle OS which might not have proper linking
+                        exec.withEnv [list LIBPYTHON_LOC [list value [python3.venv.call find_libpython] merge 0 ]] {
                             exec.run echo "source .kb/build/python3-venv/bin/activate && ${cocotb::workdir}/Vtop $runArgs " | /bin/bash 
+                        }
                         #}
                         #verilator.image.run {
                         #    cd /work && source .kb/build/python3-venv/bin/activate && ${cocotb::workdir}/Vtop
