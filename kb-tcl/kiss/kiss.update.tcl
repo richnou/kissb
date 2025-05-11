@@ -30,7 +30,7 @@ namespace eval kissb::internal::update {
         #puts "Out: [lindex [array get $token body] 1]"
         #set versionJson [split [lindex [array get $token body] 1]]
         
-        if {[kiss::utils::isWindows]} {
+        if {[::kiss::utils::isWindows]} {
             set versionJson [split [exec.call wget -q -O - $versionInfo] ]
         } else {
             set versionJson [split [exec.call wget -q -O - $versionInfo 2> /dev/null] ]
