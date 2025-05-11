@@ -50,16 +50,19 @@ namespace eval ::kiss::files {
             file mkdir $p
         }
 
-        delete f {
-            if {[file isdirectory $f]} {
-                file delete -force $f
-            } elseif {[file exists $f]} {
-                file delete $f
-            } else {
-                foreach lf [glob -nocomplain $f] {
-                    file delete -force $lf
+        delete args {
+            foreach f $args {
+                if {[file isdirectory $f]} {
+                    file delete -force $f
+                } elseif {[file exists $f]} {
+                    file delete $f
+                } else {
+                    foreach lf [glob -nocomplain $f] {
+                        file delete -force $lf
+                    }
                 }
             }
+            
         }
 
         ## Copy file to directory
