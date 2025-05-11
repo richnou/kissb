@@ -5,7 +5,7 @@
 package provide kiss.packages 1.0
 
 
-namespace eval kiss::packages {
+namespace eval ::kiss::packages {
  
 
     set modulepaths {}
@@ -15,7 +15,7 @@ namespace eval kiss::packages {
     kissb.extension kissb.packages {
 
         handler {name script} {
-            dict set kiss::packages::extrahandlers $name $script
+            dict set ::kiss::packages::extrahandlers $name $script
         }
     }
 
@@ -25,7 +25,7 @@ namespace eval kiss::packages {
         log.info "Searching for Package $name"
 
         ## Load extra module paths
-        #foreach mp ${kiss::packages::modulepaths} {
+        #foreach mp ${::kiss::packages::modulepaths} {
         #    log.info "Loading index at $mp"
         #    if {[file exists $mp/pkgIndex.tcl]} {
         #        set dir $mp
@@ -64,10 +64,10 @@ namespace eval kiss::packages {
                 }
                 package provide $name 0
             }
-        } elseif {[dict exists $kiss::packages::extrahandlers $name]} {
+        } elseif {[dict exists $::kiss::packages::extrahandlers $name]} {
             # If a handler for the package name is provided, call it
             package provide $name $version
-            eval [dict get $kiss::packages::extrahandlers $name]
+            eval [dict get $::kiss::packages::extrahandlers $name]
 
         }
     }
