@@ -36,6 +36,7 @@ namespace eval builder::podman {
             } on error e {
                 catch {exec run ${builder::podman::runtimeCommand} stop kiss-running}
                 catch {exec run ${builder::podman::runtimeCommand} rm kiss-running}
+                log.error "Cannot run image $tag : $e"
             }
             
         }
