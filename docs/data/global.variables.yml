@@ -1,0 +1,5 @@
+id: "global.variables"
+s3:
+  url: https://kissb.s3.de.io.cloud.ovh.net
+  kissb: https://kissb.s3.de.io.cloud.ovh.net/
+  kissb_dev_250501: https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/250501

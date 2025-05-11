@@ -7,6 +7,13 @@ set build.name "kissb-docs"
 
 flow.load mkdocs+netlify
 
+node.init
+npm.exec --version
+node.exec --version
+
+files.cp ../scripts/wrapper/kissbw      pages/get/
+files.cp ../scripts/linux/install.sh    pages/get/
+files.cp ../scripts/linux/install.tcl   pages/get/
 
 @ generate.variables {
 

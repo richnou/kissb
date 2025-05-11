@@ -1,5 +1,6 @@
 nav:
     - index.md
+    - releases.md
     - gettingstarted.md
     - installation.md
     - licenses.md
