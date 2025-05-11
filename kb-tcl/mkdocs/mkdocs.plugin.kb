@@ -22,12 +22,12 @@ namespace eval mkdocs {
 
         ## Ensure mkdocs
         python3.venv.withNotBinOrRefresh mkdocs MKDOCS {
-            lappend reqFiles $mkdocs::pluginFolder/mkdocs.base.requirements
+            lappend reqFiles $::mkdocs::pluginFolder/mkdocs.base.requirements
             if {[lsearch $args -material]!=-1} {
-                lappend reqFiles $mkdocs::pluginFolder/mkdocs.material.requirements
+                lappend reqFiles $::mkdocs::pluginFolder/mkdocs.material.requirements
             }
             if {[lsearch $args -kissv1]!=-1} {
-                lappend reqFiles $mkdocs::pluginFolder/mkdocs.kissv1.requirements
+                lappend reqFiles $::mkdocs::pluginFolder/mkdocs.kissv1.requirements
             }
             if {[file exists [pwd]/requirements.txt]} {
                 lappend reqFiles [file normalize [pwd]/requirements.txt]
@@ -36,7 +36,7 @@ namespace eval mkdocs {
         }
 
         ## Ensure build directory
-        file mkdir $mkdocs::buildDir
+        file mkdir $::mkdocs::buildDir
         
     }
 
@@ -45,10 +45,10 @@ namespace eval mkdocs {
     }
 
     proc buildFolder args {
-        return $mkdocs::buildDir/${::build.name}
+        return $::mkdocs::buildDir/${::build.name}
     }
     proc build args {
-        set htmlOutputFolder $mkdocs::buildDir/${::build.name}
+        set htmlOutputFolder $::mkdocs::buildDir/${::build.name}
 
         python3.venv.run mkdocs --color build -c -d $htmlOutputFolder
         kissb.args.contains -zip {
