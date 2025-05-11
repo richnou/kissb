@@ -5,7 +5,7 @@
 package provide kissb.files 1.0
 
 
-namespace eval kiss::files {
+namespace eval ::kiss::files {
 
     proc exists f {
         return [file exists $f]
@@ -20,7 +20,7 @@ namespace eval kiss::files {
         close $fid
     }
     proc ::files.writeText {f text} {
-        kiss::files::writeText $f $text
+        ::kiss::files::writeText $f $text
     }
 
     proc normalizePath p {
@@ -57,7 +57,7 @@ namespace eval kiss::files {
                 file delete $f
             } else {
                 foreach lf [glob -nocomplain $f] {
-                    file delete $lf
+                    file delete -force $lf
                 }
             }
         }
@@ -126,11 +126,16 @@ namespace eval kiss::files {
         ## Require File, if not present, run script
         require {f script} {
             if {![file exists $f]} {
+                log.warn "File $f is absent, calling script"
+                uplevel [list set __f $f]
                 uplevel [list eval $script]
+            } else {
+                log.info "File $f is present, not doing anything"
             }
         }
         requireOrForce {f script} {
             if {[env KB_FORCE 0]==1} {
+                uplevel [list set __f $f]
                 uplevel [list eval $script]
             } else {
                 uplevel [list files.require $f $script]
@@ -138,6 +143,7 @@ namespace eval kiss::files {
         }
         requireOrRefresh {f key script} {
             if {[refresh.is $key]} {
+                uplevel [list set __f $f]
                 uplevel [list eval $script]
             } else {
                 uplevel [list files.require $f $script]
@@ -173,11 +179,23 @@ namespace eval kiss::files {
         download {src {out ""}} {
             #exec wget -p $url -O $dir >@ stdout 2>@ stdout
             if {$out==""} {
-                kiss::terminal::execIn [pwd] wget --show-progress -p $src -O [lindex [split $src /] end]
+                ::kiss::terminal::execIn [pwd] wget --show-progress -p $src -O [lindex [split $src /] end]
             } else {
-                kiss::terminal::execIn [pwd] wget --show-progress -p $src -O $out
+                ::kiss::terminal::execIn [pwd] wget --show-progress -p $src -O $out
             }
             
+        }
+
+        ## Returns the name of the downloaded file
+        downloadOrRefresh {url refresh {outFile ""}} {
+            #set outFile [expr {$outFile eq "" ? [file tail $url] : $outFile}]
+            set.ifEmpty outFile [file tail $url]
+            log.info "URL tail: [file tail $url]"
+            files.requireOrRefresh $outFile $refresh {
+                log.info "Downloading $url -> $outFile"
+                files.download $url $outFile
+            }
+            return $outFile
         }
 
         ## Unzip
@@ -187,6 +205,24 @@ namespace eval kiss::files {
         untar {f args} {
             exec.run tar {*}$args -xvaf $f
         }
+        tarDir {dir out args} {
+            exec.run tar {*}$args -cvaf $out -C [file normalize $dir/..] [file tail $dir]
+        }
+        zipDir {dir out args} {
+            #exec.run zip -9 -r -y -k $out  $dir
+            zipfs mkzip $out [file normalize $dir] [file normalize $dir/..]
+        }
+
+        ## Compress dir into output archive
+        ## @arg --rename , input dir will be renamed to out file name in output tar
+        compressDir {dir out args} {
+            if {[file extension $out]==".zip"} {
+                files.zipDir $dir $out {*}$args
+            } else {
+                files.tarDir $dir $out {*}$args
+            }
+        }
+
         extract {f args} {
             if {[string match *.tar.* $f]} {
                 files.untar $f {*}$args
@@ -205,32 +241,43 @@ namespace eval kiss::files {
         ## Files writer
         withWriter {outPath script} {
             try {
-                kiss::files::writer::open $outPath
+                ::kiss::files::writer::open $outPath
                 uplevel [list eval $script]
             } finally {
-                kiss::files::writer::close
+                ::kiss::files::writer::close
             }
         }
 
         writer.printLine args {
-            kiss::files::writer::printLine {*}$args
+            ::kiss::files::writer::printLine {*}$args
         }
         writer.indent args {
-            kiss::files::writer::incrIndent
+            ::kiss::files::writer::incrIndent
         }
         writer.outdent args {
-            kiss::files::writer::decrIndent
+            ::kiss::files::writer::decrIndent
         }
 
 
         ## PATH
         joinWithPathSeparator args {
-            return [join {*}$args [kiss::files::pathSeparator]]
+            return [join {*}$args [::kiss::files::pathSeparator]]
         }
 
         ## Globbing
         globFiles args {
             return [join [lmap pattern $args {lsort [glob -nocomplain -type f $pattern]}]]
+        }
+
+        globAll args {
+            return [join [lmap pattern $args {lsort [glob -nocomplain  $pattern]}]]
+        }
+
+        withGlobFiles {args script} {
+            uplevel [list foreach file [files.globFiles {*}$args] $script]
+        }
+        withGlobAll {args script} {
+            uplevel [list foreach file [files.globAll {*}$args] $script]
         }
 
         ## Permissions
@@ -246,6 +293,11 @@ namespace eval kiss::files {
                 log.error "only supported on linux"
             }
         }
+
+        ## Script Info
+        getScriptDirectory args {
+            return [file normalize [file dirname [info script]]]
+        }
     }
 
 
@@ -258,23 +310,23 @@ namespace eval kiss::files {
         set fid -1
 
         proc incrIndent args {
-            incr kiss::files::writer::indent
+            incr ::kiss::files::writer::indent
         }
         proc decrIndent args {
-            incr kiss::files::writer::indent  -1
+            incr ::kiss::files::writer::indent  -1
         }
         proc getIndent args {
-            return [string repeat " " [expr 4*${kiss::files::writer::indent}]]
+            return [string repeat " " [expr 4*${::kiss::files::writer::indent}]]
         }
     
         proc open file {
-            set kiss::files::writer::fid [::open $file w+]
+            set ::kiss::files::writer::fid [::open $file w+]
         }
         proc close args {
-            ::close ${kiss::files::writer::fid}
+            ::close ${::kiss::files::writer::fid}
         }
         proc printLine args {
-            puts ${kiss::files::writer::fid} [getIndent][join $args]
+            puts ${::kiss::files::writer::fid} [getIndent][join $args]
         }
     }
    
