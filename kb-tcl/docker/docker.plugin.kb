@@ -21,6 +21,10 @@ namespace eval docker {
             exec.run docker build {*}$args
         }
 
+        push args {
+            exec.run docker push {*}$args
+        }
+
         run.script {image args} {
             set script [lindex $args end]
             set terminalScript [uplevel [list subst $script]]
@@ -56,8 +60,35 @@ namespace eval docker {
             docker.build -f $dockerFile -t $tag [pwd]
         }
 
-        image.run {name script} {
-            docker.run 
+        image.run {image args} {
+            set script [lindex $args end]
+            set terminalScript [uplevel [list subst $script]]
+            try {
+                files.writeText .dockerRun $terminalScript
+                set extraArgs [env KB_DOCKER_ARGS {}]
+
+                ## Gather parameters
+                kissb.args.get -workdir "." -> __workdir
+                kissb.args.get -workdirPath /build -> __workdirPath
+                kissb.args.get -args {} -> passedArgs
+                kissb.args.get -imgArgs {} -> imgArgs
+                
+                foreach {name value} [kissb.args.get -env {}] {
+                    lappend extraArgs -e ${name}=$value
+                }
+                puts "ENV: [kissb.args.get -env {}]"
+
+                ## Run
+                docker.run --rm --name kiss-running -u [exec id -u]:[exec id -g] -i -v${__workdir}:${__workdirPath} {*}$passedArgs  {*}$extraArgs $image {*}$imgArgs
+            
+            } on error {err options} {
+                catch {exec.call docker kill kiss-running}
+                #puts "ERR: $options"
+                #error $err $options
+                
+                #catch {exec.run docker rm kiss-running}
+                return -options $options $err
+            }
         }
 
         ## Runs the script with docker compose UP
