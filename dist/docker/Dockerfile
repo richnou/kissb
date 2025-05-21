@@ -1,6 +1,6 @@
 #from alpine
 #from archlinux
-from opensuse/tumbleweed
+FROM opensuse/tumbleweed
 
 #RUN apk add tcl bash
 
@@ -18,7 +18,7 @@ from opensuse/tumbleweed
 
 RUN zypper addrepo https://download.opensuse.org/repositories/devel:languages:tcl/openSUSE_Tumbleweed/devel:languages:tcl.repo
 RUN zypper --gpg-auto-import-keys --non-interactive refresh
-RUN zypper --gpg-auto-import-keys --non-interactive install unzip tcl tcllib tclxml
+RUN zypper --gpg-auto-import-keys --non-interactive install unzip  tcllib tclxml
 
 COPY dist.zip .
 RUN unzip dist.zip
