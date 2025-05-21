@@ -11,7 +11,7 @@ mkdocs::init -kissv1
 
 
 @ {configure "Run Netlify Configure command to link site"} {
-
+    netlify.run link
 }
 @ {build "Build Mkdoc site and zip it"} {
     mkdocs::build -zip
@@ -21,11 +21,11 @@ mkdocs::init -kissv1
 }
 
 @ {deploy "Builds the site and deploys to netlify (in preview)"} {
-    
+
     log.success "Deploying Site to netlify (args=$args)"
-    
+
     > build
-    
+
     netlify::run login
     netlify::run link
     netlify::run deploy -d [mkdocs::buildFolder] {*}$args
