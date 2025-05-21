@@ -10,7 +10,7 @@ namespace eval ::kiss::files {
     proc exists f {
         return [file exists $f]
     }
-    
+
     proc pathSeparator args {
         return $::tcl_platform(pathSeparator)
     }
@@ -28,10 +28,10 @@ namespace eval ::kiss::files {
     }
 
     proc inDirectory {d script} {
-        
-        file mkdir $d 
+
+        file mkdir $d
         set tmpDir [pwd]
-        cd $d 
+        cd $d
         try {
             uplevel $script
         } finally {
@@ -40,7 +40,7 @@ namespace eval ::kiss::files {
 
     }
 
-    
+
     ## Extensions
     ##################
     kissb.extension files {
@@ -62,7 +62,7 @@ namespace eval ::kiss::files {
                     }
                 }
             }
-            
+
         }
 
         ## Copy file to directory
@@ -75,11 +75,11 @@ namespace eval ::kiss::files {
                     file copy -force  $lf $dir
                 }
             }
-            
+
             #foreach f [glob $files] {
             #    file copy -force  $f $dir
             #}
-            
+
         }
 
         mv {src dst} {
@@ -93,7 +93,7 @@ namespace eval ::kiss::files {
                 set fileTextReplaced [uplevel [list subst $fileText]]
                 files.writeText $dir/[file tail $f] $fileTextReplaced
             }
-            
+
         }
 
         read f {
@@ -154,9 +154,9 @@ namespace eval ::kiss::files {
         }
 
         inDirectory {d script} {
-            file mkdir $d 
+            file mkdir $d
             set tmpDir [pwd]
-            cd $d 
+            cd $d
             try {
                 uplevel $script
             } finally {
@@ -167,7 +167,7 @@ namespace eval ::kiss::files {
 
         inBuildDirectory {d script} {
             set __p ${::kissb.buildDir}/$d
-            file mkdir ${__p} 
+            file mkdir ${__p}
             set tmpDir [pwd]
             cd ${__p}
             try {
@@ -182,11 +182,11 @@ namespace eval ::kiss::files {
         download {src {out ""}} {
             #exec wget -p $url -O $dir >@ stdout 2>@ stdout
             if {$out==""} {
-                ::kiss::terminal::execIn [pwd] wget --show-progress -p $src -O [lindex [split $src /] end]
+                ::kiss::terminal::execIn [pwd] wget --show-progress $src -O [lindex [split $src /] end]
             } else {
-                ::kiss::terminal::execIn [pwd] wget --show-progress -p $src -O $out
+                ::kiss::terminal::execIn [pwd] wget --show-progress $src -O $out
             }
-            
+
         }
 
         ## Returns the name of the downloaded file
@@ -305,10 +305,10 @@ namespace eval ::kiss::files {
 
 
     ##############
-    ## Writer 
+    ## Writer
     ###############
     namespace eval writer {
-        
+
         set indent 0
         set fid -1
 
@@ -321,7 +321,7 @@ namespace eval ::kiss::files {
         proc getIndent args {
             return [string repeat " " [expr 4*${::kiss::files::writer::indent}]]
         }
-    
+
         proc open file {
             set ::kiss::files::writer::fid [::open $file w+]
         }
@@ -332,5 +332,5 @@ namespace eval ::kiss::files {
             puts ${::kiss::files::writer::fid} [getIndent][join $args]
         }
     }
-   
+
 }
