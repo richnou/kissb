@@ -3,8 +3,7 @@ Jinja2>=2.11.2
 mkdocs
 mkdocs-material
 mkdocs-material[imaging]
-mkdocs-drawio-exporter
-mkdocs-drawio-file
+mkdocs-drawio
 mkdocs-enumerate-headings-plugin
 mkdocs-mermaid2-plugin
 mkdocs-kroki-plugin
@@ -15,7 +14,6 @@ mkdocs-exclude
 mkdocs-table-reader-plugin
 mkdocs-include-markdown-plugin
 pheasant
-openpyxl
 mkdocstrings[python]
 mkdocs-glightbox
 mkdocs-macros-plugin
