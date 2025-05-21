@@ -29,6 +29,7 @@ set tcl.version [info patchlevel]
 
 set out.dir ./[getEnv OUTDIR "dist"]
 set app.bin ./[getEnv NAME "tclkit-${tcl.version}"]
+set app.main ./[getEnv main false]
 
 set libs.stdTcl true
 
@@ -113,6 +114,10 @@ if {${libs.stdTcl}} {
 ## Package ############
 ######################
 if {!${mode.extract}} {
+
+    if {${app.main}!=false} {
+        file copy -force ${app.main} ${out.dir}/main.tcl
+    }
     zipfs mkimg ${app.bin} ${out.dir} ${out.dir} "" $exe_path
     puts "TCL Kit created: ${app.bin} in [pwd]"
 }
