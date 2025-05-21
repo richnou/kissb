@@ -1,6 +1,6 @@
 FROM rockylinux:8
 
-RUN dnf -y update
-RUN dnf install -y gcc gcc-c++ make automake autoconf zip findutils which patch bzip2 wget
+RUN dnf -y --enablerepo=devel update
+RUN dnf install -y --enablerepo=devel gcc gcc-c++ make automake autoconf zip findutils which patch bzip2 wget bc  mingw64-gcc mingw64-cpp mingw64-gcc-c++ mingw64-winpthreads-static mingw32-pkg-config
 
 WORKDIR /build

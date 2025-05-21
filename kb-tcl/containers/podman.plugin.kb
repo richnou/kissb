@@ -2,23 +2,27 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-package provide kissb.builder.podman 1.0
+package provide kissb.podman 1.0
 
 
-namespace eval builder::podman {
+namespace eval podman {
 
-    set runtimeCommand "podman" 
-    set builderImagePrefix "rleys/builder:"
+    kissb.extension podman {
 
-
-    kissb.extension builder {
-
-        selectDockerRuntime args {
-            set builder::podman::runtimeCommand docker
+        run args {
+            exec.run podman run {*}$args
         }
 
-        build {outputFile on os with script} {
-            
+        build args {
+            exec.run podman build {*}$args
+        }
+
+        push args {
+            exec.run podman push {*}$args
+        }
+
+        buildold {outputFile on os with script} {
+
             uplevel [list set os $os]
             set terminalScript [uplevel [list subst $script]]
             files.requireOrForce $outputFile {
@@ -27,7 +31,7 @@ namespace eval builder::podman {
             }
         }
 
-        image.run {tag script} {
+        run {tag script} {
             set terminalScript [uplevel [list subst $script]]
             try {
                 files.writeText .dockerRun $terminalScript
@@ -38,7 +42,7 @@ namespace eval builder::podman {
                 catch {exec run ${builder::podman::runtimeCommand} rm kiss-running}
                 log.error "Cannot run image $tag : $e"
             }
-            
+
         }
     }
 
@@ -53,7 +57,7 @@ namespace eval builder::podman {
 
         }
 
-        
+
     }
 
 }
