@@ -90,7 +90,7 @@ proc test args {
         file copy -force $base/kb-tcl/bin .
 
         # coursier gradle java-ivy  kotlin
-        foreach package {kiss docker flows builder java liquibase mkdocs netlify nodejs tclkit python3 eda git licensing native tclkit pkgIndex.tcl globals.tcl} {
+        foreach package {kiss  flows builder containers java liquibase mkdocs netlify nodejs tclkit python3 eda git licensing native tclkit pkgIndex.tcl globals.tcl} {
             file delete -force $package
             file copy -force $base/kb-tcl/$package .
         }
