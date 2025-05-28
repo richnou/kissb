@@ -99,7 +99,7 @@ foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tc
 
 ## Load local Kiss build
 set foundLocalBuildFile false
-foreach buildFile {kiss.build kissb.build.tcl kiss.build.tcl build.tcl kissb.tcl} {
+foreach buildFile [files.globFiles build.tcl kissb.tcl kissb.*.tcl] {
     if {[file exists $buildFile]} {
         set foundLocalBuildFile true
         source $buildFile  
