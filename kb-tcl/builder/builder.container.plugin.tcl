@@ -131,4 +131,7 @@ namespace eval builder::container {
 
     }
 
+
+    ## Init
+    builder.container.init
 }
