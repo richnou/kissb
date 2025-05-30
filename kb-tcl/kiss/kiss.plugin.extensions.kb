@@ -9,7 +9,7 @@
 kissb.extension kissb {
 
     module.path path {
-        
+
         set path [file normalize $path]
         if {![file exists $path]} {
             log.warn "module.path $path doesn't not exist"
@@ -55,12 +55,29 @@ kissb.extension kissb {
 
     args.get {v default {to ""} {varname ""}} {
         set localArgs [uplevel {::set args}]
-        
+
         # Get default or val from args
         set __val $default
         if {[lsearch -exact $localArgs $v]!=-1} {
             set __val [lindex $localArgs [lsearch -exact $localArgs $v]+1]
-        } 
+        }
+
+        # set to requested varname
+        if {$to!=""} {
+            uplevel [list ::set $varname ${__val}]
+        }
+        return ${__val}
+    }
+
+    args.after {v default {to ""} {varname ""}} {
+        set localArgs [uplevel {::set args}]
+
+        # Get default or val from args
+        set __val $default
+        set __indexOfArg [lsearch -exact $localArgs $v]
+        if {${__indexOfArg}!=-1} {
+            set __val [lrange $localArgs [expr ${__indexOfArg} +1] end]
+        }
 
         # set to requested varname
         if {$to!=""} {
@@ -100,7 +117,7 @@ kissb.extension vars {
         foreach n $args {
             ::kiss::vars::revert $n
         }
-        
+
     }
 
     ## This method will set the var if not set
@@ -240,40 +257,40 @@ kissb.extension os {
 
     isWindows  args {
         if {$::tcl_platform(platform)=="windows"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
     isWindows64  args {
         if {$::tcl_platform(platform)=="windows" && $::tcl_platform(machine) == "amd64"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 
     isLinux  args {
         if {$::tcl_platform(platform)=="unix"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 
     isLinux64  args {
         if {$::tcl_platform(platform)=="unix" && $::tcl_platform(machine) == "x86_64"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 
     isLinuxWSL  args {
         if {$::tcl_platform(platform)=="unix" && [string match *WSL2* [exec uname -a]]} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 }
