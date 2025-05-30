@@ -19,7 +19,7 @@ package ifneeded kissb.builder.container    1.0  [list source $dir/builder/build
 package ifneeded kissb.builder.rclone       1.0  [list source $dir/builder/builder.rclone.plugin.tcl]
 package ifneeded kissb.docker               1.0  [list source $dir/containers/docker.plugin.tcl]
 package ifneeded kissb.podman               1.0  [list source $dir/containers/podman.plugin.tcl]
-
+package ifneeded kissb.box                  1.0  [list source $dir/containers/box.plugin.tcl]
 
 package ifneeded kissb.tclkit               1.0  [list source $dir/tclkit/tclkit.plugin.tcl]
 package ifneeded kissb.tcl9.kit             1.0  [list source $dir/tclkit/tclkit9.plugin.tcl]
