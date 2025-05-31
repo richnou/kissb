@@ -8,11 +8,18 @@ namespace eval kissb::box  {
     vars.define box.ps1 {🐳\\[\\033\[01;32m\\]\\u@${BOXNAME}\\[\\033\[01;34m\\] \\w\\[\\033\[00m\\]📦}
 
 
+    proc boxContainers args {
+        return [exec.call ${::builder.container.runtime} ps -a -f label=kbox --format="{{.Names}},{{.State}}"]
+    }
     proc containerExists name {
         return [expr {[exec.call ${::builder.container.runtime} ps -aq -f name=/^$name\$/] eq ""? 0 : 1}]
     }
     proc containerRunning name {
         return [expr {[exec.call ${::builder.container.runtime} ps -q -f name=/^$name\$/] eq ""? 0 : 1}]
+    }
+
+    proc ::box {subcmd args} {
+        box.${subcmd} {*}$args
     }
 
     kissb.extension box {
@@ -52,6 +59,7 @@ namespace eval kissb::box  {
                         --env-host \
                         --hostuser=$::env(USER) \
                         --security-opt label=disable \
+                        -l kbox=$containerName \
                         -w $::env(HOME) \
                         {*}$extraArgs \
                         $image ]
@@ -72,16 +80,41 @@ namespace eval kissb::box  {
 
         }
 
+        ls args {
+
+            puts "Available boxes:"
+            foreach container [::kissb::box::boxContainers] {
+                set state [split $container ,]
+                set name [lindex $state 0]
+                if {[lindex $state 1]=="running"} {
+                    puts "- Box $name is [log.successColored running]"
+                } else {
+                    puts "- Box $name is [log.errorColored stopped]"
+                }
+            }
+        }
+
 
         rm {containerName args} {
             set exists [::kissb::box::containerExists $containerName]
             if {$exists} {
+                log.warn "Removing container for box $containerName"
                 catch {exec.call ${::builder.container.runtime} kill --signal TERM $containerName }
                 catch {exec.call ${::builder.container.runtime} rm -f $containerName }
             } else {
                 log.warn "Box $containerName doesn't exist"
             }
         }
+
+        stop {name args} {
+
+            if {[::kissb::box::containerExists $name]} {
+                log.warn "Stopping Box $name"
+                catch {exec.call ${::builder.container.runtime} stop --time 2 $name }
+            }
+
+        }
+
         enter {name args} {
 
             #set containerName [string map {: -} box-${image}]
