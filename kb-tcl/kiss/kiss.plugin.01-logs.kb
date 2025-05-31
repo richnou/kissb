@@ -5,16 +5,36 @@
 package provide kissb.log 1.0
 catch {package require term::ansi::send}
 
-fconfigure stdout -translation binary
+#
 
 namespace eval ::kiss::log {
 
+    ## Check for Colored Terminal
+    set isColoredTerm false
+    set sendNotPresent [::catch {package present term::ansi::send}]
+    if {!$sendNotPresent} {
+        #puts "Color detection, platform: $::tcl_platform(platform)"
+        if {[::kiss::utils::isLinux]} {
+
+            try {
+                if {[string match *256color $::env(TERM)]} {
+                    set isColoredTerm true
+                    fconfigure stdout -translation binary
+                }
+            } on error args {
+
+            }
+
+        } elseif {[::kiss::utils::isWindows]} {
+
+        }
+    }
 
     ## Utils
     ## Hex codes for emoji: https://dev.to/rodrigoodhin/list-of-emojis-hex-codes-35ma
     #############
     set ::kiss.log.level INFO
-    set ::kiss.log.name {top} 
+    set ::kiss.log.name {top}
 
     proc log.get.level args {
         return ${::kiss.log.level}
@@ -34,20 +54,29 @@ namespace eval ::kiss::log {
         set ::kiss.log.level FINE
     }
     proc log.set.info args {
-        set ::kiss.log.level INFO 
+        set ::kiss.log.level INFO
     }
 
     proc log {level message} {
-        #  [uplevel 2 [list namespace current]] 
+        #  [uplevel 2 [list namespace current]]
         puts "${level}.${::kiss.log.name} $message"
     }
     proc isColorTerm args {
-        set sendPresent [::catch {package present term::ansi::send}]
-        if {$sendPresent} {
-            return 0
+        return ${::kiss::log::isColoredTerm}
+    }
+
+    proc log.coloredString {color string} {
+        if {[isColorTerm]} {
+            return "[::term::ansi::code::escb $color]$string[::term::ansi::code::escb [::term::ansi::code::ctrl::sda_fgdefault]]"
         } else {
-            return 1
+            return $string
         }
+    }
+    proc log.successColored string {
+        return [log.coloredString [::term::ansi::code::ctrl::sda_fggreen] $string]
+    }
+    proc log.errorColored string {
+        return [log.coloredString [::term::ansi::code::ctrl::sda_fgred] $string]
     }
 
     proc log.with.logger {logger args} {
@@ -79,7 +108,7 @@ namespace eval ::kiss::log {
             log.set.level $l
         }
     }
-    
+
     proc log.with.info args {
         log.with FINE {*}$args
     }
@@ -92,34 +121,22 @@ namespace eval ::kiss::log {
     proc log.with.debug args {
         log.with DEBUG {*}$args
     }
-    
+
     proc log.message {level message {color "::term::ansi::send::sda_fgdefault"} {icon ""} {prefix ""} {postfix ""} } {
-        
-        
+
+
         if {[isColorTerm]} {
                 try {
                     $color
                     puts "${level}.${::kiss.log.name} ${icon}${prefix}${message}${postfix}"
                 } finally {
                     ::term::ansi::send::sda_fgdefault
-                } 
-            } else {
-                puts "${level}.${::kiss.log.name} ${prefix}${message}${postfix}"
-            }
-            return
-        uplevel [subst {
-            if {[isColorTerm]} {
-                try {
-                    $color
-                    puts "$message"
-                    #puts "${level}.${::kiss.log.name} ${icon}${prefix}${message}${postfix}"
-                } finally {
-                    ::term::ansi::send::sda_fgdefault
-                } 
-            } else {
-                puts "${level}.${::kiss.log.name} ${prefix}${message}${postfix}"
-            }
-        }]
+                }
+        } else {
+            puts "${level}.${::kiss.log.name} ${prefix}${message}${postfix}"
+        }
+
+
     }
 
     proc log.fatal {message args} {
@@ -134,69 +151,45 @@ namespace eval ::kiss::log {
         } finally {
             if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
         }
-        
+
     }
     proc log.error message {
-        
+
         #puts $message
         set args [list ERRO $message ::term::ansi::send::sda_fgred "\xE2\x9D\x8C " "" "" ]
         uplevel [list log.message {*}$args]
-        return
-        try {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgred} }
-            log ERRO "\xE2\x9D\x8C $message"
-        } finally {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
-        }
-        
+
+
     }
     proc log.warn message {
         uplevel [list log.message WARN $message ::term::ansi::send::sda_fgyellow "\xE2\x9A\xA0 " "" "" ]
-        return
-        try {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgyellow} }
-            log WARN "\xE2\x9A\xA0 $message"
-        } finally {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
-        }
-        
+
+
     }
 
     proc log.success message {
         uplevel [list log.message SUCC $message ::term::ansi::send::sda_fggreen "\xE2\x98\x91 " "" "" ]
-        return
-        try {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fggreen} }
-            log SUCC $message
-        } finally {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
-        }
-        
+
+
     }
 
     proc log.info message {
         uplevel [list log.message INFO $message ::term::ansi::send::sda_fgcyan "" "" "" ]
-        return
-        try {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgcyan} }
-            log INFO $message
-        } finally {
-            if {[isColorTerm]} { catch {::term::ansi::send::sda_fgdefault} }
-        }
-        
+
+
     }
     proc log.fine message {
         if {[log.get.level] == "FINE" || [log.get.level] == "DEBUG"} {
             uplevel [list log.message FINE $message ::term::ansi::send::sda_fgdefault "" "" "" ]
             return
-        }   
+        }
     }
     proc log.debug message {
         if {[log.get.level] == "DEBUG"} {
             uplevel [list log.message DBUG $message ::term::ansi::send::sda_fgdefault "" "" "" ]
-        }   
+        }
     }
-    
+
 
     #puts "Export/Import log"
     namespace export log*
