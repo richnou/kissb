@@ -45,6 +45,15 @@ kissb.extension kissb {
         }
     }
 
+    args.ifNotContains {v script {else ""} {elseScript {}}} {
+        set localArgs [uplevel {::set args}]
+        if {[lsearch -exact $localArgs $v]==-1} {
+            uplevel [list eval $script]
+        } else {
+            uplevel [list eval $elseScript]
+        }
+    }
+
     args.withValue {v varname script} {
         set args [uplevel {::set args}]
         kissb.args.ifContains $v {
