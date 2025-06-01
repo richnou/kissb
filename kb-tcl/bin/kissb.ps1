@@ -1,1 +1,1 @@
-tclsh $env:KISSB_HOME\bin\kissb.tcl $args
+tclsh $env:KISSB_HOME\bin\kissb $args
