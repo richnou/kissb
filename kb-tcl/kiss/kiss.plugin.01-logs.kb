@@ -65,18 +65,25 @@ namespace eval ::kiss::log {
         return ${::kiss::log::isColoredTerm}
     }
 
-    proc log.coloredString {color string} {
+    proc log.attributeString {string beginAttr endAttr} {
         if {[isColorTerm]} {
-            return "[::term::ansi::code::escb $color]$string[::term::ansi::code::escb [::term::ansi::code::ctrl::sda_fgdefault]]"
+            return "[::term::ansi::code::escb $beginAttr]$string[::term::ansi::code::escb $endAttr]"
         } else {
             return $string
         }
     }
     proc log.successColored string {
-        return [log.coloredString [::term::ansi::code::ctrl::sda_fggreen] $string]
+        return [log.attributeString $string [::term::ansi::code::ctrl::sda_fggreen] [::term::ansi::code::ctrl::sda_fgdefault]]
     }
     proc log.errorColored string {
-        return [log.coloredString [::term::ansi::code::ctrl::sda_fgred] $string]
+        return [log.attributeString $string [::term::ansi::code::ctrl::sda_fgred] [::term::ansi::code::ctrl::sda_fgdefault]]
+    }
+    proc log.warnColored string {
+        return [log.attributeString $string [::term::ansi::code::ctrl::sda_fgyellow] [::term::ansi::code::ctrl::sda_fgdefault]]
+    }
+
+    proc log.boldString string {
+        return [log.attributeString $string [::term::ansi::code::ctrl::sda_bold] [::term::ansi::code::ctrl::sda_nobold] ]
     }
 
     proc log.with.logger {logger args} {
@@ -188,6 +195,14 @@ namespace eval ::kiss::log {
         if {[log.get.level] == "DEBUG"} {
             uplevel [list log.message DBUG $message ::term::ansi::send::sda_fgdefault "" "" "" ]
         }
+    }
+
+    proc log.flush args {
+        flush stdout
+    }
+
+    proc log.resetLine args {
+
     }
 
 
