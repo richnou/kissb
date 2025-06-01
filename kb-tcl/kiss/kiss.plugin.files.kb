@@ -99,7 +99,7 @@ namespace eval ::kiss::files {
         read f {
             set fid [open $f r]
             try {
-                return [read $fid]
+                return [chan read $fid]
             } finally {
                 close $fid
             }
