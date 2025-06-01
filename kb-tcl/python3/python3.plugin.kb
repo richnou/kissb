@@ -12,11 +12,17 @@ namespace eval python3 {
 
     set venvPath [file normalize ".kb/build/python3-venv"]
 
-    vars.define python3.version   3.12
+    vars.define python3.version   3
     vars.define python3.pythonExe python${::python3.version}
 
     ## Register a venv toolchain
     kiss::toolchain::register python3-venv {
+
+        ## Clean
+        refresh.withExact CLEAN {
+            log.warn "Cleaning Python3 venv: ${::python3::venvPath}"
+            files.delete ${::python3::venvPath}
+        }
 
         ## Create venv folder
         file mkdir ${::python3::venvPath}
@@ -80,6 +86,13 @@ namespace eval python3 {
     kissb.extension python3.venv {
 
         init args {
+
+            ## Clean
+            refresh.withExact CLEAN {
+                log.warn "Cleaning Python3 venv: ${::python3::venvPath}"
+                files.delete ${::python3::venvPath}
+            }
+
             ## Create venv folder
             file mkdir ${::python3::venvPath}
 
