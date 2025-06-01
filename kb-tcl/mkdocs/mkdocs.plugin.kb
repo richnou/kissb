@@ -14,14 +14,14 @@ namespace eval mkdocs {
     ## Init Venv
     ## Install mkdocs
     proc init args {
-        
+
         log.info "Initializing mkdocs..."
 
         ## Ensure venv
-        python3.venv.init
+        set venvWasInit [python3.venv.init]
 
         ## Ensure mkdocs
-        python3.venv.withNotBinOrRefresh mkdocs MKDOCS {
+        if {$venvWasInit || [refresh.is MKDOCS]} {
             lappend reqFiles $::mkdocs::pluginFolder/mkdocs.base.requirements
             if {[lsearch $args -material]!=-1} {
                 lappend reqFiles $::mkdocs::pluginFolder/mkdocs.material.requirements
@@ -32,16 +32,18 @@ namespace eval mkdocs {
             if {[file exists [pwd]/requirements.txt]} {
                 lappend reqFiles [file normalize [pwd]/requirements.txt]
             }
+            log.info "Mkdocs installing requirements: $reqFiles"
             python3.venv.install.requirements {*}$reqFiles
         }
 
+
         ## Ensure build directory
         file mkdir $::mkdocs::buildDir
-        
+
     }
 
     proc serve args {
-        python3.venv.run mkdocs --color serve 
+        python3.venv.run mkdocs --color serve
     }
 
     proc buildFolder args {
@@ -58,6 +60,6 @@ namespace eval mkdocs {
                 log.success "Zipping $htmlFolder"
                 ::zipfile::mkzip::mkzip ${::build.name}.zip -directory $htmlFolder
             }
-        } 
+        }
     }
 }
