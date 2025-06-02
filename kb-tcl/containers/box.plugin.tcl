@@ -8,6 +8,9 @@ namespace eval kissb::box  {
     vars.define box.ps1 {🐳\\[\\033\[01;32m\\]\\u@${BOXNAME}\\[\\033\[01;34m\\] \\w\\[\\033\[00m\\]📦}
 
 
+    ## Configuration dict for boxes
+    vars.define box.configurations {}
+
     proc boxContainers args {
         return [exec.call ${::builder.container.runtime} ps -a -f label=kbox --format="{{.Names}},{{.State}}"]
     }
@@ -24,22 +27,76 @@ namespace eval kissb::box  {
 
     kissb.extension box {
 
-        create {name image args} {
+        register {name args} {
+
+            ## Check Args
+            set argsDict [dict create {*}$args]
+            assert [dict exists $argsDict -image] "Register arguments must provide -image IMAGE"
+
+            set image [dict get $argsDict -image]
+            if {[file exists $image]} {
+                dict set argsDict -image [file normalize $image]
+            }
+            dict set ::box.configurations $name $argsDict
+
+        }
+
+
+        create {name {image ""} args} {
+
+            ## Arguments
+
+            ## extra for container creation
+            set extraArgs [kissb.args.popAfter -- ""]
+            log.info "- extra args=$extraArgs"
+
+
 
             set containerName $name
 
             set exists [::kissb::box::containerExists $containerName]
-            if {[refresh.is BOX]} {
+            if {[refresh.is BOX] || [kissb.args.contains -f]} {
                 set exists 0
-                catch {exec.call ${::builder.container.runtime} kill -f $containerName }
-                catch {exec.call ${::builder.container.runtime} rm -f $containerName }
+                log.warn "Will recreate box..."
+                box.rm $containerName
+                #catch {exec.call ${::builder.container.runtime} kill -f $containerName }
+                #catch {exec.call ${::builder.container.runtime} rm -f $containerName }
             }
 
             log.info "Creating Box $containerName ($exists)"
 
+
+
             if {!$exists} {
 
                 log.info "Box $containerName does not exists, creating..."
+
+                ## Find Image
+                if {$image==""} {
+
+                    if {![dict exists ${::box.configurations} $containerName]} {
+                        log.error "Cannot create $containerName, no image provided and no box definition in configuration"
+                        return
+                    } else {
+                        log.success "Creating $containerName using box configuration"
+                        set boxConfig [dict get ${::box.configurations} $containerName]
+                        set image [dict get $boxConfig -image]
+                        lappend extraArgs {*}[dict get $boxConfig -args]
+                    }
+
+                }
+
+                ## If Image is a Dockerfile, build image first
+                #########
+                if {[file exists $image]} {
+                    set dockerFile $image
+                    set image ${name}-image:latest
+
+                    log.info "- Building image $image using provided $dockerFile"
+
+                    exec.run ${::builder.container.runtime} build -q -f $dockerFile -t $image .
+
+                }
 
                 ## Maps Command args to container manager
                 #########
@@ -47,16 +104,33 @@ namespace eval kissb::box  {
                 ## Volumes
                 set vols [split [kissb.args.get --volumes ""] ,]
 
-                ## extra
-                set extraArgs [kissb.args.after -- ""]
-                log.info "- extra args=$extraArgs"
 
-                ## Create
+
+                ## Create #-v $::env(XDG_RUNTIME_DIR):$::env(XDG_RUNTIME_DIR):rw,rslave
                 #############
+                set envToForward {DISPLAY
+                            DBUS_SESSION_BUS_ADDRESS
+                            XDG_SESSION_ID
+                            XAUTHLOCALHOSTNAME
+                            HOSTNAME
+                            WAYLAND_DISPLAY
+                            XAUTHORITY
+                            XDG_SESSION_TYPE
+                            XDG_SEAT
+                            SSH_AUTH_SOCK
+                            ICEAUTHORITY
+                            XDG_CONFIG_DIRS
+                            SESSION_MANAGER
+                }
+                set env {}
+                foreach envName $envToForward {
+                    lappend env -e $envName=$::env($envName)
+                }
+                # --env-host
                 set containerCmd [list ${::builder.container.runtime} run --replace --name $containerName -d -it --privileged --userns keep-id --network host \
                         -v $::env(HOME):$::env(HOME):rw \
-                        -v $::env(XDG_RUNTIME_DIR):$::env(XDG_RUNTIME_DIR):rw \
-                        --env-host \
+                        -v /run/user:/run/user:rw,rslave \
+                        {*}$env \
                         --hostuser=$::env(USER) \
                         --security-opt label=disable \
                         -l kbox=$containerName \
@@ -71,10 +145,13 @@ namespace eval kissb::box  {
                 log.success "Box $containerCmd created"
 
                 ## Setup SUDO
-                exec.run ${::builder.container.runtime} exec -u 0:0 $containerName gpasswd -a $::env(USER) wheel
-                exec.run ${::builder.container.runtime} exec -u 0:0 $containerName /bin/bash -c "echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers"
+                kissb.args.contains --sudo {
+                    log.success "Sudo Setup"
+                    exec.run ${::builder.container.runtime} exec -u 0:0 $containerName gpasswd -a $::env(USER) wheel
+                    exec.run ${::builder.container.runtime} exec -u 0:0 $containerName /bin/bash -c "echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers"
+                }
 
-                log.success "Sudo Setup"
+
 
             }
 
@@ -82,7 +159,7 @@ namespace eval kissb::box  {
 
         ls args {
 
-            puts "Available boxes:"
+            log.info "Boxes created:"
             foreach container [::kissb::box::boxContainers] {
                 set state [split $container ,]
                 set name [lindex $state 0]
@@ -92,6 +169,16 @@ namespace eval kissb::box  {
                     puts "- Box $name is [log.errorColored stopped]"
                 }
             }
+            log.info "Boxes available in configuration for creation:"
+            foreach {name opts} ${::box.configurations} {
+                set doc [dict getdef $opts -desc ""]
+                puts "- Box [log.successColored $name]"
+                if {$doc!=""} {
+                    puts "  $doc"
+                }
+                puts "  Image=[dict get $opts -image]"
+                puts "  Container arguments=[dict getdef $opts -args {}]"
+            }
         }
 
 
@@ -99,7 +186,8 @@ namespace eval kissb::box  {
             set exists [::kissb::box::containerExists $containerName]
             if {$exists} {
                 log.warn "Removing container for box $containerName"
-                catch {exec.call ${::builder.container.runtime} kill --signal TERM $containerName }
+                #catch {exec.call ${::builder.container.runtime} kill --time 2 --signal TERM $containerName }
+                box.stop $containerName
                 catch {exec.call ${::builder.container.runtime} rm -f $containerName }
             } else {
                 log.warn "Box $containerName doesn't exist"
