@@ -27,12 +27,14 @@ kissb.extension kissb {
 
 kissb.extension kissb {
 
-    args.contains {v script {else ""} {elseScript {}}} {
+    args.contains {v {script {}} {else ""} {elseScript {}}} {
         set localArgs [uplevel {::set args}]
         if {[lsearch -exact $localArgs $v]!=-1} {
             uplevel [list eval $script]
+            return true
         } else {
             uplevel [list eval $elseScript]
+            return false
         }
     }
 
@@ -78,6 +80,7 @@ kissb.extension kissb {
         return ${__val}
     }
 
+    ## Returns arguments after a specific one, eg. CMD arg arg -- arg arg to get all arguments after --
     args.after {v default {to ""} {varname ""}} {
         set localArgs [uplevel {::set args}]
 
@@ -92,6 +95,26 @@ kissb.extension kissb {
         if {$to!=""} {
             uplevel [list ::set $varname ${__val}]
         }
+        return ${__val}
+    }
+
+    ## @see args.after , gathered arguments are removed from the args
+    args.popAfter {v default {to ""} {varname ""}} {
+        set localArgs [uplevel {::set args}]
+
+        # Get default or val from args
+        set __val $default
+        set __indexOfArg [lsearch -exact $localArgs $v]
+        if {${__indexOfArg}!=-1} {
+            set __val [lrange $localArgs [expr ${__indexOfArg} +1] end]
+            uplevel [set args [lrange $localArgs 0 [expr ${__indexOfArg} - 1]]
+        }
+
+        # set to requested varname
+        if {$to!="" && $varname!=""} {
+            uplevel [list ::set $varname ${__val}]
+        }
+
         return ${__val}
     }
 
