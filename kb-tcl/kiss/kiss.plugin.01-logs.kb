@@ -17,13 +17,22 @@ namespace eval ::kiss::log {
         if {[::kiss::utils::isLinux]} {
 
             try {
-                if {[string match *256color $::env(TERM)]} {
-                    set isColoredTerm true
-                    fconfigure stdout -translation binary
+                set colors [exec.call tput colors]
+                if {$colors>2} {
+                    set isColorTerm true
                 }
-            } on error args {
 
+            } on error args {
+                try {
+                    if {[string match *256color $::env(TERM)]} {
+                        set isColoredTerm true
+                        fconfigure stdout -translation binary
+                    }
+                } on error args {
+
+                }
             }
+
 
         } elseif {[::kiss::utils::isWindows]} {
 
