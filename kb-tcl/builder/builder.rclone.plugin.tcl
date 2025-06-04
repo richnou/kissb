@@ -8,7 +8,7 @@ package provide kissb.builder.rclone 1.0
 namespace eval rclone {
 
 
-    set version 1.67.0
+    set version 1.69.3
     set binPath ""
     set localConfigFile {}
 
@@ -25,7 +25,7 @@ namespace eval rclone {
             }
             set ::rclone::binPath [file normalize $toolchainFolder/rclone-v${::rclone::version}-linux-amd64/rclone]
         }
-        
+
         if {![file exists ${::rclone.config}]} {
             if {[file exists rclone.conf]} {
                 vars.set rclone.config [file normalize rclone.conf]
@@ -33,10 +33,10 @@ namespace eval rclone {
                 vars.set rclone.config [file normalize ../rclone.conf]
             }
         }
-        
+
     }
-    
-    
+
+
     kissb.extension rclone {
         init args {
             if {[file exists [lindex $args 0]]} {
