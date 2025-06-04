@@ -23,15 +23,13 @@ RUN zypper --gpg-auto-import-keys --non-interactive install unzip  tcllib tclxml
 COPY dist.zip .
 RUN unzip dist.zip
 RUN cp -Rf kissb-* /usr/lib64/tcl/kissb
+RUN chmod +x /usr/lib64/tcl/kissb/bin/kissb
 #RUN ln -s /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh
-RUN echo "alias kissb=$(ls /usr/lib/tcl8.6/kissb-*/bin/kissb)" >> /etc/profile.d/99-kiss.sh
+#RUN echo "alias kissb=$(ls /usr/lib/tcl8.6/kissb-*/bin/kissb)" >> /etc/profile.d/99-kiss.sh
 WORKDIR /cwd
 #RUN ["/usr/lib/tcl8.6/kissb/bin/kissb"]
 #ENTRYPOINT ["/bin/bash","-l","-c","/usr/lib/tcl8.6/kissb/bin/kissb"]
 #ENTRYPOINT ["/bin/bash","-ilc","kissb"]
 
 #CMD ["/bin/sh","-ilc","/usr/lib64/tcl/kissb/bin/kissb"]
-CMD ["/usr/lib64/tcl/kissb/bin/kissb"]
-
-
-
+ENTRYPOINT ["/usr/lib64/tcl/kissb/bin/kissb"]
