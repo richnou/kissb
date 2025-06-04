@@ -1,6 +1,6 @@
 
 
-# Required: 
+# Required:
 # Required: apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev pngquant
 
 set build.name "kissb-docs"
@@ -11,14 +11,18 @@ node.init
 npm.exec --version
 node.exec --version
 
-files.cp ../scripts/wrapper/kissbw      pages/get/
-files.cp ../scripts/linux/install.sh    pages/get/
-files.cp ../scripts/linux/install.tcl   pages/get/
+
+@ copy-scripts {
+    files.delete pages/get/*
+    files.cp ../scripts/wrapper/kissbw      pages/get/
+    files.cp ../scripts/linux/install-kit.sh    pages/get/
+}
+
 
 @ generate.variables {
 
     set packagesNamespaces {
-    
+
         kissb.verilator verilator
         kissb.cocotb    cocotb
         kissb.quarkus   quarkus
@@ -44,6 +48,6 @@ files.cp ../scripts/linux/install.tcl   pages/get/
         }
         package require kissb.verilator
 
-        
+
     }
 }

@@ -4,6 +4,7 @@ nav:
     - gettingstarted.md
     - installation.md
     - licenses.md
-    - packages.md 
-    - toolchains.md
+    - signing.md
+    - kissb-language
+    - packages
     - tcl-packages
