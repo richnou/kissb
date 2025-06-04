@@ -38,6 +38,17 @@ kissb.extension kissb {
         }
     }
 
+    args.containsNot {v {script {}} {else ""} {elseScript {}}} {
+        set localArgs [uplevel {::set args}]
+        if {[lsearch -exact $localArgs $v]==-1} {
+            uplevel [list eval $script]
+            return true
+        } else {
+            uplevel [list eval $elseScript]
+            return false
+        }
+    }
+
     args.ifContains {v script {else ""} {elseScript {}}} {
         set localArgs [uplevel {::set args}]
         if {[lsearch -exact $localArgs $v]!=-1} {
