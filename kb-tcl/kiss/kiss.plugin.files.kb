@@ -4,6 +4,8 @@
 
 package provide kissb.files 1.0
 
+# TCL Lib
+package require sha256
 
 namespace eval ::kiss::files {
 
@@ -300,6 +302,24 @@ namespace eval ::kiss::files {
         ## Script Info
         getScriptDirectory args {
             return [file normalize [file dirname [info script]]]
+        }
+
+        # Checksums
+
+        ## Checksum the provided file and write to a .sha256 file
+        ## @arg -nowrite doesn't write the sha to the file output
+        ## @return the calculated sha is -nowrite, or the path to checksum file
+        sha256 {file args} {
+            #exec.run sha256sum -b $file > ${file}.sha256
+            #return ${file}.sha256
+            set sha [::sha2::sha256 -hex -file $file]
+            kissb.args.containsNot -nowrite {
+                files.writeText "${file}.sha256" "$sha [file tail $file]"
+                return ${file}.sha256
+            } else {
+                return $sha
+
+            }
         }
     }
 
