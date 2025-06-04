@@ -11,6 +11,11 @@ namespace eval kissb::box  {
     ## Configuration dict for boxes
     vars.define box.configurations {}
 
+    ## @return true if the named box is in configuration
+    proc boxDefined name {
+        return [dict exists ${::box.configurations} $name]
+    }
+
     proc boxContainers args {
         return [exec.call ${::builder.container.runtime} ps -a -f label=kbox --format="{{.Names}},{{.State}}"]
     }
@@ -216,8 +221,13 @@ namespace eval kissb::box  {
             ## If doesn't exist, we can create if an image is provided
 
             if {!$running && !$exists} {
-                log.error "Box $containerName doesn't exist, please use box.create first"
-                return
+                if {[::kissb::box::boxDefined $containerName]} {
+                    box.create $containerName
+                } else {
+                    log.error "Box $containerName doesn't exist, please use box.create first"
+                    return
+                }
+
             } elseif {!$running && $exists} {
                 log.warn "Box Container $containerName is stopped, running now"
                 exec.run ${::builder.container.runtime} start  $containerName
