@@ -7,8 +7,8 @@
 ## KISSB Wrapper script to start kissb using terminal without installation
 
 ## Specify version here
-kissbChannel=dev 
-kissbVersion=250501
+kissbChannel=dev
+kissbVersion=250502
 
 
 kissbInstallFolder=.kb/install/${kissbChannel}
@@ -23,7 +23,7 @@ then
     wget -q --show-progress https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissbChannel}/${kissbVersion}/kissb-${kissbVersion} -O ${kissbRuntimePath}
     chmod +x ${kissbRuntimePath}
 
-    
+
 fi
 
 ## Check if this script is running from file
@@ -32,6 +32,7 @@ then
     echo "Downloading wrapper script..."
     wget -q https://kissb.dev/get/kissbw
     chmod +x kissbw
+    exit 0
 fi
 
 export KISSB_WRAPPER=1

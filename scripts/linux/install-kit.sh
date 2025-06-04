@@ -8,7 +8,7 @@
 
 ## Specify version here
 kissbChannel=dev
-kissbVersion=250501
+kissbVersion=250502
 
 ## By default install to  local folder, if --user is set, install to  installDir=/~/.kissb/install
 installDir=$(pwd)
