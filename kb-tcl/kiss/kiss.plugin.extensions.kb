@@ -91,6 +91,24 @@ kissb.extension kissb {
         return ${__val}
     }
 
+    ## Returns value to first arg not a switch, or return default.
+    ## If getFirstNotSwitch default -> varName syntax used, value also set to variable varname
+    args.getFirstNotSwitch {default {-> ""} {varname ""}} {
+        set localArgs [uplevel {::set args}]
+        set firstMatch [lsearch -not -glob $localArgs -*]
+        if {$firstMatch!=-1} {
+            set ret [lindex $localArgs [expr $firstMatch]]
+        }  else {
+            set ret $default
+        }
+        if {$varname!=""} {
+            uplevel [list set $varname $ret]
+        }
+
+        return $ret
+
+    }
+
     ## Returns arguments after a specific one, eg. CMD arg arg -- arg arg to get all arguments after --
     args.after {v default {to ""} {varname ""}} {
         set localArgs [uplevel {::set args}]
