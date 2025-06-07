@@ -47,9 +47,11 @@ namespace eval kissb::box  {
         }
 
 
-        create {name {image ""} args} {
+        create {name args} {
 
             ## Arguments
+            ## If first arg doesn't start with -, it is the image
+            kissb.args.getFirstNotSwitch "" -> image
 
             ## extra for container creation
             set extraArgs [kissb.args.popAfter -- ""]
@@ -68,7 +70,7 @@ namespace eval kissb::box  {
                 #catch {exec.call ${::builder.container.runtime} rm -f $containerName }
             }
 
-            log.info "Creating Box $containerName ($exists)"
+            log.info "Creating Box $containerName ($exists),force=[kissb.args.contains -f]"
 
 
 
@@ -87,6 +89,9 @@ namespace eval kissb::box  {
                         set boxConfig [dict get ${::box.configurations} $containerName]
                         set image [dict get $boxConfig -image]
                         lappend extraArgs {*}[dict get $boxConfig -args]
+                        if {[dict exists $boxConfig -sudo]} {
+                            lappend args --sudo
+                        }
                     }
 
                 }
@@ -106,38 +111,20 @@ namespace eval kissb::box  {
                 ## Maps Command args to container manager
                 #########
 
-                ## Volumes
-                set vols [split [kissb.args.get --volumes ""] ,]
+
 
 
 
                 ## Create #-v $::env(XDG_RUNTIME_DIR):$::env(XDG_RUNTIME_DIR):rw,rslave
                 #############
-                set envToForward {DISPLAY
-                            DBUS_SESSION_BUS_ADDRESS
-                            XDG_SESSION_ID
-                            XAUTHLOCALHOSTNAME
-                            HOSTNAME
-                            WAYLAND_DISPLAY
-                            XAUTHORITY
-                            XDG_SESSION_TYPE
-                            XDG_SEAT
-                            SSH_AUTH_SOCK
-                            ICEAUTHORITY
-                            XDG_CONFIG_DIRS
-                            SESSION_MANAGER
-                }
-                set env {}
-                foreach envName $envToForward {
-                    lappend env -e $envName=$::env($envName)
-                }
-                # --env-host
-                set containerCmd [list ${::builder.container.runtime} run --replace --name $containerName -d -it --privileged --userns keep-id --network host \
-                        -v $::env(HOME):$::env(HOME):rw \
-                        -v /run/user:/run/user:rw,rslave \
-                        {*}$env \
-                        --hostuser=$::env(USER) \
+
+                # --env-host --hostuser=$::env(USER)
+                set containerCmd [list ${::builder.container.runtime} create -it --replace --name $containerName \
+                        --privileged --userns keep-id  \
+                        --ipc host --network host --pid host --ulimit host \
                         --security-opt label=disable \
+                        -v $::env(HOME):$::env(HOME):rw \
+                        -v /run/user:/run/user:rw,rshared \
                         -l kbox=$containerName \
                         -w $::env(HOME) \
                         {*}$extraArgs \
@@ -147,13 +134,20 @@ namespace eval kissb::box  {
 
                 exec.run {*}$containerCmd
 
-                log.success "Box $containerCmd created"
+                log.success "Box $containerName created"
+
+                exec.run ${::builder.container.runtime} start $containerName
+
+                log.success "Box $containerName started"
+
 
                 ## Setup SUDO
                 kissb.args.contains --sudo {
                     log.success "Sudo Setup"
-                    exec.run ${::builder.container.runtime} exec -u 0:0 $containerName gpasswd -a $::env(USER) wheel
-                    exec.run ${::builder.container.runtime} exec -u 0:0 $containerName /bin/bash -c "echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers"
+                    # -g [exec.call id -g]
+                    #exec.run ${::builder.container.runtime} exec -u 0:0 $containerName useradd -M -s /bin/bash -U -u [exec.call id -u]  -G wheel $::env(USER)
+                    #exec.run ${::builder.container.runtime} exec -u 0:0 $containerName gpasswd -a $::env(USER) wheel
+                    exec.run ${::builder.container.runtime} exec -u 0:0 $containerName /bin/bash -c "echo '$::env(USER) ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers.d/10-box-user && chmod 0440 /etc/sudoers.d/10-box-user"
                 }
 
 
@@ -210,6 +204,10 @@ namespace eval kissb::box  {
 
         enter {name args} {
 
+            kissb.args.contains -r {
+                catch {box.rm $name}
+
+            }
             #set containerName [string map {: -} box-${image}]
             set containerName $name
 
@@ -239,7 +237,7 @@ namespace eval kissb::box  {
             #
             #
             ## Command to run in box
-            set cmdBase {/bin/bash }
+            set cmdBase {/bin/bash}
             set userCmd [kissb.args.after -- ""]
 
             ## If there is a .boxrc file in the current directory, first source it before running the command
@@ -253,10 +251,47 @@ namespace eval kissb::box  {
                 lappend cmdBase -c "$userCmd"
             }
 
+            # Extra args for exec
+            set execArgs {}
+            kissb.args.contains --root {
+                lappend execArgs -u root:root
+            } else {
+                lappend execArgs -u [exec.call id -u]:[exec.call id -g]
+            }
+
+            ## Environment to forwared to command
+            set envToForward {DISPLAY
+                        DBUS_SESSION_BUS_ADDRESS
+                        XDG_SESSION_ID
+                        XAUTHLOCALHOSTNAME
+                        HOSTNAME
+                        WAYLAND_DISPLAY
+                        XAUTHORITY
+                        XDG_SESSION_TYPE
+                        XDG_SEAT
+                        XDG_RUNTIME_DIR
+                        SSH_AUTH_SOCK
+                        ICEAUTHORITY
+                        XDG_CONFIG_DIRS
+                        SESSION_MANAGER
+            }
+            set env {}
+            foreach envName $envToForward {
+                lappend env -e $envName=$::env($envName)
+            }
+
             ## Running
             log.success "Entering $containerName with $cmdBase - you are now in the box!"
 
-            catch {exec.run ${::builder.container.runtime} exec -it  -w $::env(PWD) -e BOXNAME=$containerName -e PS1=[join ${::box.ps1}] $containerName {*}$cmdBase}
+            catch {exec.run ${::builder.container.runtime} exec -it  \
+                    -w $::env(PWD) \
+                    {*}$execArgs \
+                    -e BOXNAME=$containerName \
+                    {*}$env \
+                    -e PS1=[join ${::box.ps1}] \
+                    $containerName \
+                    {*}$cmdBase
+            }
 
         }
 
