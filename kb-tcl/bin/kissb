@@ -4,8 +4,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-
-lappend auto_path [file dirname [info script]]/../
+## Add
+#lappend auto_path [file dirname [info script]]/../
 
 
 
@@ -15,27 +15,7 @@ log.info "TCL version: $tcl_version"
 
 vars.set kissb.binFolder [file normalize [file dirname [info script]]/../]
 
-## Load Package folders
-set possiblePackageFolders [list ${kissb.home}/pkgs/*/pkgIndex.tcl .kissb/pkgs/*/pkgIndex.tcl]
 
-package require kissb.git
-set gitRoot [git.root]
-if {[file exists $gitRoot]} {
-    lappend possiblePackageFolders $gitRoot/.kissb/pkgs/*/pkgIndex.tcl
-}
-foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
-
-    log.fine "Found Package folder [file dirname $libFile]"
-    set dir [file dirname $libFile]
-    source $libFile
-
-}
-
-
-log.info "KISSB Version=${kissb.track}@${kissb.version}"
-if {[file exists $gitRoot]} {
-    log.info "Current GIT_ROOT=[git.root]"
-}
 
 
 set ::BASE [pwd]
@@ -80,130 +60,182 @@ foreach arg $argv {
 }
 
 
+### Main
+###############
+
+## Extra sarch paths for packages
+
+## Set default paths for package folders
+set possiblePackageFolders [list ${kissb.home}/pkgs/*/pkgIndex.tcl .kissb/pkgs/*/pkgIndex.tcl]
+
+## Add from env
+foreach envPackagePath ${kissb.packagepath} {
+    log.info "Package path from environment: ${envPackagePath}"
+    lappend possiblePackageFolders ${envPackagePath}/*/pkgIndex.tcl
+}
+
+## Add from GIT
+package require kissb.git
+set gitRoot [git.root]
+if {[file exists $gitRoot]} {
+    lappend possiblePackageFolders $gitRoot/.kissb/pkgs/*/pkgIndex.tcl
+}
+foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
+
+    log.fine "Found Package folder [file dirname $libFile]"
+    set dir [file dirname $libFile]
+    source $libFile
+
+}
+
+## Extra sarch paths for packages
+#set possiblePackageFolders [list ${kissb.home}/pkgs/ .kissb/pkgs/]
+#package require kissb.git
+#set gitRoot [git.root]
+#if {[file exists $gitRoot]} {
+#    lappend possiblePackageFolders $gitRoot/.kissb/pkgs/
+#}
+#foreach pkgFolder $possiblePackageFolders {
+#
+#    lappend auto_path $pkgFolder
+#}
 
 
 
 try {
 
-## Run update check
-if {$checkVersion} {
-    package require kissb.internal.update
-    kissb::internal::update::run
-
-    exit 0
-
-}
-
-## Load Lib and packages from well-known folders
-foreach libFile [files.globFiles ${kissb.home}/lib/*.lib.tcl .kissb/*.lib.tcl *.lib.tcl ] {
-    log.info "Loading lib file: $libFile"
-    source $libFile
-}
-
-foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tcl *.pkg.tcl ] {
-    log.info "Loading package file: $packageFile"
-    ::kiss::packages::loadLocalPackageFile $packageFile
-    #source $libFile
-}
-
-## Load local Kiss build
-set foundLocalBuildFile false
-foreach buildFile [files.globFiles build.tcl kissb.tcl kissb.*.tcl] {
-    if {[file exists $buildFile]} {
-        set foundLocalBuildFile true
-        source $buildFile
-        break
+    ## Show version and git root
+    log.info "KISSB Version=${kissb.track}@${kissb.version}"
+    if {[file exists $gitRoot]} {
+        log.info "Current GIT_ROOT=[git.root]"
     }
-}
-
-set targetStack tcl
-#if {!$foundLocalBuildFile} {
-#    log.debug "No Local build file, trying to load stack"
-#    if {[llength [glob -type f -nocomplain *.py ]]>0} {
-#        log.success "Loading Python Stack"
-#        package require kissb.python3
-#        set targetStack python
-#   }
-#}
-#source kiss.kb
 
 
+    ## Run update check
+    if {$checkVersion} {
+        package require kissb.internal.update
+        kissb::internal::update::run
 
-## Run target
-if {[llength $targets] == 0 && [llength $args] == 0 } {
-    log.warn "No build target or command provided"
-    foreach target [lsort [kiss::targets::listTargets]] {
-        puts "- $target - [kiss::targets::getDoc $target]"
+        exit 0
+
     }
-} elseif {[llength $targets]>0} {
 
-    ## Loop on target using index to allow some modes to edit the target list in case they should be interpreted as command
-    #
-    set ti 0
-    while {$ti<[llength $targets]} {
+    ## Load Lib and packages from well-known folders and KISSB_LIBPATH
+    set libsSearch [list ${kissb.home}/lib/*.lib.tcl .kissb/*.lib.tcl *.lib.tcl]
+    foreach envPath ${kissb.libpath} {
+        lappend libsSearch $envPath/*.lib.tcl
+    }
+    log.debug "Libs Search path: $libsSearch"
 
-        set target [lindex $targets $ti]
-        incr ti
+    foreach libFile [files.globFiles  {*}${libsSearch}] {
+        log.debug "- Loading lib file: $libFile"
+        source $libFile
+    }
+
+    foreach packageFile [files.globFiles ${kissb.home}/lib/*.pkg.tcl .kissb/*.pkg.tcl *.pkg.tcl ] {
+        log.info "Loading package file: $packageFile"
+        ::kiss::packages::loadLocalPackageFile $packageFile
+        #source $libFile
+    }
+
+    ## Load local Kiss build
+    set foundLocalBuildFile false
+    foreach buildFile [files.globFiles build.tcl kissb.tcl kissb.*.tcl] {
+        if {[file exists $buildFile]} {
+            set foundLocalBuildFile true
+            source $buildFile
+            break
+        }
+    }
+
+    set targetStack tcl
+    #if {!$foundLocalBuildFile} {
+    #    log.debug "No Local build file, trying to load stack"
+    #    if {[llength [glob -type f -nocomplain *.py ]]>0} {
+    #        log.success "Loading Python Stack"
+    #        package require kissb.python3
+    #        set targetStack python
+    #   }
+    #}
+    #source kiss.kb
 
 
-        log.debug "Running target $target"
 
-        ## Run Target or command
-        ###########
-        if {[string range $target 0 0]=="."} {
+    ## Run target
+    if {[llength $targets] == 0 && [llength $args] == 0 } {
+        log.warn "No build target or command provided"
+        foreach target [lsort [kiss::targets::listTargets]] {
+            puts "- $target - [kiss::targets::getDoc $target]"
+        }
+    } elseif {[llength $targets]>0} {
 
-            set cmd  [split [string range $target 1 end] " "]
-            set bin  [lindex $cmd 0]
-            set cmdArgs {}
-            if {[llength $cmd]>1} {
-                lappend cmdArgs {*}[lrange $cmd 1 end]
-            }
-            lappend cmdArgs {*}[lrange $targets 1 end]
-            set targets {}
+        ## Loop on target using index to allow some modes to edit the target list in case they should be interpreted as command
+        #
+        set ti 0
+        while {$ti<[llength $targets]} {
 
-            log.info "Running command $cmd: bin=$bin, args=$cmdArgs $args"
+            set target [lindex $targets $ti]
+            incr ti
 
-            # Check that command exists, otherwise try to load convention named package
-            if {[llength [info procs $cmd]]==0} {
-                set package kissb.[lindex [split $cmd .] 0]
-                log.debug "Loading package $package by convention to find command"
-                catch {package require $package}
-            }
 
-            $bin {*}$cmdArgs {*}$args
+            log.debug "Running target $target"
 
-        } elseif {[file exists $target] && ![file isdirectory $target]} {
+            ## Run Target or command
+            ###########
+            if {[string range $target 0 0]=="."} {
 
-            log.debug "Target is a file"
+                set cmd  [split [string range $target 1 end] " "]
+                set bin  [lindex $cmd 0]
+                set cmdArgs {}
+                if {[llength $cmd]>1} {
+                    lappend cmdArgs {*}[lrange $cmd 1 end]
+                }
+                lappend cmdArgs {*}[lrange $targets 1 end]
+                set targets {}
 
-            # Provided Target is a file
-            set fileext [file extension $target]
-            if {$fileext==".tcl"} {
-                source $target
-            } elseif {$fileext==".py"} {
-                package require kissb.python3
-                python3.venv.init
-                if {[file exists ../python]} {
-                    log.warn "Adding folder ../python to python path"
-                    exec.withEnv {PYTHONPATH {merge 1 value ../python/}} {
+                log.info "Running command $cmd: bin=$bin, args=$cmdArgs $args"
+
+                # Check that command exists, otherwise try to load convention named package
+                if {[llength [info procs $cmd]]==0} {
+                    set package kissb.[lindex [split $cmd .] 0]
+                    log.debug "Loading package $package by convention to find command"
+                    catch {package require $package}
+                }
+
+                $bin {*}$cmdArgs {*}$args
+
+            } elseif {[file exists $target] && ![file isdirectory $target]} {
+
+                log.debug "Target is a file"
+
+                # Provided Target is a file
+                set fileext [file extension $target]
+                if {$fileext==".tcl"} {
+                    source $target
+                } elseif {$fileext==".py"} {
+                    package require kissb.python3
+                    python3.venv.init
+                    if {[file exists ../python]} {
+                        log.warn "Adding folder ../python to python path"
+                        exec.withEnv {PYTHONPATH {merge 1 value ../python/}} {
+                            python3.venv.run.script $target {*}$args
+                        }
+
+                    } else {
                         python3.venv.run.script $target {*}$args
                     }
-
-                } else {
-                    python3.venv.run.script $target {*}$args
                 }
+
+            } elseif {[string range $target 0 0]!="-"} {
+
+                # Run Target
+                ::kiss::targets::run $target {*}$args
+
             }
-
-        } elseif {[string range $target 0 0]!="-"} {
-
-            # Run Target
-            ::kiss::targets::run $target {*}$args
 
         }
 
     }
-
-}
 
 
 
