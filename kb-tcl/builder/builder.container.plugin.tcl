@@ -39,7 +39,7 @@ namespace eval builder::container {
                 vars.set builder.container.runtime docker
             }
 
-            log.info "Image builder, selected runtime=${::builder.container.runtime}"
+            log.debug "Image builder, selected runtime=${::builder.container.runtime}"
         }
 
         isDocker args {

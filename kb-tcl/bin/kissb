@@ -4,18 +4,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-## Add
-#lappend auto_path [file dirname [info script]]/../
-
-
 
 ## Load KISSB
 package require kissb
-log.info "TCL version: $tcl_version"
 
 vars.set kissb.binFolder [file normalize [file dirname [info script]]/../]
-
-
 
 
 set ::BASE [pwd]
@@ -105,11 +98,13 @@ foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
 try {
 
     ## Show version and git root
-    log.info "KISSB Version=${kissb.track}@${kissb.version}"
+    set _info "KISSB=${kissb.track}@${kissb.version},TCL=[string trim $tcl_patchLevel]"
+    #log.info "KISSB Version=${kissb.track}@${kissb.version},TCL version: $tcl_version"
     if {[file exists $gitRoot]} {
-        log.info "Current GIT_ROOT=[git.root]"
+        #log.info "Current GIT_ROOT=[git.root]"
+        lappend _info ",GIT_ROOT=[git.root]"
     }
-
+    log.info [join ${_info} ""]
 
     ## Run update check
     if {$checkVersion} {
