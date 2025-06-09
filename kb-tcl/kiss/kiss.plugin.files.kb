@@ -25,6 +25,7 @@ namespace eval ::kiss::files {
         ::kiss::files::writeText $f $text
     }
 
+
     proc normalizePath p {
         return [string map {\\ /} $p]
     }
@@ -125,6 +126,14 @@ namespace eval ::kiss::files {
         }
         appendLine {f args} {
             files.appendText $f {*}$args \n
+        }
+
+        moveFileToTemp f {
+            set tempFd [file tempfile _tempfile [file tail $f]]
+            puts $tempFd [files.read $f]
+            close $tempFd
+            return ${_tempfile}
+
         }
 
 
