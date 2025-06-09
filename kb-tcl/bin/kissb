@@ -9,7 +9,7 @@
 package require kissb
 
 vars.set kissb.binFolder [file normalize [file dirname [info script]]/../]
-
+vars.set kissb.mainScript [file normalize [info script]]
 
 set ::BASE [pwd]
 set ::PWD [pwd]
@@ -22,6 +22,7 @@ set targets {}
 set args {}
 set checkVersion false
 set stopArgs false
+set nobuild false
 foreach arg $argv {
 
     if {$stopArgs} {
@@ -37,6 +38,8 @@ foreach arg $argv {
         log.set.level DEBUG
     } elseif {$arg == "--update"} {
         set checkVersion true
+    } elseif {$arg == "--nobuild"} {
+        set nobuild true
     } elseif {$arg == "--"} {
         # -- means stopping argument processing, all remaining args are added to the args variable to be passed to the targets
         set stopArgs true
@@ -134,25 +137,18 @@ try {
     }
 
     ## Load local Kiss build
-    set foundLocalBuildFile false
-    foreach buildFile [files.globFiles build.tcl kissb.tcl kissb.*.tcl] {
-        if {[file exists $buildFile]} {
-            set foundLocalBuildFile true
-            source $buildFile
-            break
-        }
-    }
+    if {$nobuild==false} {
 
-    set targetStack tcl
-    #if {!$foundLocalBuildFile} {
-    #    log.debug "No Local build file, trying to load stack"
-    #    if {[llength [glob -type f -nocomplain *.py ]]>0} {
-    #        log.success "Loading Python Stack"
-    #        package require kissb.python3
-    #        set targetStack python
-    #   }
-    #}
-    #source kiss.kb
+        set foundLocalBuildFile false
+        foreach buildFile [files.globFiles build.tcl kissb.tcl kissb.*.tcl] {
+            if {[file exists $buildFile]} {
+                set foundLocalBuildFile true
+                source $buildFile
+                break
+            }
+        }
+
+    }
 
 
 
