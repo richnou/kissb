@@ -1,9 +1,26 @@
 set ::kissDir $dir
-package ifneeded kissb                      1.0 [list foreach f [concat [lsort [glob $dir/kiss/kiss.plugin.*]] [list $dir/globals.tcl] [list $dir/info.tcl] [glob -nocomplain $dir/*.conf.tcl] ] {source $f}]
+
+## Kissb Core
+proc _load_kissb_conf dir {
+
+    foreach f [concat [lsort [glob $dir/kiss/kiss.plugin.*]] [list $dir/globals.tcl] [list $dir/info.tcl] ] { source $f }
+    foreach c [glob -nocomplain $dir/*.conf.tcl] {
+        try {
+            uplevel [list source $c]
+
+        } on error {msg stack} {
+            log.error "Could not load conf file $c: $msg"
+        }
+    }
+}
+#package ifneeded kissb                      1.0 [list foreach f [concat [lsort [glob $dir/kiss/kiss.plugin.*]] [list $dir/globals.tcl] [list $dir/info.tcl] ] { source $f } ]
+package ifneeded kissb                      1.0 [list _load_kissb_conf $dir ]
+
+
 package ifneeded kissb.internal.update      1.0 [list source $dir/kiss/kiss.update.tcl]
 package ifneeded kissb.internal.tls         1.0  [list source $dir/kiss/kiss.tls.tcl]
 
-
+## Standard Plugins
 package ifneeded kissb.i18n                 1.0  [list source $dir/i18n/i18n.plugin.kb]
 package ifneeded kissb.git                  1.0  [list source $dir/git/git.plugin.kb]
 package ifneeded kissb.liquibase            1.0  [list source $dir/liquibase/liquibase.plugin.kb]
@@ -23,6 +40,8 @@ package ifneeded kissb.box                  1.0  [list source $dir/containers/bo
 
 package ifneeded kissb.tclkit               1.0  [list source $dir/tclkit/tclkit.plugin.tcl]
 package ifneeded kissb.tcl9.kit             1.0  [list source $dir/tclkit/tclkit9.plugin.tcl]
+package ifneeded kissb.runtime              1.0  [list source $dir/tclkit/runtime.plugin.tcl]
+
 
 package ifneeded kissb.reuse                1.0  [list source $dir/licensing/reuse.plugin.tcl]
 
