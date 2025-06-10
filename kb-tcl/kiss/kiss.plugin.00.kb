@@ -61,7 +61,7 @@ namespace eval kiss {
             set functionsLines [lmap line [split "$functions" \n] { string trim $line}]
 
             #log.info "Functions no comments: $functionsNoComments"
-            foreach {procName procArgs procScript} $functionsNoComments {
+            foreach {procName procArgs procScript} $functions {
                 log.debug "Extension $extName.$procName with args $procArgs"
 
                 ## Find Definition file
