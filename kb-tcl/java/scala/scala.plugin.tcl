@@ -25,8 +25,9 @@ namespace eval scala {
             scala.init $m $version
         }
 
-        ## Init with versions version
+
         init {module args} {
+            # Init project module  with versions version
 
             kiss::toolchain::init coursier
 
@@ -42,7 +43,7 @@ namespace eval scala {
 
 
 
-            vars.set ${module}.build.directory  [file normalize ${scala::buildBaseFolder}/$args/$module]
+            vars.set ${module}.build.directory  [file normalize ${::scala::buildBaseFolder}/$args/$module]
             vars.set ${module}.scalac.args      {-deprecation -unchecked -incr}
             vars.set ${module}.jvm.target       11
 
@@ -58,8 +59,10 @@ namespace eval scala {
             dependencies.add $module coursier org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version]
         }
 
-        ## Selects the runtime JVM
         jvm {module version {descriptor ""}} {
+            # Select the JVM version for the application module
+
+
             vars.set ${module}.jvm.runtime $version
             if {$descriptor==""} {
                 vars.set ${module}.jvm.name $version
@@ -70,6 +73,8 @@ namespace eval scala {
         }
 
         compile {module args} {
+            # Compile module
+
 
             ##
             log.fine "Module $module scala version: [vars.resolve ${module}.scala.version]"
@@ -134,6 +139,7 @@ namespace eval scala {
         }
 
         run {module mainClass args} {
+            # Run module's provided main class
 
             ## Load scala with PATH
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.get ${module}.jvm.name] --apps scala:[vars.get ${module}.scala.version],scalac:[vars.get ${module}.scala.version]]
@@ -155,6 +161,8 @@ namespace eval scala {
     kissb.extension scalatest {
 
         init module {
+            # Load Scala test for the given module
+
             set testModule ${module}/test
             vars.set ${testModule}.name             ${module}-test
             vars.set ${testModule}.build.directory  [file dirname [vars.get ${module}.build.directory]]/${module}-test
@@ -172,6 +180,7 @@ namespace eval scala {
         }
 
         run module {
+            # Run tests for given module
 
             ## Get Build Dir
             set testModule ${module}/test
@@ -208,10 +217,11 @@ namespace eval scala {
     kissb.extension scala {
 
         amm {scriptFile} {
+            # Run provided script File using ammonite
 
             ## Load scala with PATH
             set jvmVersion   [vars.get scala.jvm.name 21]
-            set scalaVersion [vars.get scala.version ${scala::defaultVersion}]
+            set scalaVersion [vars.get scala.version ${::scala::defaultVersion}]
             set ammVersion   [vars.get amm.version 3.0.0-M2]
 
             log.info "Ammonite scala version: $scalaVersion"
@@ -245,13 +255,13 @@ namespace eval scala {
     ################################
     namespace eval bloop {
 
-        set bloopVersion 1.5.18
+        set bloopVersion 2.0.10
 
         proc getBloopEnv module {
 
             return [exec.cmdGetBashEnv coursier.setup -q --env \
                             --jvm [vars.resolve ${module}.jvm.name] \
-                            --apps bloop:[vars.resolve ${module}.bloop.version ${scala::bloop::bloopVersion}]]
+                            --apps bloop:[vars.resolve ${module}.bloop.version ${::scala::bloop::bloopVersion}]]
         }
 
 
@@ -259,8 +269,9 @@ namespace eval scala {
 
 
             config {module} {
+                # Configure module for bloop usage
 
-                set compileEnv [scala::getScalaEnv $module]
+                set compileEnv [::scala::getScalaEnv $module]
 
                 # Dependend builds based on module hierarchy
                 set splitModule [split $module /]
@@ -309,20 +320,26 @@ namespace eval scala {
             }
 
             compile {module} {
-                set bloopEnv [scala::bloop::getBloopEnv $module]
+                # Compile via bloop
+
+                set bloopEnv [::scala::bloop::getBloopEnv $module]
                 exec.withEnv $bloopEnv {
                     exec.run bloop compile [java::getModuleBuildName $module]
                 }
             }
 
             projects args {
-                exec.withEnv [scala::bloop::getBloopEnv main] {
+                # Run bloop projects command
+
+                exec.withEnv [::scala::bloop::getBloopEnv main] {
                     exec.run bloop projects
                 }
             }
 
             run {module main args} {
-                exec.withEnv [scala::bloop::getBloopEnv main] {
+                # Run module's main class via bloop
+
+                exec.withEnv [::scala::bloop::getBloopEnv main] {
                     exec.run bloop run [java::getModuleBuildName $module] -m $main {*}$args
                 }
             }

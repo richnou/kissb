@@ -55,7 +55,7 @@ package ifneeded kissb.eda.verilator        1.0  [list source $dir/eda/verilator
 ## Java and JEE Packages
 #####################
 package ifneeded kissb.java                 1.0  [list source $dir/java/java.plugin.kb]
-package ifneeded kissb.coursier             1.0  [list source $dir/java/coursier/coursier.plugin.kb]
+package ifneeded kissb.coursier             1.0  [list source $dir/java/coursier/coursier.plugin.tcl]
 package ifneeded kissb.gradle               1.0  [list source $dir/java/gradle/gradle.plugin.kb]
 package ifneeded kissb.maven                1.0  [list source $dir/java/maven/maven.plugin.kb]
 package ifneeded kissb.ivy                  1.0  [list source $dir/java/ivy/ivy.plugin.kb]
@@ -66,9 +66,9 @@ package ifneeded kissb.kotlin.maven         1.0 [list source $dir/java/kotlin/ko
 package ifneeded kissb.kotlin.mp            1.0 [list source $dir/java/kotlin/kotlin.mp.plugin.kb]
 package ifneeded kissb.kotlin.mp.compose    1.0 [list source $dir/java/kotlin/kotlin.mp.compose.plugin.kb]
 
-package ifneeded kissb.scala                1.0 [list source $dir/java/scala/scala.plugin.kb]
+package ifneeded kissb.scala                1.0 [list source $dir/java/scala/scala.plugin.tcl]
 
-package ifneeded kissb.proguard             1.0 [list source $dir/java/proguard/proguard.plugin.kb]
+package ifneeded kissb.proguard             1.0 [list source $dir/java/proguard/proguard.plugin.tcl]
 
 package ifneeded kissb.quarkus              1.0 [list source $dir/java/quarkus/quarkus.plugin.kb]
 

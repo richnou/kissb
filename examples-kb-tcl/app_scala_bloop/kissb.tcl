@@ -1,13 +1,14 @@
 package require kissb.scala
 
-package require kissb.proguard 
+package require kissb.proguard
 
-proguard.init 
+proguard.init
 
 
 ## Select versions
-scala.module main   3.4.2
-scala.jvm    main   21      ibm-semeru-openj9-java21:21.0.3+9_openj9-0.44.0
+scala.module main   3.7.1
+scala.jvm    main   21
+#ibm-semeru-openj9-java21:21.0.3+9_openj9-0.44.0
 
 ## Scala test
 scalatest.init main
@@ -18,7 +19,7 @@ scalatest.init main
     #scala.compile main/test
     #scala.compile main
     scala.bloop.compile main/test
-    
+
 }
 
 @ test {
@@ -37,7 +38,7 @@ scalatest.init main
     scala.bloop.config main
     scala.bloop.config main/test
     scala.bloop.projects projects
-   
+
 }
 
 @ package.singlejar {

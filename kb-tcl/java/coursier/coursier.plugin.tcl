@@ -256,19 +256,18 @@ namespace eval coursier {
 
         }
 
-        ## Returns classpath string for dep
+
         classpath {dep {classifier ""} {type ""} args} {
+            # Returns classpath string for dep
             return [files.joinWithPathSeparator  [coursier.fetch.classpath.of $dep $classifier $type {*}$args]]
 
         }
 
         ## App
         withApp {apps script} {
+            # Runs provided script with environment path updated to provide applications listed in $apps
+            #  apps - list of apps to be provided in path by coursier
 
-            #set appsArgs {}
-            #foreach app apps {
-            #    lappend appsArgs
-            #}
             set jvmVersion   [vars.get scala.jvm.name 21]
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm $jvmVersion --apps [join $apps ,]]
             exec.withEnv $compileEnv $script
@@ -277,4 +276,4 @@ namespace eval coursier {
     }
 }
 
-source [file dirname [info script]]/coursier.bom.plugin.kb
+source [file dirname [info script]]/coursier.bom.plugin.tcl
