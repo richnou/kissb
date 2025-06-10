@@ -2,9 +2,9 @@ module counter_tb;
 
     logic resn;
     logic clk;
-    
+
     always begin
-        #10 clk <= ! clk;
+        #10ns clk <= ! clk;
     end
 
     initial begin
@@ -23,4 +23,4 @@ module counter_tb;
         .resn(resn),
         .value()
     );
-endmodule 
+endmodule
