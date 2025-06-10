@@ -6,8 +6,6 @@
 This page describes some methods to install KISSB, we recommend using the wrapper script or Single File Runtime as they are the easiest to use.
 
 
-
-
 ## Single File Runtime {.sfr}
 
 KISSB is available as a single executable containing the required TCL runtime and libraries.

@@ -9,15 +9,17 @@ namespace eval ::kiss::cached {
     set cacheFolder ".kb/cached"
 
     proc cleanName name {
-    
+
         return [string map {/ -} $name]
     }
 
     kissb.extension kissb.cached {
 
 
-        ## Return existing file from local cache or run script with $file variable containing file path
+
         fileOrElse {name noarg varname script} {
+            ## Return existing file from local cache or run script with $file variable containing file path
+
             set name [::kiss::cached::cleanName $name]
             set file ${::kiss::cached::cacheFolder}/$name
             if {![file exists $file]} {
@@ -26,14 +28,6 @@ namespace eval ::kiss::cached {
             set cachedContent [files.read $file]
             uplevel [list set $varname $cachedContent]
             return $cachedContent
-
-            #if {[file exists $file]} {
-            #    log.success "Found Cached file $file"
-            #    return files.read $file
-            #} else {
-            #    
-            #    uplevel [list set $varname \[files.read $file\]]
-            #}
         }
 
         writeFile {name content} {

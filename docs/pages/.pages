@@ -1,8 +1,8 @@
 nav:
     - index.md
-    - releases.md
     - gettingstarted.md
     - installation.md
+    - releases.md
     - licenses.md
     - signing.md
     - kissb-language

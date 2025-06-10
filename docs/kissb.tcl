@@ -19,6 +19,30 @@ node.exec --version
 }
 
 
+@> copy-scripts
+
+
+
+proc makeMd {pattern file} {
+
+    ::ruff::document :: -pattern $pattern -include "procs" -includeprocs procs -format markdown -md_skiplevel 2 -outdir [file dirname $file] -outfile [file tail $file]
+
+
+}
+@ generate.apidoc {
+
+    package require ruff 2.5.0
+
+    makeMd "files.*"            pages/kissb-language/kissb.files.methods.md
+    makeMd "kissb.args.*"       pages/kissb-language/kissb.args.methods.md
+    makeMd "refresh.*"    pages/kissb-language/kissb.refresh.methods.md
+    makeMd "exec.*"             pages/kissb-language/kissb.exec.methods.md
+
+
+
+
+}
+
 @ generate.variables {
 
     set packagesNamespaces {

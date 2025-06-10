@@ -65,6 +65,10 @@ $ alias kbox="kissb .box"
 $ kbox ls
 ```
 
+## Sudo support
+
+If the image used to create the box comes with the sudo utility installed, it can be created using the **--sudo** argument.
+The current user will then be added to the suoders list with a No password rule, so that it is then easy to perform root operations like installing new packages in the image.
 
 ## .boxrc file
 
@@ -93,14 +97,12 @@ When entering a box terminal in a folder, if a file named **.boxrc** is present,
     ```
 
 
-<div class="grid" markdown>
 
+## Image Persistence
 
+Please be aware that when the box container is destroyed, for example after a "box rm" command or a system reboot, the changes made in the running box are not persisted.
 
-
-</div>
-
-## Commands
+If you have added packages via sudo or a root terminal in the image, it is best to add them to a Dockerfile that can be used to rebuild the same image upon box restart.
 
 
 ## Box for EDA Tools (Cadence/Europractice)

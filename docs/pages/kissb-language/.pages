@@ -1,5 +1,8 @@
 title: KISSB Core
 nav:
-    - primer.md
+    - kissb.files.md
+    - kissb.args.md
+    - kissb.refresh.md
+    - kissb.exec.md
     - packages.md
     - toolchains.md

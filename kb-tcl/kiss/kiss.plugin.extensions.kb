@@ -28,6 +28,34 @@ kissb.extension kissb {
 kissb.extension kissb {
 
     args.contains {v {script {}} {else ""} {elseScript {}}} {
+        # Tests if $args contains a specific argument, runs script if so, or elseScript if provided
+        #   v - Value to be tested
+        #   script - Script to be run if $args contains $v
+        #   else - Dummy word for syntax, just write "else"
+        #   elseScript - Script to be run if $args doesn't contain $v
+        #
+        # Returns true or false so that this method can be used without script
+        #
+        # ```tcl
+        #proc foo args {
+        #    kissb.args.contains -test {
+        #        puts "-test passed"
+        #    }
+        #    kissb.args.contains -test {
+        #        puts "-test passed"
+        #    } else {
+        #        puts "-test not passed"
+        #    }
+        #    if {[kissb.args.contains -test]} {
+        #        puts "-test passed"
+        #    } else {
+        #        puts "-test not passed"
+        #    }
+        #}
+        #foo -test
+        #foo
+        #```
+
         set localArgs [uplevel {::set args}]
         if {[lsearch -exact $localArgs $v]!=-1} {
             uplevel [list eval $script]
@@ -39,6 +67,10 @@ kissb.extension kissb {
     }
 
     args.containsNot {v {script {}} {else ""} {elseScript {}}} {
+        # Tests if $args doesn't contains a specific argument, runs script if so, or elseScript if provided
+        # See [::kissb.args.contains](#kissbargscontains) for usage
+        #
+        # Returns true or false
         set localArgs [uplevel {::set args}]
         if {[lsearch -exact $localArgs $v]==-1} {
             uplevel [list eval $script]
@@ -49,33 +81,27 @@ kissb.extension kissb {
         }
     }
 
-    args.ifContains {v script {else ""} {elseScript {}}} {
-        set localArgs [uplevel {::set args}]
-        if {[lsearch -exact $localArgs $v]!=-1} {
-            uplevel [list eval $script]
-        } else {
-            uplevel [list eval $elseScript]
-        }
-    }
-
-    args.ifNotContains {v script {else ""} {elseScript {}}} {
-        set localArgs [uplevel {::set args}]
-        if {[lsearch -exact $localArgs $v]==-1} {
-            uplevel [list eval $script]
-        } else {
-            uplevel [list eval $elseScript]
-        }
-    }
-
     args.withValue {v varname script} {
+        # Runs provided script with the $args value for $v passed as $varname
+        #  v - switch to test in $args
+        #  varname - the name of the variable to set the value of the $v argument to
+        #  script - the script to run if $v is present in $args
         set args [uplevel {::set args}]
-        kissb.args.ifContains $v {
+        kissb.args.contains $v {
             uplevel [list ::set $varname [lindex $args [expr [lsearch -exact $args $v]+1]]]
             uplevel [list eval $script]
         }
     }
 
     args.get {v default {to ""} {varname ""}} {
+        # Returns the value of $v switch in $args, or a default value
+        # if to and $varname are provided, the variable represented by varname will be set to the value
+        #  v - switch to test in $args
+        #  default - Default value if $v is not in $args
+        #  to - Dummy word, set to "to" or "->" for example
+        #  varname - pass the name of a variable to set to the $v value or $default
+        #
+        # Returns the value of $v in $args or $default
         set localArgs [uplevel {::set args}]
 
         # Get default or val from args
@@ -91,9 +117,10 @@ kissb.extension kissb {
         return ${__val}
     }
 
-    ## Returns value to first arg not a switch, or return default.
-    ## If getFirstNotSwitch default -> varName syntax used, value also set to variable varname
+
     args.getFirstNotSwitch {default {-> ""} {varname ""}} {
+        ## Returns value to first arg not a switch, or return default.
+        ## If getFirstNotSwitch default -> varName syntax used, value also set to variable varname
         set localArgs [uplevel {::set args}]
         set firstMatch [lsearch -not -glob $localArgs -*]
         if {$firstMatch!=-1} {
@@ -109,8 +136,9 @@ kissb.extension kissb {
 
     }
 
-    ## Returns arguments after a specific one, eg. CMD arg arg -- arg arg to get all arguments after --
+
     args.after {v default {to ""} {varname ""}} {
+        ## Returns arguments after a specific one, eg. CMD arg arg -- arg arg to get all arguments after --
         set localArgs [uplevel {::set args}]
 
         # Get default or val from args
@@ -127,8 +155,9 @@ kissb.extension kissb {
         return ${__val}
     }
 
-    ## @see args.after , gathered arguments are removed from the args
+
     args.popAfter {v default {to ""} {varname ""}} {
+        ## @see args.after , gathered arguments are removed from the args
         set localArgs [uplevel {::set args}]
 
         # Get default or val from args
@@ -162,14 +191,16 @@ kissb.extension kissb {
 ##############################
 kissb.extension vars {
 
-     ## Define a variable, with documentation, default value also extracted from environment variable
+
     define {name args} {
+        ## Define a variable, with documentation, default value also extracted from environment variable
         ::kiss::vars::define $name {*}$args
         return [vars.get $name]
     }
 
-    ## Set value for a variable
+
     set {name args} {
+        ## Set value for a variable
         ::kiss::vars::set $name {*}$args
         return [vars.get $name]
     }
@@ -181,8 +212,8 @@ kissb.extension vars {
 
     }
 
-    ## This method will set the var if not set
     ensure {name args} {
+        ## This method will set the var if not set
         if {![vars.exists $name]} {
             return [vars.set $name {*}$args]
         } else {
@@ -204,8 +235,10 @@ kissb.extension vars {
         return [::kiss::vars::exists $name]
     }
 
-    ## Module based variable resolution
+
     resolve {spec {default ""}} {
+        ## Module based variable resolution
+
 
         # Split at . MODULE/MODULE/MODULE.VAR.VAR.VAR , and take first result
         set module [lindex [split $spec .] 0]
@@ -259,8 +292,11 @@ kissb.extension env {
 ##############################
 kissb.extension dependencies {
 
-    ## Save provided dict in bom
+
     bom dict {
+        ## Save provided dict in bom
+
+
         #log.info "Adding BOM: $spec"
         ::kiss::dependencies::addBOM $dict
     }
@@ -290,8 +326,9 @@ kissb.extension dependencies {
 ##############################
 kissb.extension sources {
 
-    ## Save provided dict in bom
+
     add {module folder} {
+        ## Save provided dict in bom
         ::kiss::sources::addSourceFolder $module $folder
     }
 }
