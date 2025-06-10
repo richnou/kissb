@@ -27,8 +27,12 @@ proc makeMd {pattern file} {
 
     ::ruff::document :: -pattern $pattern -include "procs" -includeprocs procs -format markdown -md_skiplevel 2 -outdir [file dirname $file] -outfile [file tail $file]
 
+}
+
+proc variablesMd {pattern file} {
 
 }
+
 @ generate.apidoc {
 
     package require ruff 2.5.0
@@ -38,6 +42,7 @@ proc makeMd {pattern file} {
     makeMd "refresh.*"    pages/kissb-language/kissb.refresh.methods.md
     makeMd "exec.*"             pages/kissb-language/kissb.exec.methods.md
 
+    makeMd "node.*"             pages/packages/nodejs/node.methods.md
 
 
 
