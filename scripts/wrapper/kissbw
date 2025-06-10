@@ -8,7 +8,7 @@
 
 ## Specify version here
 kissbChannel=dev
-kissbVersion=250502
+kissbVersion=250601
 
 
 kissbInstallFolder=.kb/install/${kissbChannel}
@@ -27,11 +27,12 @@ then
 fi
 
 ## Check if this script is running from file
-if [[ $0 == 'bash' ]]
+if [[ $0 == 'bash' || $0 == '/bin/bash' ]]
 then
     echo "Downloading wrapper script..."
     wget -q https://kissb.dev/get/kissbw
     chmod +x kissbw
+    echo "You can now run kissb: ./kissbw"
     exit 0
 fi
 

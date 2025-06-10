@@ -8,16 +8,18 @@
 
 ## Specify version here
 kissbChannel=dev
-kissbVersion=250502
+kissbVersion=250601
 
 ## By default install to  local folder, if --user is set, install to  installDir=/~/.kissb/install
 installDir=$(pwd)
-read -p "Would to like to install to your user home (~/.kissb/install) (y/n) default=n ?" -e ITARGET
+#if [[ $1 == "--local" ]]
+read -p "Would to like to install to your user home (~/.kissb/bin) (y/n) default=n ?" -e ITARGET </dev/tty
+echo "Response: $ITARGET"
 if [[ $ITARGET == "y" ]]
 then
-    installDir=~/.kissb/install
+    installDir=~/.kissb/bin
     echo "* Installing to user home's $installDir"
-    echo "* After installation, you can add $installDir to your PATH"
+    echo "* After installation, you can add $installDir to your PATH (do not use ~ character in the path)"
     mkdir -p $installDir
 
 fi
