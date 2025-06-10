@@ -42,8 +42,8 @@ namespace eval kissb::box  {
             if {[file exists $image]} {
                 dict set argsDict -image [file normalize $image]
             }
-            dict set ::box.configurations $name $argsDict
-
+            #dict set ::box.configurations $name $argsDict
+            vars.append ::box.configurations $name $argsDict
         }
 
 
