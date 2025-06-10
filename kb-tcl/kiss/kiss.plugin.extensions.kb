@@ -199,9 +199,9 @@ kissb.extension vars {
     }
 
 
-    set {name args} {
+    set {name v} {
         ## Set value for a variable
-        ::kiss::vars::set $name {*}$args
+        ::kiss::vars::set $name $v
         return [vars.get $name]
     }
 
