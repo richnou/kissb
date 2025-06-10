@@ -6,7 +6,7 @@ package require kissb.builder.rclone
 
 rclone.init
 
-vars.define version 250502
+vars.define version 250602
 vars.define track  dev
 
 vars.define sign.defaultKey "E24253BA23A2452F"
