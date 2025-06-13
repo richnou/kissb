@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.terminal 1.0
- 
+
 
 namespace eval ::kiss::terminal {
 
@@ -21,25 +21,25 @@ namespace eval ::kiss::terminal {
             lappend __ioArgs 2>@ stderr
         }
         lappend __ioArgs <@ stdin
-        
+
         try {
             #<@ stdin
             #puts "Exec: {*}${args}"
-            return [exec {*}${args} {*}${__ioArgs} ] 
+            return [exec {*}${args} {*}${__ioArgs} ]
         } on error e {
             #log.error "Error running command $args ($e)"
             throw e "Error running command $args ($e)"
         } finally {
             cd $pwd
         }
-        
+
     }
 
     ## Exec redirecting outputs to console
     proc forkIn {folder args} {
         set pwd [pwd]
         file mkdir $folder
-        cd $folder 
+        cd $folder
         try {
             return [exec {*}${args} >@ stdout 2>@ stdout &]
         } on error e {
@@ -47,14 +47,14 @@ namespace eval ::kiss::terminal {
         } finally {
             cd $pwd
         }
-        
+
     }
 
     ## Exec returning stdout as function result
     proc callIn {folder args} {
         set pwd [pwd]
         file mkdir $folder
-        cd $folder 
+        cd $folder
         try {
             # 2> /dev/null
             return [exec {*}${args}]
@@ -65,17 +65,17 @@ namespace eval ::kiss::terminal {
 
                 #log.error "Error running command $args ($options)"
                 throw e "Error running command $args ($options)"
-                
+
             } else {
                 # If error code is NONE, there was no error, only stderr had content, so just return stdout output
                 return $output
             }
-           
+
 
         } finally {
             cd $pwd
         }
-        
+
     }
 
     ## Fork Xterm in the give folder with provided command
@@ -112,18 +112,20 @@ namespace eval ::kiss::terminal {
             return [::kiss::terminal::callIn $pwd {*}$args]
         }
 
-        ## Runs a command and returns a dict of env based on export lines
+
         cmdGetBashEnv args {
+            # Runs a command and returns a dict of env based on export lines
             return [exec.bashEnvToDict [{*}$args]]
         }
 
-        ## Converts "export XXX=YYY" lines to an environment dict
+
         bashEnvToDict str {
+            # Converts "export XXX=YYY" lines to an environment dict
             set res [dict create]
             foreach l [split $str \n] {
                 #log.info "Bash env Line: $l"
                 if {[regexp {export\s+([\w_]+)=(?:\"?([^\"]+)\"?)} $l -> name value]} {
-                    
+
                     #log.info "- env var $name -> $value"
                     dict update res $name envVal {
                         dict set envVal merge [string match *\$${name}* $value]
@@ -131,23 +133,25 @@ namespace eval ::kiss::terminal {
                         dict lappend envVal value $value
                     }
                     continue
-                  
+
                 }
-           
+
             }
             return $res
         }
 
-        ## Env
-        ###########
 
-        ## Env dict format: {VARNAME {merge 0/1 value VAL}}
         withEnv {envDict args} {
-            
+            # Runs the script provided in $args list with a temporary environment modified using the provided envDict.
+            #  envDict - Env dict format: {VARNAME {merge 0/1 value VAL} ... }
+            #  merge   - <ul><li>Merge = 1, the VARNAME will be added to any existing environment value for that name </li><li> Merge = 0 , the VARNAME will be overriden by value </li>
+            #
+            #
+
             ## Update env
             set envBackup [dict create]
             dict for {name spec} $envDict {
-                
+
                 ## Save env var value before merging or updating
                 set currentEnvVal ""
                 if {[llength [array get ::env $name]]!=0} {
@@ -165,7 +169,7 @@ namespace eval ::kiss::terminal {
 
             }
 
-            ## run 
+            ## run
             try {
                 log.debug "PATH= $::env(PATH)"
                 if {[llength $args]>1} {
@@ -173,21 +177,21 @@ namespace eval ::kiss::terminal {
                 } elseif {[llength $args]==1} {
                     uplevel [lindex $args 0]
                 }
-                
+
             } finally {
                 ## restore env
                 dict for {name v} $envBackup {
                     set ::env($name) $v
                 }
             }
-            
+
         }
 
 
     }
 
     kissb.extension print {
-    
+
         line l {
             puts $l
         }

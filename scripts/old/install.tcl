@@ -40,9 +40,9 @@ if {[file exists ${kissb.home}]} {
         set fileName dist-${currentVersion}.zip
         set outputFile [open $fileName w+]
         try {
-            set urlFileName https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissb.track}/$fileName
+            set urlFileName https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissb.track}/${currentVersion}/$fileName
             puts "Downloading: $urlFileName"
-            ::http::geturl https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissb.track}/$fileName -channel $outputFile
+            ::http::geturl https://kissb.s3.de.io.cloud.ovh.net/kissb/${kissb.track}/${currentVersion}/$fileName -channel $outputFile
         } finally {
             close $outputFile
         }

@@ -1,30 +1,30 @@
 # KISSB Build System
 
-Welcome to KISSB, a pragmatic Script Oriented Build system based on the TCL script language. 
+Welcome to KISSB, a pragmatic Script Oriented Build system based on the TCL script language.
 
-KISSB provides users with a scripting language that is close to a classic terminal-based script, while being easy and quick to augment via packages and custom scripts. The goal is not to rewrite build systems for any existing programming language, but to provide a flexible scripted build system environment to run any existing toolchain. 
+KISSB provides users with a scripting language that is close to a classic terminal-based script, while being easy and quick to augment via packages and custom scripts. The goal is not to rewrite build systems for any existing programming language, but to provide a flexible scripted build system environment to run any existing toolchain.
 
-A quick example of a build to run a python script: 
+A quick example of a build to run a python script:
 
-=== "kiss.build.tcl"
-    ~~~tcl 
+=== "kissb.tcl"
+    ~~~tcl
     {%
-        include-markdown "./__index_code/hero/kiss.build.tcl"
+        include-markdown "__index_code/hero/kissb.tcl"
         comments=false
     %}
     ~~~
 
 === "main.py"
-    ~~~python 
+    ~~~python
     {%
-        include-markdown "./__index_code/hero/main.py"
+        include-markdown "__index_code/hero/main.py"
         comments=false
     %}
     ~~~
 
 Then from the command line:
 
-> kissb
+> ./kissbw
 
 
 
@@ -33,7 +33,7 @@ Then from the command line:
 <div class="card" markdown>
 ## Language Agnostic Build System
 
-KISSB is a flexible TCL scripting library aimed at building projects no matter which language, tool or output is desired. 
+KISSB is a flexible TCL scripting library aimed at building projects no matter which language, tool or output is desired.
 
 It is distributed as a script library, standalone executable or docker image.
 
@@ -47,7 +47,7 @@ It is distributed as a script library, standalone executable or docker image.
 
 
 <div  markdown>
-=== "kiss.build.tcl"
+=== "kissb.tcl"
 
     ```tcl
     log.info "Loading script with commands"
@@ -68,7 +68,7 @@ It is distributed as a script library, standalone executable or docker image.
 </div>
 
 <div markdown>
-=== "kiss.build.tcl"
+=== "kissb.tcl"
 
     ```tcl
     ## mylib.lib.tcl is loaded automatically as well-know named file
@@ -104,7 +104,7 @@ It is distributed as a script library, standalone executable or docker image.
 <div class="card" markdown>
 ## Flexible Language
 
-Based on the TCL language, KISSB offers a very flexible API to create build work flows. 
+Based on the TCL language, KISSB offers a very flexible API to create build work flows.
 
 You can use or create build commands, hackable workflows and share your script libraries in  your project, user space or directly through git.
 

@@ -1,0 +1,1 @@
+package ifneeded kissb.testpackage 1.0 [list source $dir/testpkg.tcl]

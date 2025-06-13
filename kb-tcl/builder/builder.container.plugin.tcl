@@ -39,7 +39,7 @@ namespace eval builder::container {
                 vars.set builder.container.runtime docker
             }
 
-            log.info "Image builder, selected runtime=${::builder.container.runtime}"
+            log.debug "Image builder, selected runtime=${::builder.container.runtime}"
         }
 
         isDocker args {
@@ -59,14 +59,19 @@ namespace eval builder::container {
             set a test
         }
 
-        build {dockerFile tag} {
+        build {dockerFile tag args} {
+
             switch ${::builder.container.runtime} {
                 docker {
                     docker.build -f $dockerFile -t $tag .
                 }
 
                 podman {
-                    podman.build -f $dockerFile -t $tag .
+                    set extraArgs {}
+                    kissb.args.contains -quiet {
+                        lappend extraArgs -q
+                    }
+                    podman.build {*}$extraArgs -f $dockerFile -t $tag .
                 }
             }
         }
@@ -88,10 +93,24 @@ namespace eval builder::container {
             try {
                 files.writeText .dockerRun $terminalScript
                 set extraArgs [env KB_DOCKER_ARGS {}]
-                exec.run echo "$terminalScript" | ${builder::podman::runtimeCommand} run --rm --name kiss-running -u [exec id -u] -i -v.:/build {*}$extraArgs $tag /bin/bash
+
+                ## On Podman with SELinux, map volume with z but don't map user in image
+                ## For Docker, map user in image to keep created files under calling user
+                set internalArgs {}
+                switch ${::builder.container.runtime} {
+                    docker {
+                        lappend internalArgs -u [exec id -u] -v .:/build
+                    }
+
+                    podman {
+                        lappend internalArgs -v .:/build:z
+                    }
+                }
+
+                exec.run echo "$terminalScript" | ${::builder.container.runtime} run --rm --name kiss-running {*}${internalArgs} -i  {*}$extraArgs $tag /bin/bash
             } on error e {
-                catch {exec run ${builder::podman::runtimeCommand} stop kiss-running}
-                catch {exec run ${builder::podman::runtimeCommand} rm kiss-running}
+                catch {exec run ${::builder.container.runtime} stop kiss-running}
+                catch {exec run ${::builder.container.runtime} rm kiss-running}
                 log.error "Cannot run image $tag : $e"
             }
 
@@ -112,4 +131,7 @@ namespace eval builder::container {
 
     }
 
+
+    ## Init
+    builder.container.init
 }

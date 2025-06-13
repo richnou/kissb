@@ -6,8 +6,8 @@ docs_dir: pages
 plugins:
   - exclude:
       glob:
-        - '**/~*'
-  - drawio_file
+        - "**/~*"
+  - drawio
   - search
   - kroki
   - git-revision-date
@@ -51,12 +51,10 @@ theme:
     - navigation.top
     - content.code.copy
     - content.action.edit
-    - toc.integrate
 markdown_extensions:
   - admonition
   - pymdownx.details
   - abbr
-  - pymdownx.snippets
   - footnotes
   - attr_list
   - md_in_html
@@ -65,8 +63,11 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       use_pygments: true
-      linenums: true
-      linenums_style: pymdownx.table
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.superfences:
@@ -75,6 +76,6 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - toc:
-      title: 'Table of Contents'
-      toc_depth: '2-5'
+      title: "Table of Contents"
+      toc_depth: "2-5"
       permalink: true

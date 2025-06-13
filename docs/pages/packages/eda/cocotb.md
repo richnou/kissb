@@ -8,34 +8,39 @@ tags:
 ---
 # CocoTB
 
+
+Cocotb is a Python library that allows writing simulation testbenches for (System)Verilog and VHDL designs in python. It hooks to your simulator via the Standard VPI/DPI interfaces to read and write signals. Your testing logic can be written in Python.
+
+The KISSB CoCotb Package installs cocotb using a python virtual environment, and will start the selected simulator directly.
+
 !!! note "Useful Links"
     - Homepage: https://www.cocotb.org/
     - Tutorial: https://docs.cocotb.org/en/stable/quickstart.html
 
-
-Cocotb is a Python library that allows writing simulation testbenches for (System)Verilog and VHDL designs in python. It hooks to your simulator via the Standard VPI/DPI interfaces to read and write signals. Your testing logic can be written in Python.
-
-The KISSB CoCotb Package installs cocotb using a python virtual environment, and will start the selected simulator directly. 
-
-!!! warning 
+!!! warning
 
     While Cocotb provides a Makefile based way to run simulations, the Kissb Package is running cocotb without these, by using Kissb style configuration.
     There might be some differences between Cocotb Makefiles and Kissb package way of starting simulators
 
+## Requirements
+
+This module installs a python virtual environment, but relies on the system's python installation.
+Make sure you have python3 and python3 virtual environment packages installed.
+
 ## Quick Start
 
-=== "kiss.build.tcl"
+=== "kissb.tcl"
 
     ~~~~tcl
 
     package require kissb.eda.cocotb
 
     # Init Cocotb and select verilator
-    cocotb.init 
+    cocotb.init
     cocotb.simulator verilator
 
     # By Default, verilator will run using docker
-    # Switch to a local installation 
+    # Switch to a local installation
     # You must have perl installed locally
     verilator.runtime.kissb
     verilator.run --version
@@ -48,7 +53,7 @@ The KISSB CoCotb Package installs cocotb using a python virtual environment, and
 
     # Set the name of the python simulation module
     # if your testbench is located in "sim.py"
-    cocotb.select.module sim 
+    cocotb.select.module sim
 
 
     ## Run!
@@ -59,7 +64,7 @@ The KISSB CoCotb Package installs cocotb using a python virtual environment, and
 
 === "counter.sv"
 
-    ~~~~verilog 
+    ~~~~verilog
     // That's a very bad counter to demonstrate cocotb
     module counter(input wire clk,output reg [3:0] value);
 
@@ -71,17 +76,17 @@ The KISSB CoCotb Package installs cocotb using a python virtual environment, and
             value <= value +1;
         end
 
-    endmodule 
+    endmodule
 
     ~~~~
 
-Now run kissb: 
+Now run kissb:
 
-    $ kissb
+    $ ./kissbw
 
 You should get a verilator and cocotb output:
 
-~~~~bash 
+~~~~console
 - V e r i l a t i o n   R e p o r t: Verilator 5.024 2024-04-05 rev v5.024
 - Verilator: Built from 0.015 MB sources in 2 modules, into 0.036 MB in 11 C++ files needing 0.000 MB
 - Verilator: Walltime 0.068 s (elab=0.008, cvt=0.031, bld=0.000); cpu 0.000 s on 1 threads; alloced 11.840 MB
@@ -107,8 +112,8 @@ INFO.cocotb Run args: --trace
 
 To refresh the cocotb installation and check for updates:
 
-    $ kissb --refresh-cocotb (or --refresh to refresh everything)
+    $ ./kissbw --refresh-cocotb (or --refresh to refresh everything)
 
 ## Application Requirements
 
-You can add any additional requirements to a local requirements.txt file. For example, add pytest
+You can add any additional requirements to a local requirements.txt file. For example, add pytest.

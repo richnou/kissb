@@ -9,12 +9,12 @@ proc getEnv {name default} {
         } else {
             return $::env($name)
         }
-        
+
     } on error {msg options} {
-        return $default 
+        return $default
     }
-    
-    
+
+
 }
 
 proc hasArg name {
@@ -27,9 +27,9 @@ proc hasArg name {
 ###################
 set tcl.version [info patchlevel]
 
-set out.dir ./[getEnv OUTDIR "dist"]
-set app.bin ./[getEnv NAME "tclkit-${tcl.version}"]
-set app.main ./[getEnv main false]
+set out.dir  [getEnv outdir "dist"]
+set app.bin  [getEnv name "tclkit-${tcl.version}"]
+set app.main [getEnv main false]
 
 set libs.stdTcl true
 
@@ -51,9 +51,10 @@ puts "Extract Mode=${mode.extract}"
 puts "Continue Mode=${mode.continue}"
 puts "Kit2Kit Mode=${mode.kit2kit}"
 puts "Base Exe=$exe_path"
+puts "Build dir=${out.dir}"
 
 if {$exe_path eq ""} {
-    puts "Please use a static wish to make single-file exes! "
+    puts "Please use a static tcl to make single-file exes! "
     exit -1
     #pack [ttk::label .e -text "\n Please use a static wish to make single-file exes! "]
     #pack [ttk::button .b -text Exit -command exit] -pady 8
@@ -66,7 +67,7 @@ if {${mode.kit2kit}} {
 }
 
 #puts "Auto load: $auto_path -> [ls //zipfs:/app]"
-#return 
+#return
 ###################
 ## Prepare output folder with libraries and app ############
 ###################
@@ -102,7 +103,7 @@ if {${libs.stdTcl}} {
             file copy  -force $libDir $targetDir
         }
         #file copy $libDir [file join ${out.dir} tcl_library]
-        
+
     }
 }
 

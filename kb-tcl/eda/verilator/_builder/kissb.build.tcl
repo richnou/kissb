@@ -1,8 +1,7 @@
-package require kissb.docker 
 package require kissb.git
-package require kissb.builder.podman
+package require kissb.builder.container
 
-docker.image.build ./Dockerfile.builder verilator-rhel8-builder:latest
+builder.container.image.build ./Dockerfile.builder verilator-rhel8-builder:latest
 
 if {![file exists verilator]} {
     git.clone https://github.com/verilator/verilator
@@ -16,8 +15,8 @@ set buildImage verilator-rhel8-builder:latest
 @ all {
 
     #set buildBranches {master stable detach:v5.024 detach:v5.022 detach:v5.020 detach:v4.228}
-    set buildBranches {master stable detach:v5.032 detach:v5.030 detach:v5.028 detach:v5.026 }
-    
+    set buildBranches {master stable detach:v5.036 detach:v5.034 detach:v5.032 }
+
     #
     files.mkdir build
 
@@ -41,7 +40,7 @@ set buildImage verilator-rhel8-builder:latest
 
             # Build in docker image
             files.require $outputDirectory/bin/verilator {
-                docker.run.script $::buildImage {
+                builder.container.image.run $::buildImage {
                     cd /build
                     autoconf
                     ./configure --prefix=/build/install
@@ -53,17 +52,17 @@ set buildImage verilator-rhel8-builder:latest
                 ## Done, copy from git copy
                 files.cp install ../build/verilator-[string map {detach: ""} $branch]
 
-                
+
             }
 
-            ## ZIP 
+            ## ZIP
             files.inDirectory ../build/ {
-                exec.run zip -r ${outputDirectoryName}.zip  $outputDirectoryName
+                files.compressDir $outputDirectoryName ${outputDirectoryName}.zip
             }
-            
+
             # Push if needed
             #kissb.args.ifContains -s3 {
-            #    
+            #
             #}
 
             #exec.run autoconf
@@ -85,10 +84,10 @@ set buildImage verilator-rhel8-builder:latest
         #    AR      x86_64-w64-mingw32-ar
         #    RANLIB  x86_64-w64-mingw32-ranlib
         #    STRIP   x86_64-w64-mingw32-strip
-        #    NM      x86_64-w64-mingw32-nm 
+        #    NM      x86_64-w64-mingw32-nm
         files.delete install
         files.mkdir install
-        docker.run.script $::buildImage -env {  
+        docker.run.script $::buildImage -env {
             CCACHE_DIR /build/.ccache_win
         } {
             cd /build
@@ -97,7 +96,7 @@ set buildImage verilator-rhel8-builder:latest
             make clean
             make -j 8
             make install
-        } 
+        }
 
     }
 }

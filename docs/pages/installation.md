@@ -1,41 +1,58 @@
 # Installation
 
-- **Current Version:** {{ latest_dev_release() }}
+- **Latest Version:** {{ latest_dev_release() }}
 - **Latest Docker image push (dev):** {{ latest_docker_push() }} , <https://hub.docker.com/r/rleys/kissb>{ target=_blank }
 
-## Wrapper Script 
-
-To easily install kissb locally in a project and fix the build system version, you can use a wrapper script in the same fashion as with a Gradle or Maven wrapper script
-
-    project/folder $ wget -q -O - https://kissb.dev/get/kissbw | /bin/bash
-
-Or just download the script and give it runtime permission:
-
-    project/folder $ wget -q https://kissb.dev/get/kissbw
-    project/folder $ chmod +x kissbw
-    project/folder $ ./kissbw
+This page describes some methods to install KISSB, we recommend using the wrapper script or Single File Runtime as they are the easiest to use.
 
 
+## Single File Runtime {.sfr}
 
-## Single File Runtime
+KISSB is available as a single executable containing the required TCL runtime and libraries.
+It is based on a 9 Kit which we are building specifically to release KISSB.
 
-KISSB is available as a single executable containing the required TCL runtime and libraries. It is based on so called TCL Kits which we are building
-specifically to release KISSB.
+You can easily download the latest version to a folder or to your home:
 
-Download the kissb runtime:
+```bash
+curl -o- https://kissb.dev/get/install-kit.sh | bash
+```
 
-- For Windows: [Download KISSB kit](https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/{{ latest_dev_release() }}/kissb-{{ latest_dev_release() }}.exe)
-- For Linux: [Download KISSB kit](https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/{{ latest_dev_release() }}/kissb-{{ latest_dev_release() }})
+Alternatively, download the kissb runtime:
+
+- For Windows: [Download KISSB kit v{{ latest_dev_release() }}](https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/{{ latest_dev_release() }}/kissb-{{ latest_dev_release() }}.exe)
+- For Linux:   [Download KISSB kit v{{ latest_dev_release() }}](https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/{{ latest_dev_release() }}/kissb-{{ latest_dev_release() }})
 
 Place the downloaded file in a folder present in your PATH, for example .local/bin under linux, rename it to "kissb", then you can use the kissb command anywhere in your terminal.
 
-## Local Installation
+## Wrapper Script
+
+To easily install kissb locally in a project and fix the build system version, you can use a wrapper script in the same fashion as with a Gradle or Maven wrapper script
+
+```console
+$ curl -o- https://kissb.dev/get/kissbw | /bin/bash
+```
+
+Or just download the script and give it runtime permission:
+
+~~~console
+$ wget -q https://kissb.dev/get/kissbw
+$ chmod +x kissbw
+$ ./kissbw
+~~~
+
+The Wrapper will in install a [Single File Runtime](#sfr) in your project's folder
+
+## Archive Installation
+
+!!! warning
+    KISSB Archive don't include a TCL runtime, you must make sure that required dependencies are available on your system
+
 
 ### TCL dependencies
 
-Kissb requires TCL 8.6 or TCL9 to be installed on your system.
+Kissb requires TCL 8.6 or TCL9 to be installed on your system, with **tcllib**,**tcltls** and **tdom**.
 
-For TCL8  the required TCL packages are usually available for distributions, for example: 
+For TCL8  the required TCL packages are usually available for distributions, for example:
 
 | OS | Installation | Requirements |
 |----|--------------| ------------- |
@@ -44,23 +61,12 @@ For TCL8  the required TCL packages are usually available for distributions, for
 
 If you wish to use TCL9, it is best to use a pre-build binary distribution containing the required dependencies, such as the one we provide here: <https://tcl9.kissb.dev/dist1/>{target=_blank}
 
-### Install Using Install script
 
-The release repository provides an installation TCL script which downloads the zip file and unpacks it to the standard installation location ~/.kissb/install/TRACK
-
-For example for the dev track:
-
-~~~bash 
-wget -qO- https://kissb.dev/get/install.tcl | tclsh
-~~~
-
-Once an installation is available, the install script won't run anymore, updates should be done through the kissb update command
-
-### Install Distribution Folder 
+### Install Distribution Folder
 
 Download the latest distribution from the desired track, and unpack it for example in ~/.kissb/install/TRACK
 
-~~~bash 
+~~~bash
 mkdir -p ~/.kissb/dist && cd ~/.kissb/dist
 wget https://kissb.s3.de.io.cloud.ovh.net/kissb/dev/{{ latest_dev_release() }}/dist-{{ latest_dev_release() }}.zip
 unzip dist-{{ latest_dev_release() }}.zip
@@ -68,7 +74,7 @@ unzip dist-{{ latest_dev_release() }}.zip
 ln -s current kissb-{{ latest_dev_release() }}
 ~~~
 
-Then add the bin folder to your path, or link the "kissb" script from the bin folder to a folder already on your path: 
+Then add the bin folder to your path, or link the "kissb" script from the bin folder to a folder already on your path:
 
 ~~~bash
 # In .bashrc for example

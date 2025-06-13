@@ -9,7 +9,7 @@
 kissb.extension kissb {
 
     module.path path {
-        
+
         set path [file normalize $path]
         if {![file exists $path]} {
             log.warn "module.path $path doesn't not exist"
@@ -27,45 +27,152 @@ kissb.extension kissb {
 
 kissb.extension kissb {
 
-    args.contains {v script {else ""} {elseScript {}}} {
+    args.contains {v {script {}} {else ""} {elseScript {}}} {
+        # Tests if $args contains a specific argument, runs script if so, or elseScript if provided
+        #   v - Value to be tested
+        #   script - Script to be run if $args contains $v
+        #   else - Dummy word for syntax, just write "else"
+        #   elseScript - Script to be run if $args doesn't contain $v
+        #
+        # Returns true or false so that this method can be used without script
+        #
+        # ```tcl
+        #proc foo args {
+        #    kissb.args.contains -test {
+        #        puts "-test passed"
+        #    }
+        #    kissb.args.contains -test {
+        #        puts "-test passed"
+        #    } else {
+        #        puts "-test not passed"
+        #    }
+        #    if {[kissb.args.contains -test]} {
+        #        puts "-test passed"
+        #    } else {
+        #        puts "-test not passed"
+        #    }
+        #}
+        #foo -test
+        #foo
+        #```
+
         set localArgs [uplevel {::set args}]
         if {[lsearch -exact $localArgs $v]!=-1} {
             uplevel [list eval $script]
+            return true
         } else {
             uplevel [list eval $elseScript]
+            return false
         }
     }
 
-    args.ifContains {v script {else ""} {elseScript {}}} {
+    args.containsNot {v {script {}} {else ""} {elseScript {}}} {
+        # Tests if $args doesn't contains a specific argument, runs script if so, or elseScript if provided
+        # See [::kissb.args.contains](#kissbargscontains) for usage
+        #
+        # Returns true or false
         set localArgs [uplevel {::set args}]
-        if {[lsearch -exact $localArgs $v]!=-1} {
+        if {[lsearch -exact $localArgs $v]==-1} {
             uplevel [list eval $script]
+            return true
         } else {
             uplevel [list eval $elseScript]
+            return false
         }
     }
 
     args.withValue {v varname script} {
+        # Runs provided script with the $args value for $v passed as $varname
+        #  v - switch to test in $args
+        #  varname - the name of the variable to set the value of the $v argument to
+        #  script - the script to run if $v is present in $args
         set args [uplevel {::set args}]
-        kissb.args.ifContains $v {
+        kissb.args.contains $v {
             uplevel [list ::set $varname [lindex $args [expr [lsearch -exact $args $v]+1]]]
             uplevel [list eval $script]
         }
     }
 
     args.get {v default {to ""} {varname ""}} {
+        # Returns the value of $v switch in $args, or a default value
+        # if to and $varname are provided, the variable represented by varname will be set to the value
+        #  v - switch to test in $args
+        #  default - Default value if $v is not in $args
+        #  to - Dummy word, set to "to" or "->" for example
+        #  varname - pass the name of a variable to set to the $v value or $default
+        #
+        # Returns the value of $v in $args or $default
         set localArgs [uplevel {::set args}]
-        
+
         # Get default or val from args
         set __val $default
         if {[lsearch -exact $localArgs $v]!=-1} {
             set __val [lindex $localArgs [lsearch -exact $localArgs $v]+1]
-        } 
+        }
 
         # set to requested varname
         if {$to!=""} {
             uplevel [list ::set $varname ${__val}]
         }
+        return ${__val}
+    }
+
+
+    args.getFirstNotSwitch {default {-> ""} {varname ""}} {
+        ## Returns value to first arg not a switch, or return default.
+        ## If getFirstNotSwitch default -> varName syntax used, value also set to variable varname
+        set localArgs [uplevel {::set args}]
+        set firstMatch [lsearch -not -glob $localArgs -*]
+        if {$firstMatch!=-1} {
+            set ret [lindex $localArgs [expr $firstMatch]]
+        }  else {
+            set ret $default
+        }
+        if {$varname!=""} {
+            uplevel [list set $varname $ret]
+        }
+
+        return $ret
+
+    }
+
+
+    args.after {v default {to ""} {varname ""}} {
+        ## Returns arguments after a specific one, eg. CMD arg arg -- arg arg to get all arguments after --
+        set localArgs [uplevel {::set args}]
+
+        # Get default or val from args
+        set __val $default
+        set __indexOfArg [lsearch -exact $localArgs $v]
+        if {${__indexOfArg}!=-1} {
+            set __val [lrange $localArgs [expr ${__indexOfArg} +1] end]
+        }
+
+        # set to requested varname
+        if {$to!=""} {
+            uplevel [list ::set $varname ${__val}]
+        }
+        return ${__val}
+    }
+
+
+    args.popAfter {v default {to ""} {varname ""}} {
+        ## @see args.after , gathered arguments are removed from the args
+        set localArgs [uplevel {::set args}]
+
+        # Get default or val from args
+        set __val $default
+        set __indexOfArg [lsearch -exact $localArgs $v]
+        if {${__indexOfArg}!=-1} {
+            set __val [lrange $localArgs [expr ${__indexOfArg} +1] end]
+            uplevel [set args [lrange $localArgs 0 [expr ${__indexOfArg} - 1]]
+        }
+
+        # set to requested varname
+        if {$to!="" && $varname!=""} {
+            uplevel [list ::set $varname ${__val}]
+        }
+
         return ${__val}
     }
 
@@ -84,15 +191,17 @@ kissb.extension kissb {
 ##############################
 kissb.extension vars {
 
-     ## Define a variable, with documentation, default value also extracted from environment variable
+
     define {name args} {
+        ## Define a variable, with documentation, default value also extracted from environment variable
         ::kiss::vars::define $name {*}$args
         return [vars.get $name]
     }
 
-    ## Set value for a variable
-    set {name args} {
-        ::kiss::vars::set $name {*}$args
+
+    set {name v} {
+        ## Set value for a variable
+        ::kiss::vars::set $name $v
         return [vars.get $name]
     }
 
@@ -100,11 +209,11 @@ kissb.extension vars {
         foreach n $args {
             ::kiss::vars::revert $n
         }
-        
+
     }
 
-    ## This method will set the var if not set
     ensure {name args} {
+        ## This method will set the var if not set
         if {![vars.exists $name]} {
             return [vars.set $name {*}$args]
         } else {
@@ -126,8 +235,10 @@ kissb.extension vars {
         return [::kiss::vars::exists $name]
     }
 
-    ## Module based variable resolution
+
     resolve {spec {default ""}} {
+        ## Module based variable resolution
+
 
         # Split at . MODULE/MODULE/MODULE.VAR.VAR.VAR , and take first result
         set module [lindex [split $spec .] 0]
@@ -181,8 +292,11 @@ kissb.extension env {
 ##############################
 kissb.extension dependencies {
 
-    ## Save provided dict in bom
+
     bom dict {
+        ## Save provided dict in bom
+
+
         #log.info "Adding BOM: $spec"
         ::kiss::dependencies::addBOM $dict
     }
@@ -212,8 +326,9 @@ kissb.extension dependencies {
 ##############################
 kissb.extension sources {
 
-    ## Save provided dict in bom
+
     add {module folder} {
+        ## Save provided dict in bom
         ::kiss::sources::addSourceFolder $module $folder
     }
 }
@@ -240,40 +355,40 @@ kissb.extension os {
 
     isWindows  args {
         if {$::tcl_platform(platform)=="windows"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
     isWindows64  args {
         if {$::tcl_platform(platform)=="windows" && $::tcl_platform(machine) == "amd64"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 
     isLinux  args {
         if {$::tcl_platform(platform)=="unix"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 
     isLinux64  args {
         if {$::tcl_platform(platform)=="unix" && $::tcl_platform(machine) == "x86_64"} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 
     isLinuxWSL  args {
         if {$::tcl_platform(platform)=="unix" && [string match *WSL2* [exec uname -a]]} {
-            return true 
+            return true
         } else {
             return false
-        } 
+        }
     }
 }

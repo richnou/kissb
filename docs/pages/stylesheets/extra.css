@@ -1,5 +1,20 @@
 :root {
-    --md-primary-fg-color:        #426B30;
+    --md-primary-fg-color: #426b30;
     --md-primary-fg-color--light: #6eb150;
-    --md-primary-fg-color--dark:  #172510;
-  }
+    --md-primary-fg-color--dark: #172510;
+}
+
+/* Highlight */
+/*pre {
+    color: white !important;
+}
+
+.md-clipboard:before {
+    color: rgb(255, 255, 255);
+}
+
+.codehilite:hover .md-clipboard:before,
+.md-typeset .highlight:hover .md-clipboard:before,
+pre:hover .md-clipboard:before {
+    color: rgba(255, 255, 255, 0.54) !important;
+    }*/

@@ -13,12 +13,26 @@ namespace eval kissb::refresh {
             if {[env.isDefined KB_REFRESH_[string toupper $name]] || [env.isDefined KB_REFRESH_ALL] } {
                 return true
             } else {
-                return false 
+                return false
+            }
+        }
+
+        isExact name {
+            if {[env.isDefined KB_REFRESH_[string toupper $name]] } {
+                return true
+            } else {
+                return false
             }
         }
 
         with {name script} {
             if {[refresh.is $name]} {
+                uplevel [list eval $script]
+            }
+        }
+
+        withExact {name script} {
+            if {[refresh.isExact $name]} {
                 uplevel [list eval $script]
             }
         }

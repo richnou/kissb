@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.tclkit 1.0
-package require kissb.builder.podman
+package require kissb.builder.container
 package require kissb.docker 
 
 namespace eval tclkit {
@@ -15,8 +15,8 @@ namespace eval tclkit {
         
         # Prepare Docker
         ########
-        builder.selectDockerRuntime
-        docker.image.build ${tclkit::packageFolder}/Dockerfile.builder kissb-tclkitbuilder:latest
+        #builder.selectDockerRuntime
+        builder.container.image.build ${::tclkit::packageFolder}/Dockerfile.builder kissb-tclkitbuilder:latest
 
         ## TCL version can be VERSION-SUFFIX
         ## Suffix is used to distinguis builds, like Crosscompile Build
@@ -28,7 +28,7 @@ namespace eval tclkit {
          
         ## Prepare work folder $kitName
         ################
-        files.inDirectory ${tclkit::workFolder}/${tclVersion} {
+        files.inDirectory ${::tclkit::workFolder}/${tclVersion} {
             #files.require kitcreator-trunk-tip/tclkit-${tclVersion} {
 
                 # Get TCLKIT source
@@ -38,13 +38,6 @@ namespace eval tclkit {
                 }
 
                 # Run
-                #env KIT_NAME tclkit
-                #env KIT_TCL_VERSION 8.6.14
-
-                # "tk tcllib tls zlib tclvfs mk4tcl"
-                #env KIT_KITCREATOR_PKGS     $kitPackages
-                #env KIT_KITCREATOR_USR_PKGS $userLibs
-
                 files.inDirectory kitcreator-trunk-tip {
 
                     # User lib
@@ -59,21 +52,21 @@ namespace eval tclkit {
                     }
 
                     # Patch kitsh
-                    log.info "Patching kitsh with ${tclkit::packageFolder}/patches/kitsh.build.patch..."
+                    log.info "Patching kitsh with ${::tclkit::packageFolder}/patches/kitsh.build.patch..."
                     files.inDirectory kitsh {
-                        catch {exec.run patch -sf build.sh -i ${tclkit::packageFolder}/patches/kitsh.build.patch}
+                        catch {exec.run patch -sf build.sh -i ${::tclkit::packageFolder}/patches/kitsh.build.patch}
                     }
 
                     # Update TCLX Version
                     log.info "Patching tclx version..."
                     files.inDirectory tclx {
-                        files.cp ${tclkit::packageFolder}/patches/tclx.build.sh build.sh
+                        files.cp ${::tclkit::packageFolder}/patches/tclx.build.sh build.sh
                         exec.run chmod +x build.sh
                     }
 
                     # Patch TCL TLS aclocal for proper TCL compilation setup
                     files.inDirectory tls/patches/ {
-                        files.cp ${tclkit::packageFolder}/patches/tls-aclocal-fix.patch tls-aclocal-fix.diff 
+                        files.cp ${::tclkit::packageFolder}/patches/tls-aclocal-fix.patch tls-aclocal-fix.diff
                         #catch {exec.run patch -sf build.sh -i ${tclkit::packageFolder}/patches/tls-aclocal-fix.patch}
                     }
 
@@ -104,7 +97,7 @@ namespace eval tclkit {
                     # If rebuild required, clean first
                     if {[lsearch $args -clean]!=-1} {
                         # docker run -it -u $(id -u) -v .:/build kissb-tclkitbuilder:latest /bin/bash
-                        builder.image.run kissb-tclkitbuilder:latest {
+                        builder.container.image.run kissb-tclkitbuilder:latest {
                             ./kitcreator clean
                         }
                     }
@@ -113,7 +106,7 @@ namespace eval tclkit {
                     # Build Tclkit with Kissb
                     # export KC_KITSH_CFLAGS="-DKIT_STORAGE_ZIP=1 -UKIT_INCLUDES_MK4TCL"
                     set tclKitOutput tclkit-$tclVersion
-                    builder.image.run kissb-tclkitbuilder:latest {
+                    builder.container.image.run kissb-tclkitbuilder:latest {
                         export KITCREATOR_PKGS="$kitPackages"
                         export CC=${ccPrefix}gcc
                         export CCX=${ccPrefix}cpp
@@ -148,7 +141,7 @@ namespace eval tclkit {
 
         #env TCLKIT $baseKit
         env.set TCLKIT /tclkit
-        env.set KB_DOCKER_ARGS {-v /home/rleys/git/promd/kissbuild-tcl/tclkit2/tclkit-8.6.14_notk:/tclkit}
+        #env.set KB_DOCKER_ARGS {-v /home/rleys/git/promd/kissbuild-tcl/tclkit2/tclkit-8.6.14_notk:/tclkit}
         # {tcllib zlib tclvfs} 
         set tclKitPath [buildTCLKit ${kitName} ${tclVersion}-mingw $kitPackages $userLibs x86_64-w64-mingw32 {*}$args]
 

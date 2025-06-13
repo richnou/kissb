@@ -18,13 +18,13 @@ namespace eval coursier {
     ## Repos
     ###############
     proc addRepository url {
-        lappend coursier::repositories $url
+        lappend ::coursier::repositories $url
     }
 
     ## Dependency resolution
     ################
     proc resolveModule module {
-        
+
         # Get  the deps dictionary
         set depsForModule [kiss::dependencies::getDeps $module]
 
@@ -46,10 +46,10 @@ namespace eval coursier {
             dict for {spec depInfo} $depsForModule {
                 dict with depInfo {
                     if {$resolved==false} {
-                        set resolvedDict [coursier::fetchSpec $spec]
+                        set resolvedDict [::coursier::fetchSpec $spec]
                         dict set depsForModule $spec resolved $resolvedDict
                         #log.info "Resolving $spec -> $resolvedDict"
-                        #dict merge depInfo [coursier::fetchSpec $spec]
+                        #dict merge depInfo [::coursier::fetchSpec $spec]
                     }
                 }
             }
@@ -60,9 +60,9 @@ namespace eval coursier {
         }
         log.debug "[namespace current] Cached deps: $cachedDepsDict"
         set mergedDict [kiss::dependencies::mergeDeps $module $cachedDepsDict]
-        
-         
-     
+
+
+
     }
 
     ## On Load -> Toolchain
@@ -70,48 +70,51 @@ namespace eval coursier {
     kiss::toolchain::register coursier {
         #puts "Init Coursier Toolchain"
 
-        set coursier::tcFolder $toolchainFolder
-        file mkdir ${coursier::tcFolder}
+        set ::coursier::tcFolder $toolchainFolder
+        file mkdir ${::coursier::tcFolder}
 
-        if {[kiss::utils::isWindows]} {
-            set coursier::binPath [file normalize ${coursier::tcFolder}/cs.exe]
+        if {[os.isWindows]} {
+            set ::coursier::binPath [file normalize ${::coursier::tcFolder}/cs.exe]
         } else {
-            set coursier::binPath [file normalize ${coursier::tcFolder}/cs]
+            set ::coursier::binPath [file normalize ${::coursier::tcFolder}/cs]
         }
-        
-        
-        if {![file exists ${coursier::binPath}]} {
-            log.info "Downloading Coursier"
-            if {[kiss::utils::isWindows]} {
-                kiss::utils::download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-win32.zip" ${coursier::tcFolder}/cs-x86_64-pc-win32.zip
-                kiss::utils::execIn ${coursier::tcFolder} powershell -command "Expand-Archive cs-x86_64-pc-win32.zip -DestinationPath ."
-                kiss::utils::execIn ${coursier::tcFolder} powershell -command "mv cs-x86_64-pc-win32.exe cs.exe"
-                kiss::utils::execIn ${coursier::tcFolder} powershell -command ".\\cs.exe"
+
+        files.inDirectory ${::coursier::tcFolder} {
+            if {![file exists ${::coursier::binPath}]} {
+                log.info "Downloading Coursier"
+                if {[os.isWindows]} {
+                    files.download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-win32.zip" ${::coursier::tcFolder}/cs-x86_64-pc-win32.zip
+                    exec.run powershell -command "Expand-Archive cs-x86_64-pc-win32.zip -DestinationPath ."
+                    exec.run powershell -command "mv cs-x86_64-pc-win32.exe cs.exe"
+                    exec.run powershell -command ".\\cs.exe"
+                } else {
+                    files.download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" ${::coursier::tcFolder}/cs-x86_64-pc-linux.gz
+                    exec.run gunzip -d cs-x86_64-pc-linux.gz
+                    exec.run mv cs-x86_64-pc-linux cs
+                    exec.run chmod +x cs
+                }
+
+                #exec.run $tcFolder curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
             } else {
-                kiss::utils::download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" ${coursier::tcFolder}/cs-x86_64-pc-linux.gz
-                kiss::utils::execIn ${coursier::tcFolder} gunzip -d cs-x86_64-pc-linux.gz
-                kiss::utils::execIn ${coursier::tcFolder} mv cs-x86_64-pc-linux cs
-                kiss::utils::execIn ${coursier::tcFolder} chmod +x cs
+                puts "Coursier TC ready in ${::coursier::binPath}"
             }
-            
-            #kiss::utils::execIn $tcFolder curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
-        } else {
-            puts "Coursier TC ready in ${coursier::binPath}"
         }
+
+
     }
 
     ## Fetch
     ##############
     set currentDeps {}
     proc + {dep args} {
-        set outFolder [uplevel {set outFolder}] 
+        set outFolder [uplevel {set outFolder}]
         #puts "Getting to $outFolder"
-        lappend coursier::currentDeps $dep
-        #coursier::runtime::fetchSingle $outFolder org.apache.commons commons-lang3 3.14.0 --default=true --javadoc --sources 
+        lappend ::coursier::currentDeps $dep
+        #::coursier::runtime::fetchSingle $outFolder org.apache.commons commons-lang3 3.14.0 --default=true --javadoc --sources
         log.info "Fetching $dep"
-        #set files  [string map {\\ /} [coursier::runtime::fetchSingle $dep {*}$args]]
-        set files  [coursier::runtime::fetchSingle $dep --default=true --javadoc --sources  {*}$args]
-        
+        #set files  [string map {\\ /} [::coursier::runtime::fetchSingle $dep {*}$args]]
+        set files  [::coursier::runtime::fetchSingle $dep --default=true --javadoc --sources  {*}$args]
+
         log.debug "- Result ([llength $files]): $files"
 
         ## Parse result to sort dependencies in main artifact, javadoc, sources
@@ -134,17 +137,17 @@ namespace eval coursier {
                     dict lappend sortedDeps $tail lib [file normalize $resolvedFile]
                 }
             }
-            
+
         }
         log.debug "Result map: $sortedDeps"
-        #exit 0 
+        #exit 0
         #kiss::dependencies::addDeps [uplevel {set module}] {*}$files
         kiss::dependencies::addDeps [uplevel {set module}] $sortedDeps
     }
 
     proc fetchSpec {specId args} {
-        
-        set files  [coursier::runtime::fetchSingle $specId --default=true --javadoc --sources  {*}$args]
+
+        set files  [::coursier::runtime::fetchSingle $specId --default=true --javadoc --sources  {*}$args]
         set sortedDeps [dict create]
         #dict lappend sortedDeps $dep spec $dep
         foreach resolvedFile $files {
@@ -164,14 +167,14 @@ namespace eval coursier {
                     dict lappend sortedDeps $tail lib [file normalize $resolvedFile]
                 }
             }
-            
+
         }
         return $sortedDeps
-        
+
     }
     proc fetchAll {module deps} {
 
-        set outFolder ${coursier::tcFolder}/repository/$module 
+        set outFolder ${::coursier::tcFolder}/repository/$module
         file mkdir $outFolder
 
         ## Load deps
@@ -181,7 +184,7 @@ namespace eval coursier {
     }
 
     proc fetchSingleLib {dep} {
-        return [coursier::runtime::fetchSingle $dep]
+        return [::coursier::runtime::fetchSingle $dep]
     }
 
 
@@ -190,7 +193,7 @@ namespace eval coursier {
 
     ## This method gets env settings for the target java and update current env
     proc selectJava {name args} {
-        set jEnv [kiss::terminal::callIn ${coursier::tcFolder} ${coursier::binPath} java --jvm $name --env {*}$args]
+        set jEnv [kiss::terminal::callIn ${::coursier::tcFolder} ${::coursier::binPath} java --jvm $name --env {*}$args]
         foreach {export v} $jEnv {
             puts "Coursier java env: $v"
             if {[string match JAVA_HOME=* $v]} {
@@ -205,10 +208,10 @@ namespace eval coursier {
 
         proc fetchSingle {dep args} {
             set repos {}
-            foreach r $coursier::repositories {
+            foreach r $::coursier::repositories {
                 lappend repos -r $r
             }
-            set resLibs [kiss::terminal::callIn ${coursier::tcFolder} ${coursier::binPath} fetch -q {*}$repos {*}$args $dep]
+            set resLibs [kiss::terminal::callIn ${::coursier::tcFolder} ${::coursier::binPath} fetch -q {*}$repos {*}$args $dep]
             #set resLibsNormalized [lmap f $resLibs {kiss::files::normalizePath $f}]
             set resLibsNormalized [kiss::files::normalizePath $resLibs]
             return $resLibsNormalized
@@ -226,7 +229,7 @@ namespace eval coursier {
         }
 
         run args {
-            exec.run ${coursier::binPath} {*}$args
+            exec.run ${::coursier::binPath} {*}$args
         }
 
         install args {
@@ -234,11 +237,11 @@ namespace eval coursier {
         }
 
         setup args {
-            return [exec.call ${coursier::binPath} setup {*}$args]
+            return [exec.call ${::coursier::binPath} setup {*}$args]
         }
 
         resolve module {
-            coursier::resolveModule $module
+            ::coursier::resolveModule $module
         }
 
         fetch.classpath.of {dep {classifier ""} {type ""} args} {
@@ -249,23 +252,22 @@ namespace eval coursier {
             if {$type!=""} {
                 lappend args -A $type
             }
-            return [coursier::runtime::fetchSingle $dep {*}$args]
-            
+            return [::coursier::runtime::fetchSingle $dep {*}$args]
+
         }
-        
-        ## Returns classpath string for dep
+
+
         classpath {dep {classifier ""} {type ""} args} {
+            # Returns classpath string for dep
             return [files.joinWithPathSeparator  [coursier.fetch.classpath.of $dep $classifier $type {*}$args]]
-            
+
         }
 
         ## App
         withApp {apps script} {
+            # Runs provided script with environment path updated to provide applications listed in $apps
+            #  apps - list of apps to be provided in path by coursier
 
-            #set appsArgs {}
-            #foreach app apps {
-            #    lappend appsArgs
-            #}
             set jvmVersion   [vars.get scala.jvm.name 21]
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm $jvmVersion --apps [join $apps ,]]
             exec.withEnv $compileEnv $script
@@ -274,4 +276,4 @@ namespace eval coursier {
     }
 }
 
-source [file dirname [info script]]/coursier.bom.plugin.kb
+source [file dirname [info script]]/coursier.bom.plugin.tcl

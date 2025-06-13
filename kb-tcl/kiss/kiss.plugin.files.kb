@@ -4,6 +4,8 @@
 
 package provide kissb.files 1.0
 
+# TCL Lib
+package require sha256
 
 namespace eval ::kiss::files {
 
@@ -22,6 +24,7 @@ namespace eval ::kiss::files {
     proc ::files.writeText {f text} {
         ::kiss::files::writeText $f $text
     }
+
 
     proc normalizePath p {
         return [string map {\\ /} $p]
@@ -45,12 +48,21 @@ namespace eval ::kiss::files {
     ##################
     kissb.extension files {
 
-        ## Create directory
-        mkdir p {
-            file mkdir $p
+
+        mkdir dir {
+            # Create directory
+            #  dir - path to directory to be created
+            file mkdir $dir
         }
 
         delete args {
+            # Delete provided files in the args list - if a file is not a regular file or directory, the argument is treated as a glob to delete multiple files at once
+            #  args - paths to files/directories or glob to be deleted
+            #Examples:
+            #```tcl
+            #files.delete directory1 file2
+            #files.delete *.log
+            #```
             foreach f $args {
                 if {[file isdirectory $f]} {
                     file delete -force $f
@@ -65,9 +77,11 @@ namespace eval ::kiss::files {
 
         }
 
-        ## Copy file to directory
-        ## @arg files -> file or blob
+
         cp {f dir} {
+            # Copy file to directory
+            #  f - source file
+            #  dir - target directory
             if {[file exists $f]} {
                 file copy -force  $f $dir
             } else {
@@ -75,10 +89,6 @@ namespace eval ::kiss::files {
                     file copy -force  $lf $dir
                 }
             }
-
-            #foreach f [glob $files] {
-            #    file copy -force  $f $dir
-            #}
 
         }
 
@@ -99,7 +109,7 @@ namespace eval ::kiss::files {
         read f {
             set fid [open $f r]
             try {
-                return [read $fid]
+                return [chan read $fid]
             } finally {
                 close $fid
             }
@@ -114,6 +124,9 @@ namespace eval ::kiss::files {
         }
 
         appendText {f args} {
+            # Appends test to provided file
+            #  f - Target file
+            #  args - joined to a default string with join
             set fid [open $f a+]
             try {
                 puts -nonewline $fid [join $args]
@@ -122,12 +135,33 @@ namespace eval ::kiss::files {
             }
         }
         appendLine {f args} {
+            # Appends Line to provided file
+            #  f - Target file
+            #  args - joined to a default string with join
             files.appendText $f {*}$args \n
         }
 
 
-        ## Require File, if not present, run script
+
+        moveFileToTemp f {
+            # Reads and write provided file to a tempfile
+            #  f - Source file path
+            # If a file is in Zipfs archive but needs to be used by an external command for example, move it to a temporary file on host
+            #
+            # Returns the path to the created temp file
+            set tempFd [file tempfile _tempfile [file tail $f]]
+            puts $tempFd [files.read $f]
+            close $tempFd
+            return ${_tempfile}
+
+        }
+
+
+
         require {f script} {
+            # Require File, if not present, run script
+            #  f - File to be required
+            #  script - Script to be evaluated if the file is not present
             if {![file exists $f]} {
                 log.warn "File $f is absent, calling script"
                 uplevel [list set __f $f]
@@ -178,9 +212,10 @@ namespace eval ::kiss::files {
 
         }
 
-        ## Download
+
         download {src {out ""}} {
-            #exec wget -p $url -O $dir >@ stdout 2>@ stdout
+            # Download source file to target file using wget
+
             if {$out==""} {
                 ::kiss::terminal::execIn [pwd] wget --show-progress $src -O [lindex [split $src /] end]
             } else {
@@ -189,8 +224,11 @@ namespace eval ::kiss::files {
 
         }
 
-        ## Returns the name of the downloaded file
+
         downloadOrRefresh {url refresh {outFile ""}} {
+            # Downloads file from the URL if needed, or if refresh key is set
+
+
             #set outFile [expr {$outFile eq "" ? [file tail $url] : $outFile}]
             set.ifEmpty outFile [file tail $url]
             log.info "URL tail: [file tail $url]"
@@ -201,8 +239,9 @@ namespace eval ::kiss::files {
             return $outFile
         }
 
-        ## Unzip
+
         unzip {f args} {
+            # Unzip
             exec.run unzip {*}$args $f
         }
         untar {f args} {
@@ -212,13 +251,15 @@ namespace eval ::kiss::files {
             exec.run tar {*}$args -cvaf $out -C [file normalize $dir/..] [file tail $dir]
         }
         zipDir {dir out args} {
-            #exec.run zip -9 -r -y -k $out  $dir
+
             zipfs mkzip $out [file normalize $dir] [file normalize $dir/..]
         }
 
-        ## Compress dir into output archive
-        ## @arg --rename , input dir will be renamed to out file name in output tar
+
         compressDir {dir out args} {
+            # Compress dir into output archive
+            # @arg --rename , input dir will be renamed to out file name in output tar
+
             if {[file extension $out]==".zip"} {
                 files.zipDir $dir $out {*}$args
             } else {
@@ -241,8 +282,9 @@ namespace eval ::kiss::files {
             }
         }
 
-        ## Files writer
+
         withWriter {outPath script} {
+            # Files writer
             try {
                 ::kiss::files::writer::open $outPath
                 uplevel [list eval $script]
@@ -262,13 +304,19 @@ namespace eval ::kiss::files {
         }
 
 
-        ## PATH
+
         joinWithPathSeparator args {
+            #
+
+            ## PATH
             return [join {*}$args [::kiss::files::pathSeparator]]
         }
 
-        ## Globbing
+
         globFiles args {
+            #
+
+            ## Globbing
             return [join [lmap pattern $args {lsort [glob -nocomplain -type f $pattern]}]]
         }
 
@@ -283,23 +331,57 @@ namespace eval ::kiss::files {
             uplevel [list foreach file [files.globAll {*}$args] $script]
         }
 
-        ## Permissions
-        isExecutable f {
-            if {[os.isLinux]} {
-                exec.call stat -c %A someFile
-            }
-        }
-        makeExecutable f {
-            if {[os.isLinux]} {
-                exec.run chmod +x $f
+
+        isExecutable {f {for -user}} {
+            # Returns true if a file is executable for the owner by default
+            #  for - pass -group or -other or -user to check specific group execution
+
+            ## Permissions
+            set perm [file attributes $f -permissions]
+            if {$for=="-other"} {
+                return [expr {($perm >> 0) & 0x1}]
+            } elseif {$for == "-group"} {
+                return [expr {($perm >> 3) & 0x1}]
             } else {
-                log.error "only supported on linux"
+                return [expr {($perm >> 6) & 0x1}]
             }
+
         }
 
-        ## Script Info
+        makeExecutable {f args} {
+            # Makes a file executable by setting user permissin to +x
+
+            file attributes $f -permissions u+x
+        }
+
+
         getScriptDirectory args {
+            # Returns the directory of the current running script
+            #
+
+
+            # Script Info
             return [file normalize [file dirname [info script]]]
+        }
+
+
+        sha256 {file args} {
+            # Checksum the provided file and write to a .sha256 file
+            #   file - Sourec file to checksum
+            #   args - Use -nowrite to not  write the sha to the file output
+            #
+            # Returns the calculated sha if -nowrite, or the path to checksum file
+
+            #exec.run sha256sum -b $file > ${file}.sha256
+            #return ${file}.sha256
+            set sha [::sha2::sha256 -hex -file $file]
+            kissb.args.containsNot -nowrite {
+                files.writeText "${file}.sha256" "$sha [file tail $file]"
+                return ${file}.sha256
+            } else {
+                return $sha
+
+            }
         }
     }
 

@@ -4,16 +4,16 @@
 
 package provide kissb.scala 1.0
 package require kissb.coursier
-package require kissb.java 
+package require kissb.java
 
 # https://github.com/Konloch/bytecode-viewer/releases/download/v2.12/Bytecode-Viewer-2.12.jar
 namespace eval scala {
 
     set buildBaseFolder ".kb/scala"
-    set defaultVersion 3.4.2
+    set defaultVersion 3.7.1
 
     proc getScalaEnv module {
-    
+
         return [exec.cmdGetBashEnv coursier.setup -q --env \
                         --jvm [vars.resolve ${module}.jvm.name] \
                         --apps scala:[vars.resolve ${module}.scala.version],scalac:[vars.resolve ${module}.scala.version]]
@@ -25,8 +25,9 @@ namespace eval scala {
             scala.init $m $version
         }
 
-        ## Init with versions version
+
         init {module args} {
+            # Init project module  with versions version
 
             kiss::toolchain::init coursier
 
@@ -39,27 +40,29 @@ namespace eval scala {
             vars.set ${module}.name             $module
             vars.set ${module}.scala.major      [lindex [split $args .] 0]
             vars.set ${module}.scala.version    $args
-            
 
-            
-            vars.set ${module}.build.directory  [file normalize ${scala::buildBaseFolder}/$args/$module]
+
+
+            vars.set ${module}.build.directory  [file normalize ${::scala::buildBaseFolder}/$args/$module]
             vars.set ${module}.scalac.args      {-deprecation -unchecked -incr}
             vars.set ${module}.jvm.target       11
-            
+
             vars.set ${module}.jvm.runtime      21
             vars.set ${module}.jvm.name         21
 
             ## Add Folders
             #kiss::sources::addSourceFolder $module src/main/scala
             sources.add $module src/main/scala
-            
+
             ## Add Stdlib
             #kiss::dependencies::addDepSpec $module org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version] coursier
             dependencies.add $module coursier org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version]
         }
 
-        ## Selects the runtime JVM
         jvm {module version {descriptor ""}} {
+            # Select the JVM version for the application module
+
+
             vars.set ${module}.jvm.runtime $version
             if {$descriptor==""} {
                 vars.set ${module}.jvm.name $version
@@ -70,6 +73,8 @@ namespace eval scala {
         }
 
         compile {module args} {
+            # Compile module
+
 
             ##
             log.fine "Module $module scala version: [vars.resolve ${module}.scala.version]"
@@ -80,7 +85,7 @@ namespace eval scala {
             exec.withEnv $compileEnv exec.run scala --version
             #exec.run scala --version
             #exec.run PATH=/home/rleys/.local/share/coursier/bin:$::env(PATH) scala --version
-            
+
             # Resolve deps
             coursier::resolveModule $module
             set deps [files.joinWithPathSeparator [kiss::dependencies::resolveDeps $module lib]]
@@ -96,12 +101,12 @@ namespace eval scala {
 
             # Classes output -> directory or jar
             set classesOut [vars.resolve ${module}.build.directory]/classes
-            
+
 
             # Resources
             set resources [kiss::sources::getSourcesDict ${module}/resources]
             if {[llength $resources]>0} {
-                
+
                 foreach {srcDir srcDirResources} $resources {
                     log.info "Copying resource: $srcDir contains $srcDirResources "
 
@@ -113,10 +118,10 @@ namespace eval scala {
                         files.cp    $srcDir/$relativeResourcePath $classesOut/[file dirname $relativeResourcePath]
                     }
                 }
-                
+
                 #files.cp $resources $classesOut
             }
-            
+
 
             # Compile
             files.mkdir $classesOut
@@ -128,12 +133,13 @@ namespace eval scala {
                 log.error "Compilation failed"
                 throw SCALA.COMPILE.FAIL "compilation failed"
             }
-            
+
 
 
         }
-    
+
         run {module mainClass args} {
+            # Run module's provided main class
 
             ## Load scala with PATH
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.get ${module}.jvm.name] --apps scala:[vars.get ${module}.scala.version],scalac:[vars.get ${module}.scala.version]]
@@ -149,12 +155,14 @@ namespace eval scala {
 
         }
 
-        
+
     }
 
     kissb.extension scalatest {
 
         init module {
+            # Load Scala test for the given module
+
             set testModule ${module}/test
             vars.set ${testModule}.name             ${module}-test
             vars.set ${testModule}.build.directory  [file dirname [vars.get ${module}.build.directory]]/${module}-test
@@ -167,11 +175,12 @@ namespace eval scala {
             kiss::dependencies::addDepSpec ${testModule} org.scala-lang.modules:scala-xml_3:2.3.0 coursier
             kiss::dependencies::addDepSpec ${testModule} com.vladsch.flexmark:flexmark-all:0.64.8 coursier
 
-            
-            
+
+
         }
 
         run module {
+            # Run tests for given module
 
             ## Get Build Dir
             set testModule ${module}/test
@@ -186,32 +195,33 @@ namespace eval scala {
             set deps [files.joinWithPathSeparator [concat [kiss::dependencies::resolveDeps $module lib] [kiss::dependencies::resolveDeps $testModule lib] [vars.get ${testModule}.build.directory]/classes ]]
 
             log.info "CP: $deps"
-            
+
             try {
                 # https://www.scalatest.org/user_guide/using_the_runner
                 exec.withEnv $runEnv {
                     exec.run java -version
                     exec.run java -classpath $deps org.scalatest.tools.Runner -R $buildBir/classes -o -h $buildBir/report -u $buildBir/report
                 }
-            } on error {output options} { 
+            } on error {output options} {
                 log.error "Error running tests"
             } finally {
-            
+
             }
-            
+
         }
     }
-    
+
     ###################
     ## Ammnonite scripts
     ####################
     kissb.extension scala {
 
         amm {scriptFile} {
+            # Run provided script File using ammonite
 
             ## Load scala with PATH
             set jvmVersion   [vars.get scala.jvm.name 21]
-            set scalaVersion [vars.get scala.version ${scala::defaultVersion}]
+            set scalaVersion [vars.get scala.version ${::scala::defaultVersion}]
             set ammVersion   [vars.get amm.version 3.0.0-M2]
 
             log.info "Ammonite scala version: $scalaVersion"
@@ -225,16 +235,16 @@ namespace eval scala {
                    exec.run java -cp $deps ammonite.AmmoniteMain $scriptFile
             }
 
-            return 
+            return
             #,scala:$scalaVersion
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm $jvmVersion -e $scalaVersion --apps ammonite:$ammVersion]
-            
+
             log.info "Ammonite env: $compileEnv"
 
             exec.withEnv $compileEnv {
                 exec.run scala --version
                 exec.run amm $scriptFile
-                
+
             }
 
         }
@@ -244,14 +254,14 @@ namespace eval scala {
     ## Bloop
     ################################
     namespace eval bloop {
-        
-        set bloopVersion 1.5.18
+
+        set bloopVersion 2.0.10
 
         proc getBloopEnv module {
 
             return [exec.cmdGetBashEnv coursier.setup -q --env \
                             --jvm [vars.resolve ${module}.jvm.name] \
-                            --apps bloop:[vars.resolve ${module}.bloop.version ${scala::bloop::bloopVersion}]]
+                            --apps bloop:[vars.resolve ${module}.bloop.version ${::scala::bloop::bloopVersion}]]
         }
 
 
@@ -259,8 +269,9 @@ namespace eval scala {
 
 
             config {module} {
+                # Configure module for bloop usage
 
-                set compileEnv [scala::getScalaEnv $module]
+                set compileEnv [::scala::getScalaEnv $module]
 
                 # Dependend builds based on module hierarchy
                 set splitModule [split $module /]
@@ -272,7 +283,7 @@ namespace eval scala {
                 # Resolve deps
                 coursier::resolveModule $module
                 set deps [kiss::dependencies::resolveDeps $module lib]
-                
+
                 # Compiler Jars and options
                 set compilerJars    [coursier.fetch.classpath.of org.scala-lang:scala3-compiler_3:[vars.resolve ${module}.scala.version]]
                 set compilerOptions [vars.resolve ${module}.scalac.args]
@@ -304,25 +315,31 @@ namespace eval scala {
                         }
                     }
                 }]
-            
+
 
             }
 
             compile {module} {
-                set bloopEnv [scala::bloop::getBloopEnv $module]
+                # Compile via bloop
+
+                set bloopEnv [::scala::bloop::getBloopEnv $module]
                 exec.withEnv $bloopEnv {
                     exec.run bloop compile [java::getModuleBuildName $module]
                 }
             }
 
             projects args {
-                exec.withEnv [scala::bloop::getBloopEnv main] {
+                # Run bloop projects command
+
+                exec.withEnv [::scala::bloop::getBloopEnv main] {
                     exec.run bloop projects
                 }
             }
 
             run {module main args} {
-                exec.withEnv [scala::bloop::getBloopEnv main] {
+                # Run module's main class via bloop
+
+                exec.withEnv [::scala::bloop::getBloopEnv main] {
                     exec.run bloop run [java::getModuleBuildName $module] -m $main {*}$args
                 }
             }

@@ -4,9 +4,10 @@ print.line "Loading Local package"
 package require example.pkg
 package require hello
 
-hello_from_package 
+puts "here"
+hello_from_package
 
 ## This package can be checkedout from git
-#package require kissb.git 
+#package require kissb.git
 #git.init
 package require git:https://github.com/opendesignflow/odfi-dev-tcl

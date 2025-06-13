@@ -1,9 +1,9 @@
 
-package require kissb.scala 
+package require kissb.scala
 
 
 ## Init scala with defaults
-scala.module main 3.4.2
+scala.module main 3.7.1
 scala.jvm    main 21
 
 @ build {
@@ -13,7 +13,7 @@ scala.jvm    main 21
 }
 
 @ run {
-    > build 
+    > build
 
     scala.run main example.Main
 }

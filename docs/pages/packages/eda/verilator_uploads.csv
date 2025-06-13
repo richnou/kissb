@@ -1,6 +1,8 @@
 Version,System,URL
 GIT master,linux,<https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-master.zip>
 GIT stable,linux,<https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-stable.zip>
+v5.036,linux,<https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.036.zip>
+v5.034,linux,<https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.034.zip>
 v5.032,linux,<https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.032.zip>
 v5.030,linux,<https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.030.zip>
 v5.028,linux,<https://kissb.s3.de.io.cloud.ovh.net/hdl/verilator/verilator-v5.028.zip>

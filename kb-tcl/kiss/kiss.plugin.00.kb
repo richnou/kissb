@@ -18,7 +18,7 @@ namespace eval kiss {
     ## Extension to help ease write extension procedures
     ##############################
     namespace eval extensions {
-        
+
         set extensionsLocations [dict create]
 
         rename ::proc ::__proc
@@ -36,9 +36,9 @@ namespace eval kiss {
                 set file [dict get $callerFrame file]
                 dict set ::kiss::extensions::extensionsLocations $fqdn [list $file [expr $line-1]]
             }
-            
 
-            uplevel [list  __proc $name {*}$args] 
+
+            uplevel [list  __proc $name {*}$args]
         }
 
         proc ::fun {name args} {
@@ -54,14 +54,14 @@ namespace eval kiss {
         }
 
         proc ::kissb.extension {extName functions} {
-        
+
             set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
-            
+
             ## Split functions as string to find functions lines
             set functionsLines [lmap line [split "$functions" \n] { string trim $line}]
 
             #log.info "Functions no comments: $functionsNoComments"
-            foreach {procName procArgs procScript} $functionsNoComments {
+            foreach {procName procArgs procScript} $functions {
                 log.debug "Extension $extName.$procName with args $procArgs"
 
                 ## Find Definition file
@@ -83,14 +83,14 @@ namespace eval kiss {
                     dict set ::kiss::extensions::extensionsLocations $extName.$procName [list $file [expr $line+$fline-1]]
                     #puts "$extName.$procName is at: $file:[expr $line+$fline]"
                 }
-                
+
                 #exit
                 proc ::${extName}.${procName} $procArgs $procScript
             }
         }
-    
+
     }
-    
+
 
     #####################
     ## Context
@@ -119,12 +119,12 @@ namespace eval kiss {
         }
 
         proc ::env.unset name {
-        
+
             array unset ::env $name
         }
 
         proc ::env.set {name v} {
-        
+
             set ::env($name) $v
         }
 
@@ -145,7 +145,7 @@ namespace eval kiss {
             } else {
                 return $default
             }
-            
+
         }
 
         proc exists {name} {
@@ -165,14 +165,14 @@ namespace eval kiss {
         proc revert {name} {
             if {[dict exists $::kiss::vars::_vars $name previous]} {
                 set $name [dict get $::kiss::vars::_vars $name previous]
-            }   
+            }
         }
         ## Define variable
         proc define {name args} {
 
-          
+
             if {[llength $args]>0  } {
-            
+
                 ::set defaultVal [lindex $args end]
             }
 
@@ -182,7 +182,7 @@ namespace eval kiss {
                 ::set defaultVal $::env($envName)
                 log.info "Default value for $name from ENV $envName=$defaultVal"
             }
-           
+
             # Set in dictionarry if not set yet
             if {![dict exists $::kiss::vars::_vars $name]} {
                 ::kiss::vars::set $name $defaultVal
@@ -193,12 +193,12 @@ namespace eval kiss {
                 dict set ::kiss::vars::_vars $name doc $doc
             }
 
-           
+
         }
-        
 
 
-        
+
+
 
     }
 
@@ -208,6 +208,9 @@ namespace eval kiss {
 
     proc ::@ {name args} {
        ::kiss::targets::@ $name {*}$args
+    }
+    proc ::@> {name args} {
+       ::kiss::targets::run $name {*}$args
     }
     namespace eval targets {
 
@@ -223,7 +226,7 @@ namespace eval kiss {
                 set targetDoc [lindex $name 1]
             }
             #puts "target $name doc: $targetDoc"
- 
+
             set script [lindex $args end]
             #log.info "Script is: $script"
             set reqTargets {}
@@ -235,9 +238,9 @@ namespace eval kiss {
                         lappend reqTargets $requiredTarget
                     }
                 }
-            } 
+            }
             #dict append::kiss::targets::_targets $name {*}$args
-            dict lappend ::kiss::targets::_targets $targetName $reqTargets $targetDoc $script 
+            dict lappend ::kiss::targets::_targets $targetName $reqTargets $targetDoc $script
         }
 
         proc listTargets args {
@@ -267,7 +270,7 @@ namespace eval kiss {
 
         ## Run Target
         proc run {target args} {
-            
+
             log.fine "Running target: $target with args=$args"
             if {![hasTarget $target]} {
                 log.warn "Target $target doesn't exist"
@@ -281,7 +284,7 @@ namespace eval kiss {
 
             set script [getScript $target]
             set reqTargets [getRequiredTargets $target]
-            
+
             foreach reqTarget $reqTargets {
                 uplevel #0 [list ::kiss::targets::run $reqTarget {*}$args]
             }
@@ -291,11 +294,11 @@ namespace eval kiss {
             #} else {
             #    set argv {}
             #}
-            
+
             log.with.logger $target {
                 eval $script
             }
-            
+
             #return [dict keys $::kiss::targets::_targets]
         }
 
@@ -337,7 +340,7 @@ namespace eval kiss {
         ## Init a toolchain of a given name
         ## The init closure is passed a $toolchainFolder variable pointing to a global folder so that scripts can share toolchain installations
         proc init {name} {
-            
+
             set toolchainFolder $::kiss::toolchain::globalInstallFolder/$name
             file mkdir $toolchainFolder
             set script [lindex [array get  ::kiss::toolchain::tc $name] 1]
@@ -354,12 +357,12 @@ namespace eval kiss {
         proc listFilesRecursive {dirs {files {}}} {
 
             set nextDirs {}
-            foreach dir $dirs { 
+            foreach dir $dirs {
                 set filesAndDirs [glob -tails -nocomplain -directory $dir *]
                 set foundFiles {}
                 foreach f $filesAndDirs {
                     if {[file isdirectory $dir/$f]} {
-                        lappend nextDirs $dir/$f 
+                        lappend nextDirs $dir/$f
                     } else {
                         lappend foundFiles $dir/$f
                     }
@@ -374,7 +377,7 @@ namespace eval kiss {
             } else {
                 return $files
             }
-            
+
 
         }
 
@@ -386,13 +389,13 @@ namespace eval kiss {
 
                 if {[llength $sources] == 0} {
                     log.warn "No sources found in $path for module $module"
-                } 
+                }
                 dict lappend ::kiss::sources::src $module $path $sources
-                
+
             }
 
 
-            return 
+            return
             #set sources [lmap [::kiss::utils::callIn [pwd] find $path -type f]
             set sources [concat [glob -tails -nocomplain -type f -directory $path **] [glob -tails -nocomplain -type f -directory $path **/*]]
             #set sources [lmap f  { string $f} ]
@@ -402,7 +405,7 @@ namespace eval kiss {
                 dict lappend ::kiss::sources::src $module $path $sources
             }
             #puts "Found sources: $sources"
-            
+
         }
 
         proc getSources module {
@@ -415,9 +418,9 @@ namespace eval kiss {
                 foreach {baseDir sources} $allFolders {
                     set mergedFiles [concat $mergedFiles [lmap pathSource $sources { join [list $baseDir $pathSource] /}]]
                 }
-                
 
-                return $mergedFiles 
+
+                return $mergedFiles
             } else {
                 return {}
             }
@@ -456,13 +459,13 @@ namespace eval kiss {
         set modulesBom [dict create]
 
         proc addBOM dict {
-        
+
             set ::kiss::dependencies::modulesBom [dict merge $::kiss::dependencies::modulesBom $dict]
             #puts "BOM is now ${::kiss::dependencies::modulesBom}"
         }
 
         proc resolveBOMModule {depModuleName} {
-        
+
             if {[dict exists $::kiss::dependencies::modulesBom $depModuleName]} {
                 return ${depModuleName}:[dict get $::kiss::dependencies::modulesBom $depModuleName]
             } else {
@@ -493,7 +496,7 @@ namespace eval kiss {
                 set candidates [searchBOMModules [lindex $splitSpec 0]]
                 if {[dict size $candidates]==0} {
                     throw KISSB_DEPS.NOTFOUND "No candidates for artifact: $spec"
-                } elseif {[dict size $candidates]>1} {  
+                } elseif {[dict size $candidates]>1} {
                     throw KISSB_DEPS.NOTFOUND "Too many candidates for artifact: $spec -> $candidates"
                 } else {
                     set spec [lindex $candidates 0]:[lindex $candidates end]
@@ -516,7 +519,7 @@ namespace eval kiss {
             } else {
                 return {}
             }
-             
+
         }
 
         ## The deps specs are the keys of the dict
@@ -545,17 +548,17 @@ namespace eval kiss {
                     }
                 }
 
-                
-                
+
+
             }
-           
+
             log.debug "Resolved for $module: $res"
-            return $res 
+            return $res
         }
 
     }
 
-    
+
 
     #################################
 
@@ -577,12 +580,12 @@ namespace eval kiss {
         }
     }
 
-    
+
     #####################
     ## Errors
     #####################
     namespace eval errors {
-    
+
         proc prettyv1 {msg options} {
             set errorInfo [dict get $options -errorinfo]
             set lines [split $errorInfo \n]
@@ -592,7 +595,7 @@ namespace eval kiss {
             set prevLine ""
             foreach l $lines {
                 set l [string trim $l]
-                
+
                 #puts "testing line: $l"
                 if {[regexp {\(\s*file\s+\"([\w\.\-\_\/]+)\"\s+line\s+([0-9]+)\s*\)} $l -> file line]==1} {
                     lappend filesPath [list $file $line]
@@ -607,7 +610,7 @@ namespace eval kiss {
                     } else {
                         lappend errLines "- at $proc, line $line : $prevLine"
                     }
-                    
+
                 }
 
                 set prevLine $l
@@ -622,7 +625,7 @@ namespace eval kiss {
         }
     }
 
-    
+
     ############################
     ## Utils
     ##############################
@@ -632,41 +635,41 @@ namespace eval kiss {
 
         proc isWindows  args {
             if {$::tcl_platform(platform)=="windows"} {
-                return true 
+                return true
             } else {
                 return false
-            } 
+            }
         }
         proc isWindows64  args {
             if {$::tcl_platform(platform)=="windows" && $::tcl_platform(machine) == "amd64"} {
-                return true 
+                return true
             } else {
                 return false
-            } 
+            }
         }
 
         proc isLinux  args {
             if {$::tcl_platform(platform)=="unix"} {
-                return true 
+                return true
             } else {
                 return false
-            } 
+            }
         }
 
         proc isLinux64  args {
             if {$::tcl_platform(platform)=="unix" && $::tcl_platform(machine) == "x86_64"} {
-                return true 
+                return true
             } else {
                 return false
-            } 
+            }
         }
 
         proc isLinuxWSL  args {
             if {$::tcl_platform(platform)=="unix" && [string match *WSL2* [exec uname -a]]} {
-                return true 
+                return true
             } else {
                 return false
-            } 
+            }
         }
 
 
@@ -678,4 +681,3 @@ namespace eval kiss {
 
 
 }
-
