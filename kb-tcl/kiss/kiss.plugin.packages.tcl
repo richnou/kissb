@@ -6,12 +6,12 @@ package provide kiss.packages 1.0
 
 
 namespace eval ::kiss::packages {
- 
+
 
     set modulepaths {}
 
     set extrahandlers [dict create]
-    
+
     kissb.extension kissb.packages {
 
         handler {name script} {
@@ -35,7 +35,7 @@ namespace eval ::kiss::packages {
         #}
 
         if {[string match flow::* $name]} {
-            
+
             set flowFile $::kissDir/flows/[string map {flow:: "" + _} $name].flow.tcl
             log.info "Searching for Flow in $flowFile"
             if {[file exists $flowFile]} {
@@ -44,26 +44,32 @@ namespace eval ::kiss::packages {
                 source $flowFile
             }
         } elseif {[string match "git:*" $name]} {
-            
-            set gitAddress [string map {git: ""} $name]
-            set gitProjectName [lindex [split $name /] end]
 
-            log.info "Getting package from git $gitAddress, version=$version"
+            # Split at , to get parameters
+            set gitAndParameters [split [string map {git: "" } $name] ,]
+            set gitAddress [lindex $gitAndParameters 0]
+            set gitProjectName [string map {.git ""} [lindex [split $gitAddress /] end]]
+
+            log.info "Getting package from git $gitAddress into $gitProjectName - version=$version"
             set gitFolder ${::kissb.projectFolder}/.kb/git-packages
+            set projectGitGolder $gitFolder/$gitProjectName
 
             package require kissb.git
-            git.init 
+            git.init
 
-            files.inDirectory $gitFolder {
-                if {![file exists $gitProjectName]} {
-                    git.clone $gitAddress
-                }
-                foreach tclIndex [files.globFiles {pkgIndex.tcl tcl/pkgIndex.tcl lib/pkgIndex.tcl}] {
-                    set dir [file dirname $tclIndex]
+            files.require $projectGitGolder/.git {
+                git.clone $gitAddress
+            }
+            files.inDirectory $projectGitGolder {
+                foreach tclIndex [files.globFiles pkgIndex.tcl tcl/pkgIndex.tcl lib/pkgIndex.tcl src/pkgIndex.tcl] {
+                    set dir [file normalize [file dirname $tclIndex]]
+                    log.info "Loading GIT tcl index: $tclIndex"
                     source $tclIndex
                 }
-                package provide $name 0
+                package provide $name $version
             }
+
+
         } elseif {[dict exists $::kiss::packages::extrahandlers $name]} {
             # If a handler for the package name is provided, call it
             package provide $name $version
@@ -75,7 +81,7 @@ namespace eval ::kiss::packages {
 
     ## Scan a local package file and create a package ifneeded call for the defined package in the file
     proc loadLocalPackageFile f {
-        
+
         set chan [open $f]
         try {
             while {[gets $chan line] >= 0} {
@@ -89,8 +95,8 @@ namespace eval ::kiss::packages {
         } finally {
             close $chan
         }
-        
-        
-        
+
+
+
     }
 }
