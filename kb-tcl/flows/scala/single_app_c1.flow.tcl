@@ -31,7 +31,7 @@ scalatest.init main
 @ bloop {
 
     log.info "Deps: [kiss::dependencies::getDeps main] kiss::dependencies::getDeps(main)"
-    scala.bloop main
+    bloop main
 
     log.info "Listing projects from Bloop"
 
@@ -44,7 +44,7 @@ scalatest.init main
 
     scala.compile main
     scala.compile main/test
-    
+
 }
 
 @ test {
@@ -65,6 +65,3 @@ scalatest.init main
 @ docker {
     java.docker main [vars.resolve image.name]:[vars.resolve image.tag]  -mainClass [vars.resolve java.main]
 }
-
-
-

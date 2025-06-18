@@ -96,7 +96,7 @@ namespace eval coursier {
 
                 #exec.run $tcFolder curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
             } else {
-                puts "Coursier TC ready in ${::coursier::binPath}"
+                log.fine "Coursier TC ready in ${::coursier::binPath}"
             }
         }
 
@@ -274,6 +274,9 @@ namespace eval coursier {
 
         }
     }
+
+    # Always init coursier on package require
+    coursier.init
 }
 
 source [file dirname [info script]]/coursier.bom.plugin.tcl

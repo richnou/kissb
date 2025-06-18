@@ -27,8 +27,8 @@ package ifneeded kissb.liquibase            1.0  [list source $dir/liquibase/liq
 
 
 package ifneeded kissb.python3              1.0  [list source $dir/python3/python3.plugin.kb]
-package ifneeded kissb.mkdocs               1.0  [list source $dir/mkdocs/mkdocs.plugin.kb]
-package ifneeded kissb.netlify              1.0  [list source $dir/netlify/netlify.plugin.kb]
+package ifneeded kissb.mkdocs               1.0  [list source $dir/mkdocs/mkdocs.plugin.tcl]
+package ifneeded kissb.netlify              1.0  [list source $dir/netlify/netlify.plugin.tcl]
 
 package ifneeded kissb.nodejs               1.0  [list source $dir/nodejs/nodejs.plugin.kb]
 
@@ -54,7 +54,7 @@ package ifneeded kissb.eda.verilator        1.0  [list source $dir/eda/verilator
 
 ## Java and JEE Packages
 #####################
-package ifneeded kissb.java                 1.0  [list source $dir/java/java.plugin.kb]
+package ifneeded kissb.java                 1.0  [list source $dir/java/java.plugin.tcl]
 package ifneeded kissb.coursier             1.0  [list source $dir/java/coursier/coursier.plugin.tcl]
 package ifneeded kissb.gradle               1.0  [list source $dir/java/gradle/gradle.plugin.kb]
 package ifneeded kissb.maven                1.0  [list source $dir/java/maven/maven.plugin.kb]

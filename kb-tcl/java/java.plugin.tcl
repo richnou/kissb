@@ -4,18 +4,38 @@
 
 package provide kissb.java 1.0
 package require zipfile::mkzip
+package require kissb.coursier
 
 namespace eval java {
+
+    vars.define jvm.default.version       21
 
     set packageFolder [file dirname [file normalize [info script]]]
 
     proc getModuleBuildName module {
-        
+
         return [vars.resolve ${module}.build.name [file tail [pwd]]]-[string map {/ -} $module]
     }
 
     kissb.extension java {
 
+        defaultRunEnv args {
+
+            # Runs coursier to get default jvm versions set in this module
+            # Returns an environment dict that can be used by the exec module to run java command line or javac or other tools via java.run
+            return [exec.cmdGetBashEnv coursier.setup \
+                    --env --jvm [vars.resolve jvm.default.version]]
+        }
+
+        run args {
+            # Runs java cmd line tool using jvm.default.version variable
+            #
+            exec.withEnv [java.defaultRunEnv] {
+                puts "Run java"
+
+                exec.run java {*}$args
+            }
+        }
         docker {module imageSpec args} {
 
             package require kissb.docker
@@ -33,7 +53,7 @@ namespace eval java {
                     # copy jar
                     files.cp $jarPath .
 
-                    
+
                     # Resolve library paths and copy them to libs folder
                     set libs {}
                     files.inDirectory libs {
@@ -51,7 +71,7 @@ namespace eval java {
                         } else  {
                             files.writer.printLine "JAVA_ARGS=\"\$JAVA_ARGS -cp [file tail $jarPath]\""
                         }
-                    
+
                         kissb.args.withValue -mainClass main {
                             files.writer.printLine "JAVA_ARGS=\"\$JAVA_ARGS $main\""
                         }
@@ -73,7 +93,7 @@ namespace eval java {
 
             set jarSource [vars.resolve ${module}.build.directory]/classes
             log.info "Building jar from $jarSource to $jarPath"
-            
+
             files.inBuildDirectory java/jar {
 
                 # pack compiled output
@@ -83,7 +103,7 @@ namespace eval java {
                 files.mkdir $outputAppPath
 
                 set tempJarPath [file normalize $jarName]
-                
+
                 # Copy output
                 files.cp $jarSource/* $outputAppPath
 
@@ -107,11 +127,6 @@ namespace eval java {
 
                 return $tempJarPath
             }
-            
-
-
-
-
         }
 
     }

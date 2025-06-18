@@ -11,14 +11,14 @@ proguard.init
     scala.jvm    main   21
     #ibm-semeru-openj9-java21:21.0.3+9_openj9-0.44.0
 
-    
+
 }
 ## Compile
 @ build : config {
 
     #scala.compile main/test
     scala.compile main
-    #scala.bloop.compile main/test
+    #bloop.compile main/test
 
 }
 
@@ -33,14 +33,14 @@ proguard.init
 
 @ run : build {
     #scala.run main Test
-    scala.bloop.run main Test {*}$args
+    bloop.run main Test {*}$args
 }
 
 @ bloop : config {
 
-    scala.bloop.config main
-    scala.bloop.config main/test
-    scala.bloop.projects projects
+    bloop.config main
+    bloop.config main/test
+    bloop.projects projects
 
 }
 

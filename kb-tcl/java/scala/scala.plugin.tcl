@@ -12,6 +12,8 @@ namespace eval scala {
     set buildBaseFolder ".kb/scala"
     set defaultVersion 3.7.1
 
+    vars.define scala.default.version   3.7.1
+
     proc getScalaEnv module {
 
         return [exec.cmdGetBashEnv coursier.setup -q --env \
@@ -19,6 +21,7 @@ namespace eval scala {
                         --apps scala:[vars.resolve ${module}.scala.version],scalac:[vars.resolve ${module}.scala.version]]
     }
 
+    ## Scala Extensions to build projects
     kissb.extension scala {
 
         module {m version} {
@@ -57,6 +60,15 @@ namespace eval scala {
             ## Add Stdlib
             #kiss::dependencies::addDepSpec $module org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version] coursier
             dependencies.add $module coursier org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version]
+        }
+
+        defaultRunEnv args {
+            # Runs coursier to get default scala and jvm versions set in this module
+            # Returns an environment dict that can be used by the exec module to run scala command line or scalac
+            return [exec.cmdGetBashEnv coursier.setup \
+                    -q \
+                    --env --jvm [vars.resolve jvm.default.version] \
+                    --apps scala:[vars.resolve scala.default.version],scalac:[vars.resolve scala.default.version]]
         }
 
         jvm {module version {descriptor ""}} {
@@ -248,6 +260,31 @@ namespace eval scala {
             }
 
         }
+
+
+    }
+
+    ###################
+    ## SCala REPL and CLI
+    ####################
+    kissb.extension scala {
+
+        repl args {
+            scala.runner
+        }
+        runner args {
+            log.info "Running Scala Runner, installing scala=${::scala.default.version},jvm=${::scala.default.jvm}"
+            coursier.init
+            exec.withEnv [scala.defaultRunEnv] {
+                exec.run scala --version
+                exec.run scala {*}$args
+            }
+        }
+
+        script file {
+
+        }
+
     }
 
     ################################
@@ -255,17 +292,18 @@ namespace eval scala {
     ################################
     namespace eval bloop {
 
-        set bloopVersion 2.0.10
+        vars.define bloop.version 2.0.10
+        vars.define bloopVersion 2.0.10
 
         proc getBloopEnv module {
 
             return [exec.cmdGetBashEnv coursier.setup -q --env \
                             --jvm [vars.resolve ${module}.jvm.name] \
-                            --apps bloop:[vars.resolve ${module}.bloop.version ${::scala::bloop::bloopVersion}]]
+                            --apps bloop:[vars.resolve ${module}.bloop.version ${::bloop.version}]]
         }
 
 
-        kissb.extension scala.bloop {
+        kissb.extension bloop {
 
 
             config {module} {
