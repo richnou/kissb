@@ -193,7 +193,9 @@ kissb.extension vars {
 
 
     define {name args} {
-        ## Define a variable, with documentation, default value also extracted from environment variable
+        # Define a variable, with documentation, default value also extracted from environment variable
+        # name - name of the variable created in :: global space
+        # args - list of arguments, add -doc "DOC" to document the variable, the last value of the list is used as default value
         ::kiss::vars::define $name {*}$args
         return [vars.get $name]
     }

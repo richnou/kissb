@@ -115,6 +115,9 @@ namespace eval ::kiss::files {
             }
         }
         writeText {f args} {
+            # Writes text to provided file
+            #  f - Target file
+            #  args - joined to a default string with join
             set fid [open $f w+]
             try {
                 puts -nonewline $fid [join $args]
@@ -179,6 +182,13 @@ namespace eval ::kiss::files {
             }
         }
         requireOrRefresh {f key script} {
+            # Executes $script if the provided file $f doesn't exist, or the refresh key $key was requested
+            #  f - path of file to check for existence
+            #  key - the key provided by user to kissb as argument --refresh-**key** to force file refresh
+            #  script - Script executed, user must ensure it creates the requested file. File path is passed as ${__f} variable
+            #
+            # Doesn't return anything.
+
             if {[refresh.is $key]} {
                 uplevel [list set __f $f]
                 uplevel [list eval $script]
