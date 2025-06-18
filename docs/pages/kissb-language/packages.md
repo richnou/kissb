@@ -137,6 +137,11 @@ For example:
 
 ~~~tcl
 package require git:https://github.com/opendesignflow/odfi-dev-tcl
-~~~~
+~~~
 
-If a pkgIndex.tcl is present in the root of the repository, it will be sourced so that the list of packages is loaded.
+The package loader automatically searches for a pkgIndex.tcl file to load from the following default locations in the repository:
+
+- pkgIndex.tcl
+- tcl/pkgIndex.tcl
+- lib/pkgIndex.tcl
+- src/pkgIndex.tcl

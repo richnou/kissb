@@ -35,6 +35,7 @@ proc variablesMd {pattern file} {
 
 @ generate.apidoc {
 
+    package require git:https://github.com/richnou/ruff.git 2.5.0
     package require ruff 2.5.0
 
     makeMd "files.*"            pages/kissb-language/kissb.files.methods.md
@@ -43,6 +44,10 @@ proc variablesMd {pattern file} {
     makeMd "exec.*"             pages/kissb-language/kissb.exec.methods.md
 
     makeMd "node.*"             pages/packages/nodejs/node.methods.md
+
+    package require kissb.scala
+    makeMd "scala.*"             pages/packages/jee/bloop.methods.md
+    makeMd "bloop.*"             pages/packages/jee/scala.methods.md
 
 
 

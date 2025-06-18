@@ -1,4 +1,4 @@
-# Core Refresh
+# Reference: Refresh
 
 ## Commands Reference
 

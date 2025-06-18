@@ -355,6 +355,8 @@ Require File, if not present, run script
 
 ## <a name='::files.requireOrRefresh'></a>files\.requireOrRefresh
 
+Executes `$script` if the provided file `$f` doesn't exist, or the refresh key `$key` was requested
+
 
 > `files.requireOrRefresh` *`f key script`*<br>
 
@@ -362,10 +364,14 @@ Require File, if not present, run script
 
 |||
 |----|----|
-|`f`|Not documented.|
-|`key`|Not documented.|
-|`script`|Not documented.|
+|`f`|path of file to check for existence|
+|`key`|the key provided by user to kissb as argument --refresh-**key** to force file refresh|
+|`script`|Script executed, user must ensure it creates the requested file. File path is passed as ${\_\_f} variable|
 
+
+### <a name='Description'></a>Description
+
+Doesn't return anything.
 
 ## <a name='::files.sha256'></a>files\.sha256
 
@@ -499,6 +505,8 @@ Files writer
 
 ## <a name='::files.writeText'></a>files\.writeText
 
+Writes text to provided file
+
 
 > `files.writeText` *`f ?args?`*<br>
 
@@ -506,7 +514,8 @@ Files writer
 
 |||
 |----|----|
-|`f`|Not documented.|
+|`f`|Target file|
+|`args`|joined to a default string with join|
 
 
 ## <a name='::files.zipDir'></a>files\.zipDir

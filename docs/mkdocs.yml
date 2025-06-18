@@ -4,78 +4,78 @@ copyright: Copyright &copy; 2025 Richard Leys
 
 docs_dir: pages
 plugins:
-  - exclude:
-      glob:
-        - "**/~*"
-  - drawio
-  - search
-  - kroki
-  - git-revision-date
-  - git-committers:
-      repository: richnou/kissb
-      branch: main
-  - awesome-pages
-  - include-markdown
-  - mkdocstrings
-  - glightbox
-  - macros:
-      include_yaml:
-        - data/packages.variables.yml
-        - data/global.variables.yml
-  - table-reader:
-      data_path: "."
-      allow_missing_files: True
-  - social
-  - privacy
-  - tags
+    - exclude:
+          glob:
+              - "**/~*"
+    - drawio
+    - search
+    - kroki
+    - git-revision-date
+    - git-committers:
+          repository: richnou/kissb
+          branch: main
+    - awesome-nav
+    - include-markdown
+    - mkdocstrings
+    - glightbox
+    - macros:
+          include_yaml:
+              - data/packages.variables.yml
+              - data/global.variables.yml
+    - table-reader:
+          data_path: "."
+          allow_missing_files: True
+    - social
+    - privacy
+    - tags
 
 repo_url: https://github.com/richnou/kissb
 edit_uri: edit/main/docs/pages/
 repo_name: KISSB
 extra_css:
-  - stylesheets/extra.css
+    - stylesheets/extra.css
 theme:
-  name: material
-  logo: images/kissb-logo-512-inverted.svg
-  custom_dir: overrides
-  palette:
-    primary: custom
-  font:
-    text: Baloo Chettan 2
-  features:
-    - navigation.expand
-    - navigation.sections
-    - navigation.instant
-    - navigation.expand
-    - navigation.indexes
-    - navigation.top
-    - content.code.copy
-    - content.action.edit
+    name: material
+    logo: images/kissb-logo-512-inverted.svg
+    custom_dir: overrides
+    palette:
+        primary: custom
+    font:
+        text: Baloo Chettan 2
+    features:
+        - navigation.expand
+        - navigation.sections
+        - navigation.instant
+        - navigation.expand
+        - navigation.indexes
+        - navigation.top
+        - content.code.copy
+        - content.action.edit
 markdown_extensions:
-  - admonition
-  - pymdownx.details
-  - abbr
-  - footnotes
-  - attr_list
-  - md_in_html
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - pymdownx.highlight:
-      use_pygments: true
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - toc:
-      title: "Table of Contents"
-      toc_depth: "2-5"
-      permalink: true
+    - admonition
+    - pymdownx.details
+    - abbr
+    - footnotes
+    - attr_list
+    - md_in_html
+    - pymdownx.emoji:
+          emoji_index: !!python/name:material.extensions.emoji.twemoji
+          emoji_generator: !!python/name:material.extensions.emoji.to_svg
+    - pymdownx.highlight:
+          use_pygments: true
+          anchor_linenums: true
+          line_spans: __span
+          pygments_lang_class: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.tabbed:
+          alternate_style: true
+    - pymdownx.superfences:
+          custom_fences:
+              - name: mermaid
+                class: mermaid
+                format: !!python/name:pymdownx.superfences.fence_code_format
+    - toc:
+          title: "Table of Contents"
+          toc_depth: "2-5"
+          permalink: true

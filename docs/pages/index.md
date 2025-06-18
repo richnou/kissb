@@ -1,8 +1,23 @@
+---
+hide:
+  - toc
+---
+
 # KISSB Build System
 
-Welcome to KISSB, a pragmatic Script Oriented Build system based on the TCL script language.
+Welcome to KISSB, a pragmatic, script-oriented build system powered by the Tcl scripting language.
 
-KISSB provides users with a scripting language that is close to a classic terminal-based script, while being easy and quick to augment via packages and custom scripts. The goal is not to rewrite build systems for any existing programming language, but to provide a flexible scripted build system environment to run any existing toolchain.
+KISSB is designed to make build system creation intuitive and straightforward. It uses clear, familiar commands that
+align with common development practices, providing robust tools for everyday tasks like compiling, packaging, and
+releasing. At the same time, its API remains simple enough to let you easily tailor workflows to your specific project
+needs without unnecessary complexity.
+
+Our primary goal isn't to rewrite build systems for every existing programming language. Instead, we aim to offer a
+flexible, scripted build environment that can effectively orchestrate your existing toolchains or, where beneficial,
+provide a viable alternative.
+
+
+
 
 A quick example of a build to run a python script:
 
@@ -38,12 +53,14 @@ KISSB is a flexible TCL scripting library aimed at building projects no matter w
 It is distributed as a script library, standalone executable or docker image.
 
 
-<div markdown>[:material-arrow-right-box: Getting started](./gettingstarted.md)</div>
+<div markdown>
+[:material-arrow-right-box: Getting started](./gettingstarted.md)
 
-
+[:material-arrow-right-box: Installation](./installation.md)
 </div>
 
 
+</div>
 
 
 <div  markdown>
@@ -110,6 +127,10 @@ You can use or create build commands, hackable workflows and share your script l
 
 KISSB comes with a set of well-known locations and file names for packages and libraries to quickly load scripts.
 
+<div markdown>
+[:material-arrow-right-box: KISSB Basics](./kissb-language/primer.md)
+[:material-arrow-right-box: Packages](./kissb-language/packages.md)
+</div>
 </div>
 
 

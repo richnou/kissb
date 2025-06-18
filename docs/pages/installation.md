@@ -24,7 +24,7 @@ Alternatively, download the kissb runtime:
 
 Place the downloaded file in a folder present in your PATH, for example .local/bin under linux, rename it to "kissb", then you can use the kissb command anywhere in your terminal.
 
-## Wrapper Script
+## Wrapper Script {.wrapper}
 
 To easily install kissb locally in a project and fix the build system version, you can use a wrapper script in the same fashion as with a Gradle or Maven wrapper script
 
