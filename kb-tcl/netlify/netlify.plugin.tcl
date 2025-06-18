@@ -34,18 +34,18 @@ namespace eval netlify {
         #}
 
     }
-    proc init args {
-        node.init
-        kiss::toolchain::init netlify-cli
-        
-    }
 
-    proc run args {
-        node.withEnv { exec.run $::netlify::netlifyCliPath {*}$args }
-    }
+
+
 
     kissb.extension netlify {
-        
+
+        init args {
+            node.init
+            kiss::toolchain::init netlify-cli
+
+        }
+
         run args {
            node.withEnv { exec.run $::netlify::netlifyCliPath {*}$args }
         }

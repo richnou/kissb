@@ -5,8 +5,8 @@
 package require kissb.mkdocs
 package require kissb.netlify
 
-netlify::init
-mkdocs::init -kissv1
+netlify.init
+mkdocs.init -kissv2
 
 
 
@@ -14,10 +14,10 @@ mkdocs::init -kissv1
     netlify.run link
 }
 @ {build "Build Mkdoc site and zip it"} {
-    mkdocs::build -zip
+    mkdocs.build -zip
 }
 @ {serve "Run mkdocs development server"} {
-    mkdocs::serve
+    mkdocs.serve
 }
 
 @ {deploy "Builds the site and deploys to netlify (in preview)"} {
@@ -26,9 +26,9 @@ mkdocs::init -kissv1
 
     > build
 
-    netlify::run login
-    netlify::run link
-    netlify::run deploy -d [mkdocs::buildFolder] {*}$args
+    netlify.run login
+    netlify.run link
+    netlify.run deploy -d [mkdocs::buildFolder] {*}$args
 }
 
 @ {deploy.prod "Runs the deploy target to production"} {
