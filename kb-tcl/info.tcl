@@ -1,2 +1,2 @@
-vars.define kissb.version 250501
+vars.define kissb.version dev
 vars.define kissb.track dev
