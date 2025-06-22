@@ -408,7 +408,7 @@ namespace eval scala {
             scala.runner
         }
         runner args {
-            log.info "Running Scala Runner, installing scala=${::scala.default.version},jvm=${::scala.default.jvm}"
+            log.info "Running Scala Runner, installing scala=${::scala.default.version},jvm=${::jvm.default.version}"
             coursier.init
             exec.withEnv [scala.defaultRunEnv] {
                 exec.run scala --version

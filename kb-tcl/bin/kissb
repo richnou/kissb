@@ -84,19 +84,6 @@ foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
 
 }
 
-## Extra sarch paths for packages
-#set possiblePackageFolders [list ${kissb.home}/pkgs/ .kissb/pkgs/]
-#package require kissb.git
-#set gitRoot [git.root]
-#if {[file exists $gitRoot]} {
-#    lappend possiblePackageFolders $gitRoot/.kissb/pkgs/
-#}
-#foreach pkgFolder $possiblePackageFolders {
-#
-#    lappend auto_path $pkgFolder
-#}
-
-
 
 try {
 
@@ -215,6 +202,9 @@ try {
                     } else {
                         python3.venv.run.script $target {*}$args
                     }
+                } elseif {$fileext==".sc"} {
+                    package require kissb.scala
+                    scala.runner $target {*}$args
                 }
 
             } elseif {[string range $target 0 0]!="-"} {
