@@ -53,9 +53,18 @@ namespace eval kiss {
             }
         }
 
-        proc ::kissb.extension {extName functions} {
+        proc ::kissb.extension {extName args} {
 
-            set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
+            #set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
+
+            ## ExtName can contain arguments
+            set functions [lindex $args 0]
+            if {[llength $args]>1} {
+                set functions [lindex $args end]
+            }
+
+            ## Parameters
+            set noLogger [expr {[lsearch -exact $args -noLogger]!=-1 ? true : false }]
 
             ## Split functions as string to find functions lines
             set functionsLines [lmap line [split "$functions" \n] { string trim $line}]
@@ -63,6 +72,8 @@ namespace eval kiss {
             #log.info "Functions no comments: $functionsNoComments"
             foreach {procName procArgs procScript} $functions {
                 log.debug "Extension $extName.$procName with args $procArgs"
+
+                set procFQN ${extName}.${procName}
 
                 ## Find Definition file
                 set __cframe [info frame]
@@ -84,8 +95,15 @@ namespace eval kiss {
                     #puts "$extName.$procName is at: $file:[expr $line+$fline]"
                 }
 
+                ## Augment script with logger
+                if {!$noLogger} {
+                    set procScript [list log.appendLogger $procFQN $procScript ]
+                }
+
+
+                ## Define extension method as proc
                 #exit
-                proc ::${extName}.${procName} $procArgs $procScript
+                proc ::${procFQN} $procArgs $procScript
             }
         }
 
