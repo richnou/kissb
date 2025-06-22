@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+package provide flow.mkdocs.netlify 1.0
+
 package require kissb.mkdocs
 package require kissb.netlify
 
