@@ -171,7 +171,8 @@ namespace eval kiss {
         }
 
         proc append {name args} {
-            dict lappend ::kiss::vars::_vars $name {*}$args
+            #puts "appending to $name $args"
+            dict set ::kiss::vars::_vars $name value [concat {*}[get $name {}] $args]
         }
         proc set {name v} {
             if {[dict exists $::kiss::vars::_vars $name]} {

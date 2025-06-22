@@ -189,7 +189,7 @@ kissb.extension kissb {
 ##############################
 ## vars extension
 ##############################
-kissb.extension vars {
+kissb.extension vars -noLogger {
 
 
     define {name args} {
@@ -268,6 +268,30 @@ kissb.extension vars {
         } else {
             return $default
         }
+    }
+
+    dict.withKeyValue {dictVar args} {
+        # Runs script with passed value of last key as varname if exists
+        # Example: dict.with.keyValue dictVar a b c { puts "Value of $c" }
+        set script [lindex $args end]
+        set keys [lrange $args 0 end-1]
+
+        #log.info "running dict with on  [set $dictVar] -> $keys"
+        if {[dict exists [set $dictVar] {*}$keys]} {
+            #set [lindex $keys end] [dict get [set $dictVar] {*}$keys]
+            #uplevel [list apply $script [dict get [set $dictVar] {*}$keys]]
+            #set script [concat [list set [lindex $keys end] [dict get [set $dictVar] {*}$keys]] $script]
+            #uplevel  $script
+            uplevel [list set [lindex $keys end] [dict get [set $dictVar] {*}$keys]]
+            uplevel $script
+        }
+
+        #try {
+        #    log.info "running dict with on $varname -> $args"
+        #    dict with $varname {*}$keys $body
+        #} on error {msg stack} {
+        #    log.warn "dict.with error: $msg"
+        #}
     }
 }
 
