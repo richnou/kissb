@@ -400,6 +400,8 @@ namespace eval kiss {
 
 
     #############################
+    ## Sources
+    #############################
     namespace eval sources {
 
         set src [dict create]
@@ -408,6 +410,7 @@ namespace eval kiss {
 
             set nextDirs {}
             foreach dir $dirs {
+                #set dir [file normalize $dir]
                 set filesAndDirs [glob -tails -nocomplain -directory $dir *]
                 set foundFiles {}
                 foreach f $filesAndDirs {
@@ -433,6 +436,11 @@ namespace eval kiss {
 
         proc addSourceFolder {module path} {
 
+            set path [file normalize $path]
+            #puts "** adding $path to $module (exists=[dict exists ${::kiss::sources::src} $module $path])"
+            if {[dict exists ${::kiss::sources::src} $module $path]} {
+                return
+            }
             files.inDirectory $path {
 
                 set sources [listFilesRecursive . {}]
@@ -462,11 +470,11 @@ namespace eval kiss {
             if {[dict exists ${::kiss::sources::src} $module]} {
                 ## Returns a list of pairs {basePath sources}
                 set allFolders [dict get ${::kiss::sources::src} $module]
-                puts "Resolving sources: $allFolders"
+                #puts "Resolving sources: $allFolders"
                 set mergedFiles {}
 
                 foreach {baseDir sources} $allFolders {
-                    set mergedFiles [concat $mergedFiles [lmap pathSource $sources { join [list $baseDir $pathSource] /}]]
+                    set mergedFiles [concat $mergedFiles [lmap pathSource $sources { file normalize [join [list $baseDir $pathSource] /]}]]
                 }
 
 
