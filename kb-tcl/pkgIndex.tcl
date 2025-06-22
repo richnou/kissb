@@ -79,3 +79,8 @@ package ifneeded kissb.rust 1.0 [list source $dir/native/rust/rust.plugin.tcl ]
 ## UI Frameworks
 #############
 package ifneeded kissb.tauri 1.0 [list source $dir/tauri/tauri.plugin.tcl]
+
+
+## Flows
+############
+package ifneeded flow.scala.applib 1.0 [list source $dir/flows/scala/applib.1_0.tcl]

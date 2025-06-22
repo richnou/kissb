@@ -10,6 +10,8 @@ namespace eval java {
 
     vars.define jvm.default.version       21
 
+    vars.define javac.env.args {}
+
     set packageFolder [file dirname [file normalize [info script]]]
 
     proc getModuleBuildName module {
@@ -91,10 +93,12 @@ namespace eval java {
 
         jar {module jarPath args} {
 
-            set jarSource [vars.resolve ${module}.build.directory]/classes
-            log.info "Building jar from $jarSource to $jarPath"
+            set jarSource   [vars.resolve ${module}.build.classes]
+            set buildDir     [vars.resolve ${module}.build.directory]
 
-            files.inBuildDirectory java/jar {
+
+
+            files.inBuildDirectory java/jar/$module {
 
                 # pack compiled output
                 set jarName [file tail $jarPath]
@@ -106,6 +110,8 @@ namespace eval java {
 
                 # Copy output
                 files.cp $jarSource/* $outputAppPath
+
+                log.info "Copying compiled classes to [file normalize $outputAppPath]"
 
 
                 # pack manifest
@@ -125,9 +131,14 @@ namespace eval java {
                     ::zipfile::mkzip::mkzip $tempJarPath -comment "JAR Created by KISSB" -directory .
                 }
 
+                log.info "Build jar from $jarSource to $tempJarPath"
+
                 return $tempJarPath
             }
         }
+
+
+
 
     }
 }

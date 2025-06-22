@@ -14,6 +14,8 @@ namespace eval scala {
 
     vars.define scala.default.version   3.7.1
 
+    vars.define scalac.env.args {}
+
     proc getScalaEnv module {
 
         return [exec.cmdGetBashEnv coursier.setup -q --env \
@@ -22,40 +24,72 @@ namespace eval scala {
     }
 
     ## Scala Extensions to build projects
+    # #module {m version args} {
+    #    scala.init $m -scala $version {*}$args
+    #}
     kissb.extension scala {
 
-        module {m version} {
-            scala.init $m $version
-        }
+
 
 
         init {module args} {
             # Init project module  with versions version
 
-            kiss::toolchain::init coursier
+            set scalaversion [kissb.args.get -scala ${::scala.default.version}]
+            set baseDir      [file normalize [kissb.args.get -baseDir [pwd]]]
+            set jvmVersion   [kissb.args.get -jvm-version ${::jvm.default.version}]
+            set jvmName      [kissb.args.get -jvm-name ${::jvm.default.version}]
+            set srcDirs      [kissb.args.get -srcDirs {src/main/java src/main/scala}]
+
+            log.info "Init Scala module=$module,version=$scalaversion,directory=$baseDir"
 
             ## Set Version
-            kissb.each $args {
-                log.info "Selecting Scala $it"
-                coursier.install -q scala:$it scalac:$it
-            }
+            log.info "Selecting Scala $scalaversion"
+            coursier.install -q scala:$scalaversion scalac:$scalaversion
+
 
             vars.set ${module}.name             $module
-            vars.set ${module}.scala.major      [lindex [split $args .] 0]
-            vars.set ${module}.scala.version    $args
+            vars.set ${module}.scala.major      [lindex [split $scalaversion .] 0]
+            vars.set ${module}.scala.version    $scalaversion
 
 
+            vars.set ${module}.baseDir          $baseDir
+            vars.set ${module}.build.directory  [file normalize ${::scala::buildBaseFolder}/$scalaversion/$module]
+            vars.set ${module}.build.classes    [file normalize [vars.get ${module}.build.directory]/classes]
 
-            vars.set ${module}.build.directory  [file normalize ${::scala::buildBaseFolder}/$args/$module]
-            vars.set ${module}.scalac.args      {-deprecation -unchecked -incr}
-            vars.set ${module}.jvm.target       11
+            vars.set ${module}.scalac.args      [concat {-deprecation -unchecked} ${::scalac.env.args}]
+            vars.set ${module}.javac.args       [concat { } ${::javac.env.args}]
+            vars.set ${module}.jvm.target       [kissb.args.get -target $jvmVersion]
 
-            vars.set ${module}.jvm.runtime      21
-            vars.set ${module}.jvm.name         21
+            vars.set ${module}.jvm.runtime      $jvmVersion
+            vars.set ${module}.jvm.name         $jvmName
+
+            vars.ensure ${module}.moduleDependencies {}
 
             ## Add Folders
+            ## Default behaviour to add *java and * scala
+            foreach srcDir $srcDirs {
+                set folder [files.makeAbsoluteTo $srcDir $baseDir]
+                if {[file exists $folder]} {
+                    log.info "Adding source folder $folder"
+                    sources.add $module $folder
+                } else {
+                    log.warning "Requested scala source dir $srcDir doesn't exist"
+                }
+            }
+            #foreach folder [files.globFolders $baseDir/src/main/*] {
+            #    log.info "Adding source folder $folder"
+            #    sources.add $module $folder
+            #}
+
+
+
             #kiss::sources::addSourceFolder $module src/main/scala
-            sources.add $module src/main/scala
+            #sources.add $module $baseDir/src/main/scala
+            #foreach folder [kissb.args.get -src {}] {
+            #    assert.isFolder $folder "Requested source folder $folder doesn't exist"
+            #    sources.add $module $folder
+            #}
 
             ## Add Stdlib
             #kiss::dependencies::addDepSpec $module org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version] coursier
@@ -63,12 +97,38 @@ namespace eval scala {
         }
 
         defaultRunEnv args {
-            # Runs coursier to get default scala and jvm versions set in this module
+            # Runs coursier to get default scala and jvm versions set in this plugin
             # Returns an environment dict that can be used by the exec module to run scala command line or scalac
             return [exec.cmdGetBashEnv coursier.setup \
                     -q \
                     --env --jvm [vars.resolve jvm.default.version] \
                     --apps scala:[vars.resolve scala.default.version],scalac:[vars.resolve scala.default.version]]
+        }
+
+        getModuleEnv module {
+            # Runs couriser to get scala and jvm path environment for the provided module
+            # Returns an environment dict that can be used by the exec module to run scala command line or scalac
+            assert [vars.exists ${module}.name] "Scala module $module doesn't exist"
+            return [exec.cmdGetBashEnv coursier.setup -q --env \
+                            --jvm [vars.resolve ${module}.jvm.name] \
+                            --apps scala:[vars.resolve ${module}.scala.version],scalac:[vars.resolve ${module}.scala.version]]
+        }
+
+        addDependencies {module args} {
+            # Add dependencies to specified module
+            # If a dependency is named @xxxx it will refer to another project module
+
+            foreach dep {*}$args {
+
+                if {[string match @* $dep]} {
+                    log.info "Adding module dependency $dep to $module"
+                    vars.append ${module}.moduleDependencies [string range $dep 1 end]
+                } else {
+                    log.debug "Adding dependency $dep to $module"
+                    dependencies.add $module coursier $dep
+                }
+            }
+
         }
 
         jvm {module version {descriptor ""}} {
@@ -81,7 +141,52 @@ namespace eval scala {
             } else {
                 vars.set ${module}.jvm.name $descriptor
             }
-            coursier.setup --env -q --jvm [vars.get ${module}.jvm.name]
+            coursier.env java --jvm [vars.get ${module}.jvm.name] -q
+        }
+
+        resolveDeps {module args} {
+            # Returns list of dependencies, including module dependencies output build directory in classpath
+            # If -classpath if passed, module's own classes output is added to the results to generate a full classpath
+            #  -classpath - Pass  to add module's output class directory to list of dependencies
+
+            # Resolve deps
+            ########
+            coursier::resolveModule $module
+            set deps [kiss::dependencies::resolveDeps $module lib]
+
+
+
+            # Add Module dependencies
+            # - Add output classes of module, and resolved dependencies
+            set moduleCPDependencies {}
+            log.info "Module depends on other modules=[vars.get ${module}.moduleDependencies]"
+            foreach depModule [vars.get ${module}.moduleDependencies] {
+
+                coursier::resolveModule $depModule
+                set depModuleDeps [kiss::dependencies::resolveDeps $depModule lib]
+
+                log.debug "- $depModule classes=[vars.get ${depModule}.build.classes],libs=$depModuleDeps"
+                lappend deps  [vars.get ${depModule}.build.classes]
+
+                #set deps [concat $deps $depModuleDeps]
+                lappend deps {*}$depModuleDeps
+            }
+
+            log.debug "Deps: $deps"
+
+
+            # Classes output -> directory or jar
+            ######
+            kissb.args.contains -classpath {
+                set classesOut [vars.resolve ${module}.build.classes]
+                files.mkdir $classesOut
+                lappend deps $classesOut
+            }
+
+
+            return $deps
+
+
         }
 
         compile {module args} {
@@ -99,21 +204,9 @@ namespace eval scala {
             #exec.run PATH=/home/rleys/.local/share/coursier/bin:$::env(PATH) scala --version
 
             # Resolve deps
-            coursier::resolveModule $module
-            set deps [files.joinWithPathSeparator [kiss::dependencies::resolveDeps $module lib]]
+            ########
+            set deps     [scala.resolveDeps $module -classpath]
             log.debug "Deps: $deps"
-
-            # Sources
-            set sources [kiss::sources::getSources $module]
-            log.info "Sources to compile: $sources"
-            if {[llength $sources]==0} {
-                log.warn "No sources to compile in module $module ([kiss::sources::getSourceFolders $module])"
-                return
-            }
-
-            # Classes output -> directory or jar
-            set classesOut [vars.resolve ${module}.build.directory]/classes
-
 
             # Resources
             set resources [kiss::sources::getSourcesDict ${module}/resources]
@@ -135,34 +228,76 @@ namespace eval scala {
             }
 
 
-            # Compile
-            files.mkdir $classesOut
-            try {
-                exec.withEnv $compileEnv {
-                    exec.run scalac  -usejavacp -classpath $deps -d $classesOut -java-output-version [vars.resolve ${module}.jvm.target] {*}$sources
-                }
-            } on error args {
-                log.error "Compilation failed"
-                throw SCALA.COMPILE.FAIL "compilation failed"
-            }
+            # Compile Sources in order
+            ###########
+            set depsJoined [files.joinWithPathSeparator $deps]
 
+
+            set classesOut [vars.resolve ${module}.build.classes]
+
+
+            foreach {baseFolder sourceFiles} [kiss::sources::getSourcesDict $module] {
+
+                log.info "Compiling sources in $baseFolder"
+
+                set scalaSources {}
+                set javaSources {}
+                foreach src $sourceFiles {
+                    if {[string match *.java $src]} {
+                        lappend javaSources [file normalize $baseFolder/$src]
+                    } else {
+                        lappend scalaSources [file normalize $baseFolder/$src]
+                    }
+                }
+
+                log.debug "- Scala Sources to compile: $scalaSources"
+                log.debug "- Java Sources to compile: $javaSources"
+
+                try {
+                    exec.withEnv $compileEnv {
+
+
+
+                        if {[llength $javaSources]>0} {
+                            exec.run javac -classpath $depsJoined -d $classesOut {*}[vars.get ${module}.javac.args] {*}$javaSources
+                            log.success "Done compiling java in $baseFolder"
+
+                        }
+
+                        if {[llength $scalaSources]>0} {
+                            exec.run scalac  -usejavacp -classpath $depsJoined -d $classesOut -java-output-version [vars.resolve ${module}.jvm.target] {*}[vars.get ${module}.scalac.args] {*}$scalaSources
+                            log.success "Done compiling scala in $baseFolder"
+                        }
+                    }
+                } on error {error stack} {
+                    log.error "Compilation failed for $baseFolder ($error)"
+                    #error "Compilation failed for $baseFolder"
+                    throw SCALA.COMPILE.FAIL "Compilation failed for $baseFolder"
+                    #throw SCALA.COMPILE.FAIL "compilation failed"
+                }
+
+
+
+            }
 
 
         }
 
         run {module mainClass args} {
-            # Run module's provided main class
+            # Run module's provided main class - doesn't build
 
             ## Load scala with PATH
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.get ${module}.jvm.name] --apps scala:[vars.get ${module}.scala.version],scalac:[vars.get ${module}.scala.version]]
             log.fine "Scala compile Env: $compileEnv"
 
             ## deps = deps + build folder
-            set deps [files.joinWithPathSeparator [concat [kiss::dependencies::resolveDeps $module lib] [vars.get ${module}.build.directory]/classes ]]
+            set deps     [scala.resolveDeps $module -classpath]
+            set depsPath [files.joinWithPathSeparator $deps]
+            #set deps [files.joinWithPathSeparator [concat [kiss::dependencies::resolveDeps $module lib] [vars.get ${module}.build.directory]/classes ]]
 
             exec.withEnv $compileEnv {
                 exec.run java -version
-                exec.run java -classpath $deps $mainClass
+                exec.run java -classpath $depsPath $mainClass
             }
 
         }
@@ -287,103 +422,8 @@ namespace eval scala {
 
     }
 
-    ################################
     ## Bloop
-    ################################
-    namespace eval bloop {
-
-        vars.define bloop.version 2.0.10
-        vars.define bloopVersion 2.0.10
-
-        proc getBloopEnv module {
-
-            return [exec.cmdGetBashEnv coursier.setup -q --env \
-                            --jvm [vars.resolve ${module}.jvm.name] \
-                            --apps bloop:[vars.resolve ${module}.bloop.version ${::bloop.version}]]
-        }
-
-
-        kissb.extension bloop {
-
-
-            config {module} {
-                # Configure module for bloop usage
-
-                set compileEnv [::scala::getScalaEnv $module]
-
-                # Dependend builds based on module hierarchy
-                set splitModule [split $module /]
-                set moduleDependencies {}
-                if {[llength $splitModule]>1} {
-                    lappend moduleDependencies [java::getModuleBuildName [lindex $splitModule end-1]]
-                }
-
-                # Resolve deps
-                coursier::resolveModule $module
-                set deps [kiss::dependencies::resolveDeps $module lib]
-
-                # Compiler Jars and options
-                set compilerJars    [coursier.fetch.classpath.of org.scala-lang:scala3-compiler_3:[vars.resolve ${module}.scala.version]]
-                set compilerOptions [vars.resolve ${module}.scalac.args]
-
-                set bloopName [java::getModuleBuildName $module]
-
-                #scala           [list [list version [vars.get ${module}.scala.version]]] -${module}
-                files.mkdir .bloop/
-                kiss::json::write .bloop/${bloopName}.json  [subst {
-                    version 1.4.0
-                    project {
-                        name            ${bloopName}
-                        directory       [file normalize [pwd]]
-                        workspaceDir    [file normalize [pwd]]
-                        sources::       [lmap src [kiss::sources::getSourceFolders $module] { file normalize $src }]
-                        resources::     {}
-                        dependencies::  [list $moduleDependencies]
-                        classpath::     [list $deps]
-                        out             [file normalize [vars.get ${module}.build.directory]]
-                        classesDir      [file normalize [vars.get ${module}.build.directory]/classes]
-                        scala           [list [list version [vars.resolve ${module}.scala.version] organization org.scala-lang name scala-compiler options:: $compilerOptions jars:: $compilerJars ]]
-                        platform        {
-                            name "jvm"
-                            config {
-                                home     [dict get $compileEnv JAVA_HOME value]
-                                options:: {}
-                            }
-                            mainClass:: {}
-                        }
-                    }
-                }]
-
-
-            }
-
-            compile {module} {
-                # Compile via bloop
-
-                set bloopEnv [::scala::bloop::getBloopEnv $module]
-                exec.withEnv $bloopEnv {
-                    exec.run bloop compile [java::getModuleBuildName $module]
-                }
-            }
-
-            projects args {
-                # Run bloop projects command
-
-                exec.withEnv [::scala::bloop::getBloopEnv main] {
-                    exec.run bloop projects
-                }
-            }
-
-            run {module main args} {
-                # Run module's main class via bloop
-
-                exec.withEnv [::scala::bloop::getBloopEnv main] {
-                    exec.run bloop run [java::getModuleBuildName $module] -m $main {*}$args
-                }
-            }
-
-        }
-    }
+    source [files.getScriptDirectory]/bloop.plugin.tcl
 
 }
 

@@ -33,10 +33,10 @@ namespace eval coursier {
         # Create a SHA of the required specs for caching purpose
         set specList {}
         foreach {spec depDict} $depsForModule {
-            lappend specList $specList
+            lappend specList $spec
         }
         set specSHA [::sha2::sha256 -hex -- [join [lsort $specList]]]
-        log.debug "Coursier spec SHA256: $specSHA"
+        log.debug "Coursier spec SHA256 of $specList: $specSHA"
 
         # Get Cache file
         set cacheFileName coursier-${module}-deps-${specSHA}
@@ -55,6 +55,7 @@ namespace eval coursier {
             }
 
             # Write Dict output to file
+            kissb.cached.cleanFiles coursier-${module}-deps
             kissb.cached.writeFile ${cacheFileName}.txt  $depsForModule
             kissb.cached.writeFile ${cacheFileName}.json [json.toString $depsForModule]
         }
@@ -231,6 +232,9 @@ namespace eval coursier {
         run args {
             exec.run ${::coursier::binPath} {*}$args
         }
+        call args {
+            return [exec.call ${::coursier::binPath} {*}$args]
+        }
 
         install args {
             return [coursier.run install {*}$args]
@@ -238,6 +242,11 @@ namespace eval coursier {
 
         setup args {
             return [exec.call ${::coursier::binPath} setup {*}$args]
+        }
+
+        env args {
+            # Runs command with --env and using exec.call to return env result
+            return [coursier.call {*}$args --env]
         }
 
         resolve module {

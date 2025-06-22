@@ -4,16 +4,25 @@
 
 package provide kissb.maven 1.0
 
+package require kissb.xml
+
+
 namespace eval maven {
 
     set wrapperVersion  3.3.2
     set mavenVersion    3.9.8
 
+    vars.define maven.wrapper.version 3.3.2
+    vars.define maven.wrapper.version 3.9.8
+
+    vars.define maven.local.directory $::env(HOME)/.m2/repository
+
+
     kiss::toolchain::register maven-wrapper {
 
         files.requireOrRefresh mvnw MAVEN {
-            
-            log.info "Setting up maven wrapper"
+
+            log.info "Setting up maven wrapper in local directory"
 
             ## Download wrapper
             files.download https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper-distribution/${maven::wrapperVersion}/maven-wrapper-distribution-${maven::wrapperVersion}-bin.zip maven-wrapper-distribution-${maven::wrapperVersion}-bin.zip
@@ -23,13 +32,13 @@ namespace eval maven {
             ## Set properties
             files.writeText .mvn/wrapper/maven-wrapper.properties distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${maven::mavenVersion}/apache-maven-${maven::mavenVersion}-bin.zip
 
-        
+
         }
     }
 
 
     proc writeSpec spec {
-    
+
         foreach {key val} $spec {
             switch $key {
                 artifactId {
@@ -41,7 +50,7 @@ namespace eval maven {
                 version {
                     files.writer.printLine  "<version>$val</version>"
                 }
-                
+
                 default {
                     if {[llength $val]==1} {
                         files.writer.printLine <$key>$val</$key>
@@ -56,36 +65,63 @@ namespace eval maven {
                         }
                         #log.warn "Maven unknown key $key"
                     }
-                    
+
                 }
             }
         }
     }
 
+
+
     kissb.extension maven {
 
-        generate.spec {outPath spec} {
+        generate.spec {outFile spec} {
 
-            set pomFile [file normalize $outPath/pom.xml]
+            set pomFile [file normalize $outFile]
             set specSubst [uplevel [list subst $spec]]
 
             ## Create Writer and go through spec
             files.withWriter $pomFile {
 
+
                 files.writer.printLine <?xml version="1.0" encoding="UTF-8"?>
                 files.writer.printLine <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
                 files.writer.printLine <modelVersion>4.0.0</modelVersion>
-                
+
                 files.writer.indent
 
+
                 maven::writeSpec $specSubst
-                
+
                 files.writer.outdent
                 files.writer.printLine </project>
-                
+
 
             }
 
+        }
+
+        installM2Local {artifactId groupId version jar deps} {
+
+            ## Create spec
+            ######
+
+            ## Copy to output dir
+            #######
+            set jar [file normalize $jar]
+            set groupIdPath [string map {. /} $groupId]
+            files.inDirectory ${::maven.local.directory}/${groupIdPath}/$artifactId/$version {
+
+                files.cp $jar $artifactId-$version.jar
+                maven.generate.spec $artifactId-$version.pom {
+
+                    artifactId $artifactId
+                    groupId    $groupId
+                    version    $version
+
+                }
+
+            }
         }
     }
 
