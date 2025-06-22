@@ -226,10 +226,10 @@ namespace eval kiss {
     #############################
 
     proc ::@ {name args} {
-       ::kiss::targets::@ $name {*}$args
+       uplevel [list ::kiss::targets::@ $name {*}$args]
     }
     proc ::@> {name args} {
-       ::kiss::targets::run $name {*}$args
+       uplevel [list ::kiss::targets::run $name {*}$args]
     }
     namespace eval targets {
 
@@ -239,6 +239,7 @@ namespace eval kiss {
             log.fine "Registering target $name, size of args=[llength $args]"
 
             # Split Name from doc
+            ####
             set targetName [lindex $name 0]
             set targetDoc ""
             if {[llength $name] > 1} {
@@ -246,7 +247,16 @@ namespace eval kiss {
             }
             #puts "target $name doc: $targetDoc"
 
+            # Script is the last in args
+            ####
             set script [lindex $args end]
+
+            ## Replace currnet scope template variables
+            set script [uplevel [list template.replace $script]]
+
+            # Other args represent required targets
+            #######
+
             #log.info "Script is: $script"
             set reqTargets {}
             if {[llength $args]>1} {
@@ -259,7 +269,7 @@ namespace eval kiss {
                 }
             }
             #dict append::kiss::targets::_targets $name {*}$args
-            dict lappend ::kiss::targets::_targets $targetName $reqTargets $targetDoc $script
+            dict lappend ::kiss::targets::_targets $targetName  required $reqTargets doc $targetDoc script $script run false
         }
 
         proc listTargets args {
@@ -267,24 +277,39 @@ namespace eval kiss {
         }
 
         proc getScript target {
+
+            return [dict get $::kiss::targets::_targets $target script]
+
             set targetcontent [dict get $::kiss::targets::_targets $target]
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent end]
         }
 
         proc getDoc target {
+
+            return [dict get $::kiss::targets::_targets $target doc]
+
             set targetcontent [dict get $::kiss::targets::_targets $target]
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent 1]
         }
 
         proc getRequiredTargets target {
+
+            return [dict get $::kiss::targets::_targets $target required]
+
             set targetcontent [dict get $::kiss::targets::_targets $target]
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent 0]
         }
         proc hasTarget target {
             return [dict exists $::kiss::targets::_targets $target]
+        }
+        proc exists target {
+            return [dict exists $::kiss::targets::_targets $target]
+        }
+        proc hasRun target {
+            return [dict get $::kiss::targets::_targets $target run]
         }
 
         ## Run Target
@@ -314,8 +339,14 @@ namespace eval kiss {
             #    set argv {}
             #}
 
-            log.with.logger $target {
-                eval $script
+            # Run target
+            if {![hasRun $target]} {
+                log.with.logger $target {
+                    eval $script
+                    dict set ::kiss::targets::_targets $target run true
+                }
+            } else {
+                log.warn "Not re-running target $target"
             }
 
             #return [dict keys $::kiss::targets::_targets]

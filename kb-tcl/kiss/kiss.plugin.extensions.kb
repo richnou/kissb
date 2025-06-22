@@ -21,6 +21,31 @@ kissb.extension kissb {
     }
 
 }
+
+############################
+## Targets
+##############################
+kissb.extension targets -noLogger {
+
+    exists name {
+        return [::kiss::targets::exists $name]
+
+    }
+
+    ensure {name args} {
+        # Creates named target if doesn't exist
+        if {![targets.exists $name]} {
+            uplevel [list targets.create $name  {*}$args]
+        }
+    }
+
+    create {name args} {
+        uplevel [list ::kiss::targets::@ $name {*}$args]
+    }
+
+}
+
+
 ############################
 ## Core extension -> language
 ##############################
