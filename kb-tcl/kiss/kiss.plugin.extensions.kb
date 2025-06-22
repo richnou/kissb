@@ -50,7 +50,7 @@ kissb.extension targets -noLogger {
 ## Core extension -> language
 ##############################
 
-kissb.extension kissb {
+kissb.extension kissb -noLogger {
 
     args.contains {v {script {}} {else ""} {elseScript {}}} {
         # Tests if $args contains a specific argument, runs script if so, or elseScript if provided
@@ -388,12 +388,29 @@ kissb.extension sources {
 ## Asserts
 #####################
 
+proc ::assert {res message} {
+    if {!$res} {
+        log.fatal "Assert failed: $message"
+        uplevel {return}
+    }
+}
+
 kissb.extension assert {
 
     isFile {path msg} {
-        if {![file isfile $path]} {
-            error "File doesn't exist:$path , $msg"
+        if {![file isfile $path] ||![file exists $path]} {
+            error "File doesn't exist: $path , $msg"
         }
+    }
+
+    isFolder {path msg} {
+        if {![file isdirectory $path] || ![file exists $path]} {
+            error "Folder doesn't exist: $path , $msg"
+        }
+    }
+
+    dictHasKey {dict key msg} {
+        assert [dict exists $dict $key] "$msg"
     }
 }
 

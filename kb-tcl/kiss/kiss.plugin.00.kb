@@ -625,12 +625,7 @@ namespace eval kiss {
     ##############################
 
 
-    proc ::assert {res message} {
-        if {!$res} {
-            log.error "Assert failed: $message"
-            uplevel {return}
-        }
-    }
+
 
     proc ::ignore {test script} {
         if {!$test} {
