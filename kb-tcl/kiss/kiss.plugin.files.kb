@@ -77,6 +77,97 @@ namespace eval ::kiss::files {
 
         }
 
+        download {src {out ""}} {
+            # Download source file to target file using wget
+
+            if {$out==""} {
+                ::kiss::terminal::execIn [pwd] wget --show-progress $src -O [lindex [split $src /] end]
+            } else {
+                ::kiss::terminal::execIn [pwd] wget --show-progress $src -O $out
+            }
+
+        }
+
+
+        downloadOrRefresh {url refresh {outFile ""}} {
+            # Downloads file from the URL if needed, or if refresh key is set
+
+
+            #set outFile [expr {$outFile eq "" ? [file tail $url] : $outFile}]
+            set.ifEmpty outFile [file tail $url]
+            log.info "URL tail: [file tail $url]"
+            files.requireOrRefresh $outFile $refresh {
+                log.info "Downloading $url -> $outFile"
+                files.download $url $outFile
+            }
+            return $outFile
+        }
+
+
+        globFiles args {
+            #
+
+            ## Globbing
+            return [join [lmap pattern $args {lsort [glob -nocomplain -type f $pattern]}]]
+        }
+
+        globFolders args {
+            #
+
+            ## Globbing
+            return [join [lmap pattern $args {lsort [glob -nocomplain -type d $pattern]}]]
+        }
+
+
+        globAll args {
+            return [join [lmap pattern $args {lsort [glob -nocomplain  $pattern]}]]
+        }
+
+        withGlobFiles {args script} {
+            uplevel [list foreach file [files.globFiles {*}$args] $script]
+        }
+        withGlobAll {args script} {
+            uplevel [list foreach file [files.globAll {*}$args] $script]
+        }
+
+        isFile {path} {
+            # Returns true if path is a file and exists
+
+            if {![file isfile $path] ||![file exists $path]} {
+                return false
+            }
+            return true
+        }
+
+        isFolder {path} {
+            # Returns true if path is a folder and exists
+
+            if {![file isdirectory $path] || ![file exists $path]} {
+                return false
+            }
+            return true
+        }
+
+        isEmpty {path} {
+            # Returns true if path is a folder and empty
+
+            if {![files.isFolder $path] || [llength [files.globAll $path/*]]==0} {
+                return true
+            }
+            return false
+        }
+
+        isAbsolute {path} {
+            # Returns true if path is absolute
+            set fp [file pathtype $path ]
+            return [expr {$fp == "absolute" || $fp == "volumerelative"}]
+        }
+
+        isRelative {path} {
+            # Returns true if path is relative
+            return [expr {[file pathtype $path ] == "relative"}]
+        }
+
 
         cp {f dir} {
             # Copy file to directory
@@ -114,6 +205,12 @@ namespace eval ::kiss::files {
                 close $fid
             }
         }
+
+        makeAbsoluteTo {path base} {
+            # Returns an absolute path, if path is relative, make it absolute relative to base
+            return [expr {[files.isAbsolute $path] ? $path : [file normalize $base/$path]}]
+        }
+
         writeText {f args} {
             # Writes text to provided file
             #  f - Target file
@@ -223,31 +320,7 @@ namespace eval ::kiss::files {
         }
 
 
-        download {src {out ""}} {
-            # Download source file to target file using wget
 
-            if {$out==""} {
-                ::kiss::terminal::execIn [pwd] wget --show-progress $src -O [lindex [split $src /] end]
-            } else {
-                ::kiss::terminal::execIn [pwd] wget --show-progress $src -O $out
-            }
-
-        }
-
-
-        downloadOrRefresh {url refresh {outFile ""}} {
-            # Downloads file from the URL if needed, or if refresh key is set
-
-
-            #set outFile [expr {$outFile eq "" ? [file tail $url] : $outFile}]
-            set.ifEmpty outFile [file tail $url]
-            log.info "URL tail: [file tail $url]"
-            files.requireOrRefresh $outFile $refresh {
-                log.info "Downloading $url -> $outFile"
-                files.download $url $outFile
-            }
-            return $outFile
-        }
 
 
         unzip {f args} {
@@ -298,13 +371,19 @@ namespace eval ::kiss::files {
             try {
                 ::kiss::files::writer::open $outPath
                 uplevel [list eval $script]
-            } finally {
-                ::kiss::files::writer::close
+            }  finally {
+                catch {::kiss::files::writer::close}
             }
         }
 
         writer.printLine args {
             ::kiss::files::writer::printLine {*}$args
+        }
+        writer.println args {
+            ::kiss::files::writer::printLine {*}$args
+        }
+        writer.print  args {
+            ::kiss::files::writer::print {*}$args
         }
         writer.indent args {
             ::kiss::files::writer::incrIndent
@@ -323,23 +402,7 @@ namespace eval ::kiss::files {
         }
 
 
-        globFiles args {
-            #
 
-            ## Globbing
-            return [join [lmap pattern $args {lsort [glob -nocomplain -type f $pattern]}]]
-        }
-
-        globAll args {
-            return [join [lmap pattern $args {lsort [glob -nocomplain  $pattern]}]]
-        }
-
-        withGlobFiles {args script} {
-            uplevel [list foreach file [files.globFiles {*}$args] $script]
-        }
-        withGlobAll {args script} {
-            uplevel [list foreach file [files.globAll {*}$args] $script]
-        }
 
 
         isExecutable {f {for -user}} {
@@ -415,13 +478,20 @@ namespace eval ::kiss::files {
         }
 
         proc open file {
+
             set ::kiss::files::writer::fid [::open $file w+]
+            log.debug "Opening file writer to ${::kiss::files::writer::fid}"
         }
         proc close args {
+            log.debug "Closing file writer to ${::kiss::files::writer::fid}"
             ::close ${::kiss::files::writer::fid}
+            set ::kiss::files::writer::fid -1
         }
         proc printLine args {
             puts ${::kiss::files::writer::fid} [getIndent][join $args]
+        }
+        proc print args {
+            puts -nonewline ${::kiss::files::writer::fid} [getIndent][join $args]
         }
     }
 
