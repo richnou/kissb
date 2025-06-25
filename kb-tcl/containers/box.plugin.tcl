@@ -43,7 +43,8 @@ namespace eval kissb::box  {
                 dict set argsDict -image [file normalize $image]
             }
             #dict set ::box.configurations $name $argsDict
-            vars.append ::box.configurations $name $argsDict
+            vars.append box.configurations $name $argsDict
+            #puts "Configs are now: ${::box.configurations}"
         }
 
 
