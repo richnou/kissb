@@ -26,7 +26,7 @@ package ifneeded kissb.git                  1.0  [list source $dir/git/git.plugi
 package ifneeded kissb.liquibase            1.0  [list source $dir/liquibase/liquibase.plugin.kb]
 
 
-package ifneeded kissb.python3              1.0  [list source $dir/python3/python3.plugin.kb]
+package ifneeded kissb.python3              1.0  [list source $dir/python3/python3.plugin.tcl]
 package ifneeded kissb.mkdocs               1.0  [list source $dir/mkdocs/mkdocs.plugin.tcl]
 package ifneeded kissb.netlify              1.0  [list source $dir/netlify/netlify.plugin.tcl]
 
@@ -84,4 +84,4 @@ package ifneeded kissb.tauri 1.0 [list source $dir/tauri/tauri.plugin.tcl]
 ## Flows
 ############
 package ifneeded flow.scala.applib      1.0 [list source $dir/flows/scala/applib.1_0.tcl]
-package ifneeded flow.mkdocs.netlify    1.0 [list source $dir/flows/mkdocs/mkdocs_netlify.1_0.tcl]
+package ifneeded flow.mkdocs    1.0 [list source $dir/flows/mkdocs/mkdocs.1_0.tcl]

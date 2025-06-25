@@ -59,7 +59,7 @@ namespace eval mkdocs {
                     cd ..
                     set htmlFolder [file tail $htmlOutputFolder]
                     log.success "Zipping $htmlFolder"
-                    files.compress $htmlFolder ${::build.name}.zip
+                    files.compressDir $htmlFolder ${::build.name}.zip
 
                 }
             }
