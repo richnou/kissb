@@ -7,9 +7,8 @@ package require kissb.scala
 package require kissb.maven
 package require kissb.ivy
 
-vars.define flow.scala.version ${::scala.default.version}
-vars.define flow.jvm.version   ${::jvm.default.version}
-vars.define flow.mainClass     false
+vars.define flow.scala.version ${::scala.default.version} -doc "Scala Version used for the builds"
+vars.define flow.jvm.version   ${::jvm.default.version} -doc "Default JVM Version used for the builds. scalac/javac run via this jvm version, scalac outputs for this jvm version"
 
 
 
@@ -41,21 +40,22 @@ proc flow.addBuilds args {
 
         set buildFolder [file normalize [lindex $buildFolderAndArgs 0]]
         set buildName   [file tail $buildFolder]
-        set targetSuffix ".[file tail $buildFolder]"
 
+        set targetSuffix ".[file tail $buildFolder]"
+        set targetBaseName "${buildName}."
+        if {[llength $args]==1} {
+            set targetBaseName ""
+        }
 
 
         lappend allbuildNames $buildName
         vars.append flow.allBuilds $buildName
 
 
-        log.info "Adding build in $buildFolder"
+        log.info "Adding build in $buildFolder, base build name=$buildName"
 
         assert.isFolder  $buildFolder "Build folder doesn't exist"
 
-        #if {[pwd]!=$buildFolder} {
-        #
-        #}
 
         ## Configure properties for flow
         #########
@@ -63,7 +63,7 @@ proc flow.addBuilds args {
 
         ## Configure targets
         ##########
-        @ ${buildName}.setup  {
+        @ ${targetBaseName}setup  {
 
             set buildName   {{set buildName}}
             set buildFolder {{set buildFolder}}
@@ -88,9 +88,12 @@ proc flow.addBuilds args {
             #if {[files.isFolder $buildFolder/src/main/java]} {
             #    lappend extraSources $buildFolder/src/main/java
             #}
-            scala.init $buildName/main -scala [vars.get flow.scala.version]  -baseDir $buildFolder -srcDirs $srcDirs
+            scala.init $buildName/main \
+                    -scala [vars.get flow.scala.version]  \
+                    -baseDir $buildFolder \
+                    -srcDirs $srcDirs
 
-            log.info "Select JVM"
+            log.info    "Select JVM"
             scala.jvm    $buildName/main [vars.get flow.jvm.version]
 
             log.info "Setup done"
@@ -101,49 +104,65 @@ proc flow.addBuilds args {
             }
 
 
+            ## Setup test target
+            #########
+            set testSrcFolders [files.globFolders $buildFolder/src/test/*]
+            if {[llength $testSrcFolders]>=1} {
+
+                log.info "Setting up scala test compilation target $buildName/test "
+
+                scala.init $buildName/test \
+                        -scala [vars.get flow.scala.version]  \
+                        -baseDir $buildFolder \
+                        -srcDirs $testSrcFolders
+
+                ## Add scalatest
+                scalatest.init $buildName/test
+                scala.addDependencies $buildName/test compile @${buildName}/main
+
+            }
+
         }
 
-        @ ${buildName}.bloop.config  {
+        @ ${targetBaseName}bloop  {
 
             set buildName   {{set buildName}}
 
-            >> ${buildName}.setup
+            >> {{set targetBaseName}}setup
 
             ## Config any dependend modules
             #foreach depModule [vars.get ${module}.moduleDependencies] {
             #    >> [lindex [split $depModule /] 0].bloop.config
             #}
 
-            bloop.config $buildName/main
+            ## Generate configuration
+            #bloop.config $buildName/main
+            foreach module [scala.listModules $buildName] {
+                bloop.config $module
+            }
 
-
-            #bloop.config main/test
-
-            if {[llength ${::flow.allBuilds}]<=1}  {
+            ## List projects if requested
+            kissb.args.contains -list {
                 log.info "Listing projects from Bloop"
                 bloop.projects
             }
 
-        }
+            ## Compile if requested
+            kissb.args.contains -compile {
 
-        @ ${buildName}.bloop.compile  {
+                bloop.compile $buildName/main
+            }
 
-
-            set buildName   {{set buildName}}
-
-            >> ${buildName}.setup
-
-            bloop.compile $buildName/main
 
 
         }
 
-        @ ${buildName}.build   {
+        @ ${targetBaseName}build   {
 
             set buildName   {{set buildName}}
             set module      $buildName/main
 
-            >> ${buildName}.setup
+            >> {{set targetBaseName}}setup
 
             ## Build any dependend modules
             foreach depModule [vars.get ${module}.moduleDependencies] {
@@ -157,19 +176,14 @@ proc flow.addBuilds args {
 
         }
 
-        @ ${buildName}.test  {
-
-            #scala.compile main/test
-            #scalatest.run main
-            log.warning "Test target not implemented yet"
-        }
 
 
-        @ ${buildName}.jar   {
+
+        @ ${targetBaseName}jar   {
 
             set buildName   {{set buildName}}
 
-            >> ${buildName}.build
+            >> {{set targetBaseName}}build
 
             set buildProps [vars.get ${buildName}.properties]
 
@@ -179,9 +193,28 @@ proc flow.addBuilds args {
 
             set jarOut [java.jar $buildName/main $buildName-[dict get $buildProps version].jar]
 
-            ivy.installIvyLocal [dict get $buildProps artifactId] [dict get $buildProps groupId] [dict get $buildProps version] $jarOut {}
+            kissb.args.contains -publishLocal {
+                ivy.installIvyLocal [dict get $buildProps artifactId] \
+                                    [dict get $buildProps groupId] \
+                                    [dict get $buildProps version] \
+                                    $jarOut {}
+            }
 
         }
+
+
+        ## Test Targets
+        #########
+
+        @ ${targetBaseName}test  {
+
+            set buildName   {{set buildName}}
+
+            scala.compile ${buildName}/test
+            scalatest.run ${buildName}/test
+            #log.warn "Test target not implemented yet"
+        }
+
 
 
         #if {${::flow.mainClass}!=false} {
@@ -215,10 +248,23 @@ proc flow.addBuilds args {
 
 # }
 
-        @> ${buildName}.setup
+        @> ${targetBaseName}setup
 
     } ; ## EOF Foreach
 
+
+    ## Catch All targets
+    #########
+    if {[llength $allbuildNames]>1} {
+
+        @ bloop {
+
+            foreach build [vars.get flow.allBuilds] {
+                >> ${build}.bloop
+            }
+        }
+
+    }
     ## Add Targets to build all builds at once
     #if {[llength $allbuildNames]>1} {
 
@@ -250,13 +296,60 @@ proc flow.addBuilds args {
 }
 
 
-proc flow.addDependencies {module args} {
+proc flow._addDependencies {module scope deps} {
 
-    set args  [uplevel [list subst $args]]
+
+
+    set args  [uplevel [list subst $deps]]
 
     #log.info "Adding dependencies: $module -> [split {*}$args]"
+    foreach d $args {
+        scala.addDependencies ${module} compile {*}$d
+    }
 
-    scala.addDependencies ${module}/main {*}$args
+}
+
+
+proc flow.addDependencies {module deps} {
+
+    if {$module=="."} {
+        set module [file tail [pwd]]
+    }
+
+    uplevel [list flow._addDependencies $module/main compile $deps]
+
+}
+
+proc flow.addTestDependencies {module deps} {
+
+    if {$module=="."} {
+        set module [file tail [pwd]]
+    }
+
+    uplevel [list flow._addDependencies $module/test compile $deps]
+
+
+}
+
+proc flow.addTestRuntimeDependencies {module deps} {
+
+    if {$module=="."} {
+        set module [file tail [pwd]]
+    }
+
+    uplevel [list flow._addDependencies $module/test runtime $deps]
+
+
+}
+
+proc flow.addRuntimeDependencies {module deps} {
+
+    if {$module=="."} {
+        set module [file tail [pwd]]
+    }
+
+    uplevel [list flow._addDependencies $module/main test $deps]
+
 }
 
 
