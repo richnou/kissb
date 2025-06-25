@@ -142,6 +142,24 @@ kissb.extension kissb -noLogger {
         return ${__val}
     }
 
+    args.consumeValue {v default {to ""} {varname ""}} {
+        set localArgs [uplevel {::set args}]
+        set __val $default
+        set argIndex [lsearch -exact $localArgs $v]
+        if {$argIndex!=-1} {
+            set __val [lindex $localArgs $argIndex+1]
+            #uplevel [list set args [lrange $localArgs 0 ${argIndex}-1]]
+            uplevel [list lpop args $argIndex ]
+            uplevel [list lpop args [expr $argIndex] ]
+        }
+
+        # set to requested varname
+        if {$to!=""} {
+            uplevel [list ::set $varname ${__val}]
+        }
+        return ${__val}
+    }
+
 
     args.getFirstNotSwitch {default {-> ""} {varname ""}} {
         ## Returns value to first arg not a switch, or return default.
@@ -189,8 +207,10 @@ kissb.extension kissb -noLogger {
         set __val $default
         set __indexOfArg [lsearch -exact $localArgs $v]
         if {${__indexOfArg}!=-1} {
+
             set __val [lrange $localArgs [expr ${__indexOfArg} +1] end]
-            uplevel [set args [lrange $localArgs 0 [expr ${__indexOfArg} - 1]]
+            uplevel [list set args [lrange $localArgs 0 [expr ${__indexOfArg} - 1]]
+
         }
 
         # set to requested varname
@@ -250,12 +270,16 @@ kissb.extension vars -noLogger {
 
     append {name args} {
         foreach v $args {
-             ::kiss::vars::append $name $v
+            ::kiss::vars::append $name $v
         }
     }
 
     get {name {v ""}} {
         return [::kiss::vars::get $name $v]
+    }
+
+    getDoc {name {v ""}} {
+        return [::kiss::vars::getDoc $name $v]
     }
 
     exists name {
@@ -356,7 +380,7 @@ kissb.extension dependencies {
 
         foreach dSpecs $args {
             foreach dSpec $dSpecs {
-                log.info "Adding Dependency: $dSpec"
+                log.debug "Adding Dependency: $dSpec"
                 ::kiss::dependencies::addDepSpec $module $dSpec $resolver
             }
         }
@@ -369,6 +393,10 @@ kissb.extension dependencies {
 
     resolve {module type args} {
         return [::kiss::dependencies::resolveDeps $module $type]
+    }
+
+    isScopeDefined module {
+        return [::kiss::dependencies::isScopeDefined $module]
     }
 }
 
