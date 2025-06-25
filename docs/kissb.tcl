@@ -5,8 +5,12 @@
 
 set build.name "kissb-docs"
 
-flow.load mkdocs+netlify
+package require flow.mkdocs 1.0
 
+ 
+flow.enableNetlify
+
+# Ensure node initialised
 node.init
 npm.exec --version
 node.exec --version
@@ -46,8 +50,8 @@ proc variablesMd {pattern file} {
     makeMd "node.*"             pages/packages/nodejs/node.methods.md
 
     package require kissb.scala
-    makeMd "scala.*"             pages/packages/jee/bloop.methods.md
-    makeMd "bloop.*"             pages/packages/jee/scala.methods.md
+    makeMd "scala.*"             pages/packages/jee/scala.methods.md
+    makeMd "bloop.*"             pages/packages/jee/bloop.methods.md
 
 
 
@@ -55,12 +59,15 @@ proc variablesMd {pattern file} {
 
 @ generate.variables {
 
+    ## Package Variables
+    ############"
     set packagesNamespaces {
 
-        kissb.verilator verilator
-        kissb.cocotb    cocotb
-        kissb.quarkus   quarkus
-        kissb.coursier  coursier
+        kissb.scala         scala
+        kissb.coursier      coursier
+        kissb.eda.verilator verilator
+        kissb.eda.cocotb    cocotb 
+        
     }
 
     files.withWriter data/packages.variables.yml {
@@ -71,17 +78,99 @@ proc variablesMd {pattern file} {
             files.writer.indent
 
             package require $package
-            foreach v [info vars ::${ns}::*] {
+            foreach v [info vars ::${ns}.*] {
                 puts "V: $v"
-                set vName [string range [string map {:: .} $v] 1 end]
-                set localName [lindex [split $vName .] end]
-                files.writer.printLine "${localName}: \"[set $v]\""
+                
+                set localName [join [lrange [split $v .] 1 end] _]
+                #set vName [string range [string map {:: .} $v] 1 end]
+                #set localName [lindex [split $vName .] end]
+                #files.writer.printLine "${localName}: \"[set $v]\""
+                files.writer.printLine "$localName: \"[set $v]\""
             }
 
             files.writer.outdent
         }
-        package require kissb.verilator
+        #package require kissb.verilator
 
 
     }
+
+    ## Flow Variables
+    ###################
+    set flowPackages {
+
+        flow.mkdocs 1.0 mkdocs
+        flow.scala.applib 1.0 scala
+          
+    }
+
+    
+
+    # Generate flows file with all vars
+    files.withWriter data/flows.variables.yml {
+
+        files.writer.printLine "id: \"flows.variable\""
+
+        
+        puts "all flow packages: $flowPackages"
+        foreach {package version ns} $flowPackages {
+            
+        
+            # Common Key for this flow is the flow name
+            set flowName [string map {. _} ${package}.$version]
+            files.writer.printLine "$flowName:"
+            files.writer.indent
+
+            # Load Flow package and generate a key for each value 
+            # Also write a table file to be included in the main doc
+            set mdFile pages/flows/_vars/${flowName}.inc.md
+            files.writeLine $mdFile "|Variable|Description|Default Value|Env. Override|"
+            files.appendLine $mdFile "|---|---|---|---|"
+
+            
+
+            #catch {package forget $package}
+            package require $package 
+            #$version
+            
+            puts "package: $package - [info vars ::flow.*]"
+
+            foreach v [info vars ::flow.*] {
+                puts "V: $v"
+                set vNoNS [string range $v 2 end]
+
+                
+                set localName [join [lrange [split $v .] 1 end] _]
+                #set vName [string range [string map {:: .} $v] 1 end]
+                #set localName [lindex [split $vName .] end]
+                #files.writer.printLine "${localName}: \"[set $v]\""
+                files.writer.printLine "${localName}_default: \"[vars.get $v]\""
+
+                set vDoc [vars.getDoc $vNoNS]
+                if {$vDoc==false} {
+                    log.warn "Variable $v has no documentation"
+                    set vDoc ""
+                }
+                files.writer.printLine "${localName}_doc: \"$vDoc\""
+
+                # Add Line to Markdown
+                files.appendLine $mdFile "|$vNoNS|$vDoc|[set $v]|[string toupper [string map {. _} $vNoNS]]|"
+
+                #unset $v
+            }
+
+            package forget $package
+
+            # Forget all flow. variables to avoid conflicts between packages
+            foreach v [info vars ::flow.*] {
+                unset $v
+            }
+        }
+
+        files.writer.outdent
+    }
+
+    puts "EOF vars"
+
+
 }

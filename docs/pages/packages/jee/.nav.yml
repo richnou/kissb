@@ -1,4 +1,3 @@
 title: "JEE / Java"
 nav:
-    - scala.md
-    - helidon.md
+  - scala.md

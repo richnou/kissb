@@ -1,0 +1,9 @@
+id: "flows.variable"
+flow_mkdocs_1_0:
+    mkdocs_presets_default: ""
+    mkdocs_presets_doc: "A list containing some mkdocs requirements presets from KISSB"
+    flow_scala_applib_1_0:
+        jvm_version_default: ""
+        jvm_version_doc: "Default JVM Version used for the builds. scalac/javac run via this jvm version, scalac outputs for this jvm version"
+        scala_version_default: ""
+        scala_version_doc: "Scala Version used for the builds"

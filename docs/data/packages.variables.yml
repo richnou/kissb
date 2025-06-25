@@ -1,18 +1,9 @@
 id: "packages.variable"
-verilator:
-    runtime: "local"
-    version: "v5.024"
-cocotb:
-    simulator: "-"
-    workdir: ".kb/work/cocotb"
-quarkus:
-    cliJar: ""
-    version: "3.17.0"
-    cliCP: ""
+scala:
+    default_version: "3.7.1"
 coursier:
-    repositories: "ivy2Local central sonatype:releases https://oss.sonatype.org/content/groups/public/"
-    buildFolder: ".kb/coursier"
-    outputFolder: "repository"
-    binPath: ""
-    currentDeps: ""
-    tcFolder: ".kb/toolchain/coursier"
+verilator:
+    version: "v5.030"
+    runtime: "local"
+    verilate_args: ""
+cocotb:

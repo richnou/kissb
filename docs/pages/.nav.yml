@@ -1,10 +1,11 @@
 nav:
-    - index.md
-    - gettingstarted.md
-    - installation.md
-    - releases.md
-    - licenses.md
-    - signing.md
-    - kissb-language
-    - packages
-    - tcl-packages
+  - index.md
+  - gettingstarted.md
+  - installation.md
+  - releases.md
+  - licenses.md
+  - signing.md
+  - kissb-language
+  - flows
+  - packages
+  - tcl-packages

@@ -1,13 +1,13 @@
-title: KISSB Core
+title: KISSB Core API
 nav:
-    - primer.md
-    - conventions.md
-    - targets.md
-    - flows.md
-    - packages.md
-    - toolchains.md
-    - kissb.log.md
-    - kissb.files.md
-    - kissb.args.md
-    - kissb.refresh.md
-    - kissb.exec.md
+  - primer.md
+  - conventions.md
+  - targets.md
+  - flows.md
+  - packages.md
+  - toolchains.md
+  - kissb.log.md
+  - kissb.files.md
+  - kissb.args.md
+  - kissb.refresh.md
+  - kissb.exec.md
