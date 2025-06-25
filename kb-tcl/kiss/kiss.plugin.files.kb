@@ -49,6 +49,31 @@ namespace eval ::kiss::files {
     kissb.extension files {
 
 
+        appendText {f text {args -nonewline}} {
+            # Appends test to provided file
+            #  f - Target file
+            #  args - joined to a default string with join
+            set fid [open $f a+]
+            try {
+                if {"-nonewline" in $args} {
+                    puts -nonewline $fid $text
+                } else {
+                    puts $fid $text
+                }
+                
+            } finally {
+                close $fid
+            }
+        }
+
+        appendLine {f text} {
+            # Appends Line to provided file
+            #  f - Target file
+            #  args - joined to a default string with join
+            files.appendText $f $text {}
+        }
+
+
         mkdir dir {
             # Create directory
             #  dir - path to directory to be created
@@ -211,36 +236,9 @@ namespace eval ::kiss::files {
             return [expr {[files.isAbsolute $path] ? $path : [file normalize $base/$path]}]
         }
 
-        writeText {f args} {
-            # Writes text to provided file
-            #  f - Target file
-            #  args - joined to a default string with join
-            set fid [open $f w+]
-            try {
-                puts -nonewline $fid [join $args]
-            } finally {
-                close $fid
-            }
-        }
+        
 
-        appendText {f args} {
-            # Appends test to provided file
-            #  f - Target file
-            #  args - joined to a default string with join
-            set fid [open $f a+]
-            try {
-                puts -nonewline $fid [join $args]
-            } finally {
-                close $fid
-            }
-        }
-        appendLine {f args} {
-            # Appends Line to provided file
-            #  f - Target file
-            #  args - joined to a default string with join
-            files.appendText $f {*}$args \n
-        }
-
+        
 
 
         moveFileToTemp f {
@@ -390,6 +388,30 @@ namespace eval ::kiss::files {
         }
         writer.outdent args {
             ::kiss::files::writer::decrIndent
+        }
+
+        writeText {f args} {
+            # Writes text to provided file
+            #  f - Target file
+            #  args - joined to a default string with join
+            set fid [open $f w+]
+            try {
+                puts -nonewline $fid [join $args]
+            } finally {
+                close $fid
+            }
+        }
+
+        writeLine {f args} {
+            # Writes text to provided file
+            #  f - Target file
+            #  args - joined to a default string with join
+            set fid [open $f w+]
+            try {
+                puts $fid [join $args]
+            } finally {
+                close $fid
+            }
         }
 
 
