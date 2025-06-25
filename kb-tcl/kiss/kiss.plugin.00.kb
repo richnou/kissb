@@ -97,7 +97,7 @@ namespace eval kiss {
 
                 ## Augment script with logger
                 if {!$noLogger} {
-                    set procScript [list log.appendLogger $procFQN $procScript ]
+                    #set procScript [list log.appendLogger $procFQN $procScript ]
                 }
 
 
@@ -166,19 +166,36 @@ namespace eval kiss {
 
         }
 
+        proc getDoc {name {default ""}} {
+            if {[dict exists $::kiss::vars::_vars $name]} {
+                return [dict get $::kiss::vars::_vars $name doc]
+            } else {
+                return $default
+            }
+
+        }
+
         proc exists {name} {
            return [dict exists $::kiss::vars::_vars $name]
         }
 
         proc append {name args} {
             #puts "appending to $name $args"
-            dict set ::kiss::vars::_vars $name value [concat {*}[get $name {}] $args]
+            ::set _newval [concat [get $name {}] $args]
+            dict set ::kiss::vars::_vars $name value $_newval
+            ::set ::${name} $_newval
         }
         proc set {name v} {
             if {[dict exists $::kiss::vars::_vars $name]} {
                 dict set ::kiss::vars::_vars $name previous [get $name]
             }
+            if {![dict exists $::kiss::vars::_vars $name]} {
+                dict set ::kiss::vars::_vars $name doc false
+            }
+
             dict set ::kiss::vars::_vars $name value $v
+
+
             ::set ::${name} $v
         }
         proc revert {name} {
@@ -190,10 +207,14 @@ namespace eval kiss {
         proc define {name args} {
 
 
-            if {[llength $args]>0  } {
-
-                ::set defaultVal [lindex $args end]
+            if {[llength $args]==0  } {
+                log.fatal "Cannot call vars define without a default value"
             }
+
+            #log.info "$name args before doc: [llength $args]"
+            ::set docVal [kissb.args.consumeValue -doc ""]
+            #log.info "$name args after doc: [llength $args] -> $docVal"
+            ::set defaultVal [lindex $args end]
 
             # If env variable is defined, use as default value
             ::set envName [string map {. _} [string toupper $name]]
@@ -208,9 +229,8 @@ namespace eval kiss {
             }
 
             # Take documentation
-            kissb.args.withValue -doc doc {
-                dict set ::kiss::vars::_vars $name doc $doc
-            }
+            dict set ::kiss::vars::_vars $name doc $docVal
+
 
 
         }
@@ -542,6 +562,10 @@ namespace eval kiss {
             dict lappend ::kiss::dependencies::moduleDeps $module {*}$depsDict
         }
 
+        proc isScopeDefined moduleAndScope {
+            return [dict exists $::kiss::dependencies::moduleDeps $moduleAndScope]
+        }
+
         proc addDepSpec {module spec resolver} {
 
             ## Resolve from BOM if needed
@@ -586,9 +610,10 @@ namespace eval kiss {
             return [dict keys $currentDeps *]
         }
 
-        proc resolveDeps {module classifier} {
+        proc resolveDeps {module classifier {excludeList {}}} {
+            # Use exclude list to not add files already in exclude list
             set currentDeps [getDeps $module]
-            log.debug "Resolve deps for $module, return $classifier for $currentDeps"
+            log.debug "Resolve deps for $module, return $classifier for $currentDeps with exclusions: $excludeList"
             set res {}
             foreach {name resolutionDict} $currentDeps {
                 dict with resolutionDict {
@@ -596,8 +621,10 @@ namespace eval kiss {
                             lappend res [dict get $resolutionDict $classifier]
                     } elseif {$resolved!=false} {
                         dict for {resolvedSpec resolvedDict} $resolved {
-                            if {[dict exists $resolvedDict $classifier]} {
-                                lappend res [dict get $resolvedDict $classifier]
+                            set depToAdd [dict getdef $resolvedDict $classifier false]
+                            #log.info "Is $depToAdd in $excludeList"
+                            if {$depToAdd!=false && ($depToAdd ni $excludeList)} {
+                                lappend res $depToAdd
                             } else {
                                 #log.warn "No $classifier in $dict"
                                 #string cat ""
