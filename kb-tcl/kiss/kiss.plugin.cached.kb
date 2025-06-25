@@ -25,14 +25,17 @@ namespace eval ::kiss::cached {
             files.delete ${::kiss::cached::cacheFolder}/${baseName}*
         }
 
-        fileOrElse {name noarg varname script} {
+        fileOrElse {name refresh varname script} {
             ## Return existing file from local cache or run script with $file variable containing file path
 
             set name [::kiss::cached::cleanName $name]
             set file ${::kiss::cached::cacheFolder}/$name
-            if {![file exists $file]} {
-                uplevel [list eval $script]
+            files.requireOrRefresh $file $refresh {
+                 uplevel [list eval $script]
             }
+            #if {![file exists $file]} {
+            #    uplevel [list eval $script]
+            #}
             set cachedContent [files.read $file]
             uplevel [list set $varname $cachedContent]
             return $cachedContent
