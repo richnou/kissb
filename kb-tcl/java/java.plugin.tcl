@@ -16,7 +16,7 @@ namespace eval java {
 
     proc getModuleBuildName module {
 
-        return [vars.resolve ${module}.build.name [file tail [pwd]]]-[string map {/ -} $module]
+        return [vars.resolve ${module}.build.name [string map {/ -} $module]]
     }
 
     kissb.extension java {

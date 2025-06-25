@@ -18,6 +18,12 @@ namespace eval bloop {
                             --apps bloop:[vars.resolve ${module}.bloop.version ${::bloop.version}]]
         }
 
+        exec {module args} {
+            exec.withEnv [bloop.getBloopEnv $module] {
+                exec.run bloop {*}$args
+            }
+        }
+
         config {module} {
             # Configure module for bloop usage
 
@@ -36,11 +42,11 @@ namespace eval bloop {
             }
 
             # Resolve deps
-            coursier::resolveModule $module
-            set deps [kiss::dependencies::resolveDeps $module lib]
+            #coursier::resolveModule $module
+            #set deps [kiss::dependencies::resolveDeps $module lib]
 
 
-            set deps [scala.resolveDeps $module]
+            set deps [scala.resolveDeps $module -scopes {compile runtime}]
 
             # Compiler Jars and options
             set compilerJars    [coursier.fetch.classpath.of org.scala-lang:scala3-compiler_3:[vars.resolve ${module}.scala.version]]
@@ -74,6 +80,60 @@ namespace eval bloop {
                             options:: {}
                         }
                         mainClass:: {}
+                    }
+                    test {
+                        frameworks:: {
+                            {
+                                names:: { "org.scalacheck.ScalaCheckFramework" }
+
+                            }
+                            {
+                                names:: {
+                                    "org.specs2.runner.Specs2Framework"
+                                    "org.specs2.runner.SpecsFramework"
+                                }
+                            }
+                            {
+                                names:: {
+                                    "org.specs.runner.SpecsFramework"
+                                }
+                            }
+                            {
+                                names:: {
+                                    "org.scalatest.tools.Framework"
+                                    "org.scalatest.tools.ScalaTestFramework"
+                                }
+                            }
+                            {
+                                names:: {
+                                    "com.novocode.junit.JUnitFramework"
+                                }
+                            }
+                            {
+                                names:: {
+                                    "munit.Framework"
+                                }
+                            }
+                            {
+                                names:: {
+                                    "zio.test.sbt.ZTestFramework"
+                                }
+                            }
+                            {
+                                names:: {
+                                    "weaver.framework.CatsEffect"
+                                }
+                            }
+                            {
+                                names:: {
+                                    "hedgehog.sbt.Framework"
+                                }
+                            }
+                        }
+                        options {
+                            excludes:: {}
+                            arguments:: {}
+                        }
                     }
                 }
             }]

@@ -16,6 +16,8 @@ namespace eval scala {
 
     vars.define scalac.env.args {}
 
+    vars.set   _scala.modules {}
+
     proc getScalaEnv module {
 
         return [exec.cmdGetBashEnv coursier.setup -q --env \
@@ -33,13 +35,26 @@ namespace eval scala {
 
 
         init {module args} {
-            # Init project module  with versions version
+            # Init project module, this method creates ${module}.xxx variables used by other functions and tools to build the module and output files in the desired location
+            # Users can provide arguments to customize behavior.
+            #   args - Supported arguments described below:
+            #   -scala - Scala version , default to ${::scala.default.version} module variable
+            #   -baseDir - Base directory of module, default to current directory
+            #   -jvm-version - JVM version used to run scala, default to ${::jvm.default.version}
+            #   -jvm-name - JVM name used to run scala, ${::jvm.default.version} - The name is used by coursier to use a specific vendor of the JVM.
+            #   -target - JVM version target output for scalac, default to ${::jvm.default.version}
+            #   -srcDirs - Source directories to use for compilation
+            #   -scalac-args - Arguments for scalac
+            #   -javac-args - Arguments for javac
+
 
             set scalaversion [kissb.args.get -scala ${::scala.default.version}]
             set baseDir      [file normalize [kissb.args.get -baseDir [pwd]]]
             set jvmVersion   [kissb.args.get -jvm-version ${::jvm.default.version}]
             set jvmName      [kissb.args.get -jvm-name ${::jvm.default.version}]
             set srcDirs      [kissb.args.get -srcDirs {src/main/java src/main/scala}]
+            set scalacArgs   [kissb.args.get -scalac-args {}]
+            set javacArgs    [kissb.args.get -javac-args {}]
 
             log.info "Init Scala module=$module,version=$scalaversion,directory=$baseDir"
 
@@ -57,8 +72,8 @@ namespace eval scala {
             vars.set ${module}.build.directory  [file normalize ${::scala::buildBaseFolder}/$scalaversion/$module]
             vars.set ${module}.build.classes    [file normalize [vars.get ${module}.build.directory]/classes]
 
-            vars.set ${module}.scalac.args      [concat {-deprecation -unchecked} ${::scalac.env.args}]
-            vars.set ${module}.javac.args       [concat { } ${::javac.env.args}]
+            vars.set ${module}.scalac.args      [concat $scalacArgs {-deprecation -unchecked} ${::scalac.env.args}]
+            vars.set ${module}.javac.args       [concat $javacArgs  { } ${::javac.env.args}]
             vars.set ${module}.jvm.target       [kissb.args.get -target $jvmVersion]
 
             vars.set ${module}.jvm.runtime      $jvmVersion
@@ -93,12 +108,23 @@ namespace eval scala {
 
             ## Add Stdlib
             #kiss::dependencies::addDepSpec $module org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version] coursier
-            dependencies.add $module coursier org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version]
+            scala.addDependencies $module compile org.scala-lang:scala3-library_[vars.get ${module}.scala.major]:[vars.get ${module}.scala.version]
+
+            ## Create other dependencies scopes
+            scala.addDependencies $module runtime {}
+
+
+            vars.append _scala.modules $module
+        }
+
+        listModules match {
+            return [lsearch -all -glob -inline [vars.get _scala.modules] ${match}*]
         }
 
         defaultRunEnv args {
             # Runs coursier to get default scala and jvm versions set in this plugin
             # Returns an environment dict that can be used by the exec module to run scala command line or scalac
+
             return [exec.cmdGetBashEnv coursier.setup \
                     -q \
                     --env --jvm [vars.resolve jvm.default.version] \
@@ -109,23 +135,27 @@ namespace eval scala {
             # Runs couriser to get scala and jvm path environment for the provided module
             # Returns an environment dict that can be used by the exec module to run scala command line or scalac
             assert [vars.exists ${module}.name] "Scala module $module doesn't exist"
+
+            log.info "Scala module env for $module, scala version=[vars.resolve ${module}.jvm.name] "
+
+
             return [exec.cmdGetBashEnv coursier.setup -q --env \
                             --jvm [vars.resolve ${module}.jvm.name] \
                             --apps scala:[vars.resolve ${module}.scala.version],scalac:[vars.resolve ${module}.scala.version]]
         }
 
-        addDependencies {module args} {
+        addDependencies {module scope args} {
             # Add dependencies to specified module
             # If a dependency is named @xxxx it will refer to another project module
 
-            foreach dep {*}$args {
+            foreach dep $args {
 
                 if {[string match @* $dep]} {
                     log.info "Adding module dependency $dep to $module"
                     vars.append ${module}.moduleDependencies [string range $dep 1 end]
                 } else {
-                    log.debug "Adding dependency $dep to $module"
-                    dependencies.add $module coursier $dep
+                    log.info "Adding dependency $dep to $module@${scope}"
+                    dependencies.add ${module}@${scope} coursier $dep
                 }
             }
 
@@ -149,28 +179,50 @@ namespace eval scala {
             # If -classpath if passed, module's own classes output is added to the results to generate a full classpath
             #  -classpath - Pass  to add module's output class directory to list of dependencies
 
-            # Resolve deps
-            ########
-            coursier::resolveModule $module
-            set deps [kiss::dependencies::resolveDeps $module lib]
+            set scopes [kissb.args.get -scopes {compile}]
+            set deps {}
+            set currentDepSpecs {}
+            foreach scope $scopes {
 
+                set dependencyScopedModule ${module}@$scope
 
+                if {![dependencies.isScopeDefined $dependencyScopedModule]} {
+                    log.warn "Module dependency scope ${module}@$scope not defined"
+                    continue
+                }
+
+                # Resolve deps
+                # Set the current dependency specs as forced version
+                # When resolving modules we are depending on, we will add the module's own dependencies
+                ########
+                lappend currentDepSpecs {*}[kiss::dependencies::getDepsSpecs ${dependencyScopedModule}]
+                log.info "Current deps artifacts for $dependencyScopedModule: $currentDepSpecs"
+                # [list org.scala-lang:scala3-library_3:[vars.get ${module}.scala.version]
+                coursier::resolveModule $dependencyScopedModule $currentDepSpecs
+                lappend deps {*}[kiss::dependencies::resolveDeps $dependencyScopedModule lib]
+
+            }
 
             # Add Module dependencies
             # - Add output classes of module, and resolved dependencies
             set moduleCPDependencies {}
-            log.info "Module depends on other modules=[vars.get ${module}.moduleDependencies]"
+            log.info "Module $module depends on other modules=[vars.get ${module}.moduleDependencies]"
             foreach depModule [vars.get ${module}.moduleDependencies] {
 
-                coursier::resolveModule $depModule
-                set depModuleDeps [kiss::dependencies::resolveDeps $depModule lib]
-
-                log.debug "- $depModule classes=[vars.get ${depModule}.build.classes],libs=$depModuleDeps"
-                lappend deps  [vars.get ${depModule}.build.classes]
-
-                #set deps [concat $deps $depModuleDeps]
+                set depModuleDeps [scala.resolveDeps $depModule -classpath -scopes $scopes]
                 lappend deps {*}$depModuleDeps
             }
+            #foreach depModule [vars.get ${module}.moduleDependencies] {
+
+            #    coursier::resolveModule $depModule [list org.scala-lang:scala3-library_3:[vars.get ${module}.scala.version]]
+            #    set depModuleDeps [kiss::dependencies::resolveDeps $depModule lib $deps]
+
+            #    log.debug "- $depModule classes=[vars.get ${depModule}.build.classes],libs=$depModuleDeps"
+            #    lappend deps  [vars.get ${depModule}.build.classes]
+
+
+            #    lappend deps {*}$depModuleDeps
+            #}
 
             log.debug "Deps: $deps"
 
@@ -184,7 +236,21 @@ namespace eval scala {
             }
 
 
-            return $deps
+
+            # Remove duplicate elements in the list
+            set uniqueDeps {}
+            foreach d $deps {
+                if {$d ni $uniqueDeps} {
+                    lappend uniqueDeps $d
+                }
+            }
+
+            log.debug "Module $module libs:"
+            foreach d $uniqueDeps {
+                log.debug "-- [file tail $d] $d"
+            }
+
+            return $uniqueDeps
 
 
         }
@@ -197,7 +263,10 @@ namespace eval scala {
             log.fine "Module $module scala version: [vars.resolve ${module}.scala.version]"
 
             ## Load scala with PATH
-            set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.resolve ${module}.jvm.name] --apps scala:[vars.resolve ${module}.scala.version],scalac:[vars.resolve ${module}.scala.version]]
+            #set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.resolve ${module}.jvm.name] --apps scala:[vars.resolve ${module}.scala.version],scalac:[vars.resolve ${module}.scala.version]]
+
+            set compileEnv [scala.getModuleEnv $module]
+
             log.fine "Scala compile Env: $compileEnv"
             exec.withEnv $compileEnv exec.run scala --version
             #exec.run scala --version
@@ -291,7 +360,7 @@ namespace eval scala {
             log.fine "Scala compile Env: $compileEnv"
 
             ## deps = deps + build folder
-            set deps     [scala.resolveDeps $module -classpath]
+            set deps     [scala.resolveDeps $module -classpath -scopes {runtime compile}]
             set depsPath [files.joinWithPathSeparator $deps]
             #set deps [files.joinWithPathSeparator [concat [kiss::dependencies::resolveDeps $module lib] [vars.get ${module}.build.directory]/classes ]]
 
@@ -305,58 +374,7 @@ namespace eval scala {
 
     }
 
-    kissb.extension scalatest {
 
-        init module {
-            # Load Scala test for the given module
-
-            set testModule ${module}/test
-            vars.set ${testModule}.name             ${module}-test
-            vars.set ${testModule}.build.directory  [file dirname [vars.get ${module}.build.directory]]/${module}-test
-
-            ## Add source folder
-            kiss::sources::addSourceFolder ${testModule} src/test/scala
-
-            ## Add deps
-            kiss::dependencies::addDepSpec ${testModule} org.scalatest:scalatest-app_3:${scalatest::version} coursier
-            kiss::dependencies::addDepSpec ${testModule} org.scala-lang.modules:scala-xml_3:2.3.0 coursier
-            kiss::dependencies::addDepSpec ${testModule} com.vladsch.flexmark:flexmark-all:0.64.8 coursier
-
-
-
-        }
-
-        run module {
-            # Run tests for given module
-
-            ## Get Build Dir
-            set testModule ${module}/test
-            set buildBir [vars.get ${testModule}.build.directory]
-
-            ## Try to detect all classes
-
-            ## Run scalatest app
-            coursier::resolveModule $module
-            coursier::resolveModule $testModule
-            set runEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.get ${module}.jvm.name]]
-            set deps [files.joinWithPathSeparator [concat [kiss::dependencies::resolveDeps $module lib] [kiss::dependencies::resolveDeps $testModule lib] [vars.get ${testModule}.build.directory]/classes ]]
-
-            log.info "CP: $deps"
-
-            try {
-                # https://www.scalatest.org/user_guide/using_the_runner
-                exec.withEnv $runEnv {
-                    exec.run java -version
-                    exec.run java -classpath $deps org.scalatest.tools.Runner -R $buildBir/classes -o -h $buildBir/report -u $buildBir/report
-                }
-            } on error {output options} {
-                log.error "Error running tests"
-            } finally {
-
-            }
-
-        }
-    }
 
     ###################
     ## Ammnonite scripts
@@ -430,4 +448,84 @@ namespace eval scala {
 namespace eval scalatest {
 
     set version 3.2.19
+
+
+    kissb.extension scalatest {
+
+        init module {
+            # Load Scala test for the given module
+            # Module must have been init using scala.init first
+
+            scala.addDependencies $module compile org.scalatest:scalatest-app_3:${::scalatest::version}
+            scala.addDependencies $module runtime org.scala-lang.modules:scala-xml_3:2.3.0 com.vladsch.flexmark:flexmark-all:0.64.8
+
+
+            return
+            set testModule ${module}/test
+            vars.set ${testModule}.name             ${module}-test
+            vars.set ${testModule}.build.directory  [file dirname [vars.get ${module}.build.directory]]/${module}-test
+
+            ## Add source folder
+            kiss::sources::addSourceFolder ${testModule} src/test/scala
+
+            ## Add deps
+            kiss::dependencies::addDepSpec ${testModule} org.scalatest:scalatest-app_3:${scalatest::version} coursier
+            kiss::dependencies::addDepSpec ${testModule} org.scala-lang.modules:scala-xml_3:2.3.0 coursier
+            kiss::dependencies::addDepSpec ${testModule} com.vladsch.flexmark:flexmark-all:0.64.8 coursier
+
+
+
+        }
+
+        run module {
+            # Run tests for given module
+            # This method doesn't compile, user must compiler module target first
+            set scalaEnv [scala.getModuleEnv $module]
+            set deps     [scala.resolveDeps $module -classpath -scopes {compile runtime}]
+            set depsCP   [files.joinWithPathSeparator $deps]
+
+            try {
+                # https://www.scalatest.org/user_guide/using_the_runner
+                exec.withEnv $scalaEnv {
+                    exec.run java -version
+                    set buildBir [vars.get ${module}.build.directory]
+                    #exec.run scala -cp $depsCP org.scalatest.tools.Runner -- -R $buildBir/classes -o -h $buildBir/report -u $buildBir/report
+                    exec.run java -classpath $depsCP org.scalatest.tools.Runner -R $buildBir/classes -o -h $buildBir/report -u $buildBir/report
+                }
+            } on error {output options} {
+                log.error "Error running tests: $output"
+            } finally {
+
+            }
+
+            return
+
+            ## Get Build Dir
+            set testModule ${module}/test
+            set buildBir [vars.get ${testModule}.build.directory]
+
+            ## Try to detect all classes
+
+            ## Run scalatest app
+            coursier::resolveModule $module
+            coursier::resolveModule $testModule
+            set runEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm [vars.get ${module}.jvm.name]]
+            set deps [files.joinWithPathSeparator [concat [kiss::dependencies::resolveDeps $module lib] [kiss::dependencies::resolveDeps $testModule lib] [vars.get ${testModule}.build.directory]/classes ]]
+
+            log.info "CP: $deps"
+
+            try {
+                # https://www.scalatest.org/user_guide/using_the_runner
+                exec.withEnv $runEnv {
+                    exec.run java -version
+                    exec.run java -classpath $deps org.scalatest.tools.Runner -R $buildBir/classes -o -h $buildBir/report -u $buildBir/report
+                }
+            } on error {output options} {
+                log.error "Error running tests"
+            } finally {
+
+            }
+
+        }
+    }
 }
