@@ -9,17 +9,21 @@ vars.define flow.mkdocs.presets \
 
 
 
+@ {init "Configure Mkdocs"} {
 
-
-@ {build "Build Mkdoc site and zip it"} {
-
+    log.info "Configuring Mkdocs, selected preset=[vars.get flow.mkdocs.presets]"
     mkdocs.init {*}[vars.get flow.mkdocs.presets]
+}
+
+@ {build "Build Mkdoc site and zip it"} : init {
+
+
     mkdocs.build -zip
 }
 
-@ {serve "Run mkdocs development server"} {
+@ {serve "Run mkdocs development server"} : init {
 
-    mkdocs.init {*}[vars.get flow.mkdocs.presets]
+
     mkdocs.serve
 }
 
@@ -34,11 +38,11 @@ proc flow.enableNetlify args {
         netlify.run link
     }
 
-    @ {deploy "Builds the site and deploys to netlify (in preview)"} {
+    @ {deploy "Builds the site and deploys to netlify (in preview)"} : build {
 
         log.success "Deploying Site to netlify (args=$args)"
 
-        > build
+
 
         netlify.run login
         netlify.run link
