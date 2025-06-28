@@ -3,11 +3,7 @@
 ################################
 namespace eval bloop {
 
-    vars.define bloop.version 2.0.10
-    vars.define bloopVersion 2.0.10
-
-
-
+    vars.define bloop.version -doc "Bloop version used by toolchain installer" 2.0.10
 
     kissb.extension bloop {
 

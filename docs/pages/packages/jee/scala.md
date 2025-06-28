@@ -82,6 +82,21 @@ A bloop package is available which will generate a bloop json configuration,
 which can be loaded by bloop supporting IDE plugins like [Scala Metals](https://scalameta.org/metals/)
 
 
+
+## Scala Package Variables
+
+Before or after Loading the flow, you can set configuration variables:
+
+~~~tcl
+package require kissb.scala
+
+vars.set CONFIGURATION VALUE
+~~~
+
+{%
+    include-markdown "./_scala.vars.inc.md"
+%}
+
 ## Scala Commands Reference
 
 {%

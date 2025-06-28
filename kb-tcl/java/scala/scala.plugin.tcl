@@ -12,9 +12,9 @@ namespace eval scala {
     set buildBaseFolder ".kb/scala"
     set defaultVersion 3.7.1
 
-    vars.define scala.default.version   3.7.1
+    vars.define scala.default.version -doc "Default Scala version used for build modules"   3.7.1
 
-    vars.define scalac.env.args {}
+    vars.define scalac.env.args -doc "Extra scalac arguments passed via environment from user" {}
 
     vars.set   _scala.modules {}
 

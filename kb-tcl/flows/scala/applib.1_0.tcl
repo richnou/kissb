@@ -31,6 +31,9 @@ vars.define flow.jvm.version   ${::jvm.default.version} -doc "Default JVM Versio
 ################
 
 proc flow.addBuilds args {
+    # Add build folders as scala build module to the project
+    # This Method creates Kissb top level target to build, run, test, generate bloop config etc..
+
 
 
     set allbuildNames {}
@@ -216,38 +219,6 @@ proc flow.addBuilds args {
         }
 
 
-
-        #if {${::flow.mainClass}!=false} {
-#
-#            @ jar${targetSuffix} : build${targetSuffix} {##
-
-                #set buildName   {{set buildName}}
-
-         #       java.jar $buildName/main example.jar -mainClass [vars.resolve java.main]
-
-         #   }
-
-         #   @ run${targetSuffix} : build${targetSuffix} {
-
-          #      set buildName   {{set buildName}}
-
-          #      scala.compile $buildName/main
-          #      scala.run $buildName/main [vars.resolve $buildName/main.mainClass]
-          #  }
-
-          #  @ docker${targetSuffix} : build${targetSuffix} {
-
-          #      set buildName   {{set buildName}}
-
-           #     java.docker main [vars.resolve $buildName/main.image.name]:[vars.resolve $buildName/main.image.tag]  -mainClass [vars.resolve $buildName/main.mainClass]
-
-           # }
-
-           # } else {
-#
-
-# }
-
         @> ${targetBaseName}setup
 
     } ; ## EOF Foreach
@@ -265,38 +236,12 @@ proc flow.addBuilds args {
         }
 
     }
-    ## Add Targets to build all builds at once
-    #if {[llength $allbuildNames]>1} {
 
-      #  @ setup : {*}[lmap b $allbuildNames { string cat setup. $b }] {
-
-#
- #       }
-
-  #      @ bloop.config : {*}[lmap b $allbuildNames { string cat bloop.config. $b }] {
-
-   #         if {[llength ${::flow.allBuilds}]>1}  {
-     #           log.info "Listing projects from Bloop"
-    #            bloop.projects
-    #     }
-      #  }
-
-       # @ jar : {*}[lmap b $allbuildNames { string cat jar. $b }] {
-
-
-        #}
-    #} else {
-#
- #       @ setup : {*}[lmap b $allbuildNames { string cat setup. $b }] {
-#
-#
- #       }
- # }
 
 }
 
 
-proc flow._addDependencies {module scope deps} {
+proc _addDependencies {module scope deps} {
 
 
 
@@ -320,6 +265,17 @@ proc flow.addDependencies {module deps} {
 
 }
 
+proc flow.addRuntimeDependencies {module deps} {
+
+    if {$module=="."} {
+        set module [file tail [pwd]]
+    }
+
+    uplevel [list flow._addDependencies $module/main runtime $deps]
+
+}
+
+
 proc flow.addTestDependencies {module deps} {
 
     if {$module=="."} {
@@ -342,15 +298,6 @@ proc flow.addTestRuntimeDependencies {module deps} {
 
 }
 
-proc flow.addRuntimeDependencies {module deps} {
-
-    if {$module=="."} {
-        set module [file tail [pwd]]
-    }
-
-    uplevel [list flow._addDependencies $module/main test $deps]
-
-}
 
 
 proc flow.build.properties {build pDict} {
