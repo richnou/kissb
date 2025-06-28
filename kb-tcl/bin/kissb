@@ -23,6 +23,7 @@ set args {}
 set checkVersion false
 set stopArgs false
 set nobuild false
+set changeDir false
 foreach arg $argv {
 
     if {$stopArgs} {
@@ -40,6 +41,8 @@ foreach arg $argv {
         set checkVersion true
     } elseif {$arg == "--nobuild"} {
         set nobuild true
+    } elseif {$arg == "--chdir"} {
+        set changeDir true
     } elseif {$arg == "--"} {
         # -- means stopping argument processing, all remaining args are added to the args variable to be passed to the targets
         set stopArgs true
@@ -61,6 +64,8 @@ foreach arg $argv {
 
 ## Extra sarch paths for packages
 
+lappend ::auto_path ${kissb.home}/pkgs [file normalize .kissb/pkgs]
+
 ## Set default paths for package folders
 set possiblePackageFolders [list ${kissb.home}/pkgs/*/pkgIndex.tcl .kissb/pkgs/*/pkgIndex.tcl]
 
@@ -78,7 +83,9 @@ if {[file exists $gitRoot]} {
 }
 foreach libFile [files.globFiles {*}${possiblePackageFolders} ] {
 
-    log.fine "Found Package folder [file dirname $libFile]"
+    set libFile [file normalize $libFile]
+
+    log.info "Found Package folder [file dirname $libFile]"
     set dir [file dirname $libFile]
     source $libFile
 
@@ -158,9 +165,45 @@ try {
 
             log.debug "Running target $target"
 
-            ## Run Target or command
-            ###########
-            if {[string range $target 0 0]=="."} {
+            ## First Run File if exists, then command if target starts with "."
+            ##################
+            if {[file exists $target] && ![file isdirectory $target]} {
+
+                log.debug "Target is a file"
+                set target [file normalize $target]
+
+                set runDir [expr {$changeDir ? [file dirname $target] : [pwd]}]
+                log.info "Running file $target in $runDir with args=$args"
+
+                # Provided Target is a file
+                set fileext [file extension $target]
+                if {$fileext==".tcl"} {
+
+                    ## Set argv to command args
+                    set ::argv $args
+                    files.inDirectory $runDir { source $target }
+
+                } elseif {$fileext==".py"} {
+                    package require kissb.python3
+                    python3.venv.init
+                    if {[file exists ../python]} {
+                        log.warn "Adding folder ../python to python path"
+
+                        exec.withEnv {PYTHONPATH {merge 1 value ../python/}} {
+
+                            files.inDirectory $runDir { python3.venv.run.script $target {*}$args }
+
+                        }
+
+                    } else {
+                        files.inDirectory $runDir { python3.venv.run.script $target {*}$args }
+                    }
+                } elseif {$fileext==".sc"} {
+                    package require kissb.scala
+                    files.inDirectory $runDir { scala.runner $target {*}$args }
+                }
+
+            } elseif {[string range $target 0 0]=="."} {
 
                 set cmd  [split [string range $target 1 end] " "]
                 set bin  [lindex $cmd 0]
@@ -181,31 +224,6 @@ try {
                 }
 
                 $bin {*}$cmdArgs {*}$args
-
-            } elseif {[file exists $target] && ![file isdirectory $target]} {
-
-                log.debug "Target is a file"
-
-                # Provided Target is a file
-                set fileext [file extension $target]
-                if {$fileext==".tcl"} {
-                    source $target
-                } elseif {$fileext==".py"} {
-                    package require kissb.python3
-                    python3.venv.init
-                    if {[file exists ../python]} {
-                        log.warn "Adding folder ../python to python path"
-                        exec.withEnv {PYTHONPATH {merge 1 value ../python/}} {
-                            python3.venv.run.script $target {*}$args
-                        }
-
-                    } else {
-                        python3.venv.run.script $target {*}$args
-                    }
-                } elseif {$fileext==".sc"} {
-                    package require kissb.scala
-                    scala.runner $target {*}$args
-                }
 
             } elseif {[string range $target 0 0]!="-"} {
 
