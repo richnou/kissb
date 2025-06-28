@@ -212,7 +212,7 @@ namespace eval kiss {
             }
 
             #log.info "$name args before doc: [llength $args]"
-            ::set docVal [kissb.args.consumeValue -doc ""]
+            ::set docVal [kissb.args.consumeValue -doc false]
             #log.info "$name args after doc: [llength $args] -> $docVal"
             ::set defaultVal [lindex $args end]
 
