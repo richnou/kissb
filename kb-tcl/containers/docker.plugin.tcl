@@ -91,9 +91,10 @@ namespace eval docker {
             }
         }
 
-        ## Runs the script with docker compose UP
+
         compose.withUP script {
 
+            # Runs the script with docker compose UP
             try {
                 docker.run compose up -d --wait
                 uplevel [list eval $script]
@@ -103,9 +104,9 @@ namespace eval docker {
 
         }
 
-        ## Runs the script with docker compose UP
-        compose.withUPDown script {
 
+        compose.withUPDown script {
+            # Runs the script with docker compose UP then run compose down after the script ran
             try {
                 docker.run compose up -d --wait
                 uplevel [list eval $script]
