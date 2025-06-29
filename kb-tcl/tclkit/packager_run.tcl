@@ -97,7 +97,7 @@ if {${libs.stdTcl}} {
         if {[file exists $targetDir]} {
             foreach __f [glob -types {d f l} $libDir/*] {
                 puts "-- Copying ${__f} to $targetDir"
-                file copy  -force ${__f} $targetDir/
+                catch {file copy  -force ${__f} $targetDir/}
             }
         } else {
             file copy  -force $libDir $targetDir

@@ -5,5 +5,5 @@ package require kissb.runtime
 @ make {
 
 
-    kissb.runtime.sf.create mykissb {*}$args
+    kissb.runtime.create mykissb {*}$args
 }

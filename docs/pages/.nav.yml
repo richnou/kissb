@@ -5,6 +5,7 @@ nav:
   - releases.md
   - licenses.md
   - signing.md
+  - runtime_customization.md
   - kissb-language
   - flows
   - packages

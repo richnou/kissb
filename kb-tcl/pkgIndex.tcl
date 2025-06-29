@@ -4,7 +4,7 @@ set ::kissDir $dir
 proc _load_kissb_conf dir {
 
     foreach f [concat [lsort [glob $dir/kiss/kiss.plugin.*]] [list $dir/globals.tcl] [list $dir/info.tcl] ] { source $f }
-    foreach c [glob -nocomplain $dir/*.conf.tcl] {
+    foreach c [lsort [glob -nocomplain $dir/*.conf.tcl]] {
         try {
             uplevel [list source $c]
 

@@ -4,10 +4,10 @@ package provide kissb.runtime 1.0
 namespace eval kissb::runtime {
 
 
-    kissb.extension kissb.runtime {
+    kissb.extension runtime {
 
 
-        sf.create {name args} {
+        create {name args} {
 
             package require kissb.tcl9.kit
 
@@ -17,18 +17,26 @@ namespace eval kissb::runtime {
 
             set pRunner [files.moveFileToTemp ${::tcl9.kit.home}/packager_run.tcl]
 
-            exec.run $exe_path --nobuild $pRunner --extract  --outdir .kb/dist --kit
+            set tclExe ${exe_path}
+            set packagerArgs {}
+            if {${::kissb.distribution}=="kit"} {
+                lappend tclExe --nobuild
+                lappend packagerArgs --kit
+            }
+
+            ## Run First TCLSH and if needed WISH to create a proper base distribution
+            exec.run {*}$tclExe $pRunner --extract  --outdir .kb/dist {*}$packagerArgs
 
             foreach confFile [kissb.args.get --conf {}] {
                 files.cp $confFile .kb/dist/kissb-${::kissb.version}
             }
 
-            foreach packageFolder [kissb.args.get --package {}] {
-            
+            foreach packageFolder [kissb.args.get --packages {}] {
+
                 files.cp $packageFolder .kb/dist/
             }
 
-            exec.run $exe_path --nobuild $pRunner --continue --outdir .kb/dist  --kit --name $name --main ${::kissb.mainScript}
+            exec.run {*}$tclExe $pRunner --continue --outdir .kb/dist  {*}$packagerArgs --name $name --main ${::kissb.mainScript}
 
         }
 

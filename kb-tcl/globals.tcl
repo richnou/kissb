@@ -5,6 +5,8 @@ files.mkdir ${::kissb.home}
 vars.set kissb.projectFolder [pwd]
 vars.set kissb.buildDir ${::kissb.projectFolder}/.kb
 
+
+# Portable for main zip or git distribution, kit for single file runtime kit
 vars.set kissb.distribution portable
 
 # KISSB_LIBPATH can be set to add folders where .lib.tcl from users will be search for
