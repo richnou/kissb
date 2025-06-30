@@ -60,7 +60,7 @@ namespace eval ::kiss::files {
                 } else {
                     puts $fid $text
                 }
-                
+
             } finally {
                 close $fid
             }
@@ -74,10 +74,20 @@ namespace eval ::kiss::files {
         }
 
 
-        mkdir dir {
-            # Create directory
-            #  dir - path to directory to be created
-            file mkdir $dir
+
+
+        cp {f dir} {
+            # Copy file to directory
+            #  f - source file
+            #  dir - target directory
+            if {[file exists $f]} {
+                file copy -force  $f $dir
+            } else {
+                foreach lf [glob -nocomplain $f] {
+                    file copy -force  $lf $dir
+                }
+            }
+
         }
 
         delete args {
@@ -194,19 +204,7 @@ namespace eval ::kiss::files {
         }
 
 
-        cp {f dir} {
-            # Copy file to directory
-            #  f - source file
-            #  dir - target directory
-            if {[file exists $f]} {
-                file copy -force  $f $dir
-            } else {
-                foreach lf [glob -nocomplain $f] {
-                    file copy -force  $lf $dir
-                }
-            }
 
-        }
 
         mv {src dst} {
             files.cp $src $dst
@@ -236,9 +234,13 @@ namespace eval ::kiss::files {
             return [expr {[files.isAbsolute $path] ? $path : [file normalize $base/$path]}]
         }
 
-        
 
-        
+
+        mkdir dir {
+            # Create directory
+            #  dir - path to directory to be created
+            file mkdir $dir
+        }
 
 
         moveFileToTemp f {
@@ -349,7 +351,7 @@ namespace eval ::kiss::files {
         }
 
         extract {f args} {
-            if {[string match *.tar.* $f]} {
+            if {[string match *.tar.* $f] || [string match *.tgz $f]} {
                 files.untar $f {*}$args
             } else {
                 files.unzip $f {*}$args
