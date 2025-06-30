@@ -333,9 +333,9 @@ namespace eval kiss {
         }
 
         ## Run Target
-        proc run {target args} {
+        proc run {target {targetargs {}} args} {
 
-            log.fine "Running target: $target with args=$args"
+            log.fine "Running target: $target with args=$targetargs"
             if {![hasTarget $target]} {
                 log.warn "Target $target doesn't exist"
                 foreach ptarget [listTargets] {
@@ -350,7 +350,7 @@ namespace eval kiss {
             set reqTargets [getRequiredTargets $target]
 
             foreach reqTarget $reqTargets {
-                uplevel #0 [list ::kiss::targets::run $reqTarget {*}$args]
+                uplevel #0 [list ::kiss::targets::run $reqTarget $targetargs]
             }
             #array set env [array get ::env]
             #if {[llength $args]>0} {
@@ -360,8 +360,9 @@ namespace eval kiss {
             #}
 
             # Run target
-            if {![hasRun $target]} {
+            if {![hasRun $target] || [kissb.args.contains --force]} {
                 log.with.logger $target {
+                    set args $targetargs
                     eval $script
                     dict set ::kiss::targets::_targets $target run true
                 }
@@ -375,7 +376,7 @@ namespace eval kiss {
         # Call target without merging calling target args
         proc > {target args} {
             log.info "Call target: $target with args=$args"
-            ::kiss::targets::run $target {*}$args
+            ::kiss::targets::run $target $args --force
             #uplevel #0 [list ::kiss::targets::run $target {*}$mergedArgs]
         }
 
@@ -383,7 +384,7 @@ namespace eval kiss {
         proc >> {target args} {
             set mergedArgs [concat $args [uplevel [list set args]]]
             log.info "Call target: $target with args=$mergedArgs"
-            ::kiss::targets::run $target {*}$mergedArgs
+            ::kiss::targets::run $target $mergedArgs --force
             #uplevel #0 [list ::kiss::targets::run $target {*}$mergedArgs]
         }
 

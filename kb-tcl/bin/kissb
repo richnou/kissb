@@ -227,8 +227,8 @@ try {
 
             } elseif {[string range $target 0 0]!="-"} {
 
-                # Run Target
-                ::kiss::targets::run $target {*}$args
+                # Run Target {*}
+                ::kiss::targets::run $target $args
 
             }
 
