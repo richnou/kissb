@@ -281,6 +281,8 @@ namespace eval scala {
             set resources [kiss::sources::getSourcesDict ${module}/resources]
             if {[llength $resources]>0} {
 
+                set classesOut [vars.resolve ${module}.build.classes]
+                
                 foreach {srcDir srcDirResources} $resources {
                     log.info "Copying resource: $srcDir contains $srcDirResources "
 

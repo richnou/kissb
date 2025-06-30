@@ -12,21 +12,6 @@ vars.define flow.jvm.version   ${::jvm.default.version} -doc "Default JVM Versio
 
 
 
-
-
-## Set values for building project
-######
-
-# Target JVM
-#vars.set        main.jvm.target       21
-#vars.set        main.jvm.target       21
-
-## Setup Scalatest
-###########
-
-#scalatest.init main
-
-
 ## Targets
 ################
 
@@ -84,7 +69,10 @@ proc flow.addBuilds args {
             ## Add Source folders by listed names under src/main
             set srcDirs {}
             foreach folder [files.globFolders $buildFolder/src/main/*] {
-                lappend srcDirs $folder
+                if {[file tail $folder] != "resources"} {
+                    lappend srcDirs $folder
+                }
+                
             }
 
             #set extraSources {}
@@ -241,7 +229,7 @@ proc flow.addBuilds args {
 }
 
 
-proc _addDependencies {module scope deps} {
+proc flow._addDependencies {module scope deps} {
 
 
 
@@ -302,6 +290,12 @@ proc flow.addTestRuntimeDependencies {module deps} {
 
 proc flow.build.properties {build pDict} {
 
+    set targetBaseName "${build}."
+    if {$build=="."} {
+        set build [file tail [pwd]]
+        set targetBaseName ""
+    }
+
     ## Append build class
     vars.set    ${build}.properties [dict merge  [vars.get ${build}.properties] [uplevel [list subst $pDict]]]
     #vars.append ${build}.properties {*}[uplevel [list subst $pDict]]
@@ -314,7 +308,7 @@ proc flow.build.properties {build pDict} {
 
         log.info "Main class $mainClass detected for build $build"
 
-        targets.ensure ${build}.run {
+        targets.ensure ${targetBaseName}run {
 
             # First build
             >> {{set build}}.build

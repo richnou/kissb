@@ -38,11 +38,15 @@ package ifneeded kissb.docker               1.0  [list source $dir/containers/do
 package ifneeded kissb.podman               1.0  [list source $dir/containers/podman.plugin.tcl]
 package ifneeded kissb.box                  1.0  [list source $dir/containers/box.plugin.tcl]
 
+## TCL
+#########
 package ifneeded kissb.tclkit               1.0  [list source $dir/tclkit/tclkit.plugin.tcl]
 package ifneeded kissb.tcl9.kit             1.0  [list source $dir/tclkit/tclkit9.plugin.tcl]
 package ifneeded kissb.runtime              1.0  [list source $dir/tclkit/runtime.plugin.tcl]
+package ifneeded kissb.critcl               1.0  [list source $dir/critcl/critcl.plugin.tcl]
 
-
+## Licensing
+#######
 package ifneeded kissb.reuse                1.0  [list source $dir/licensing/reuse.plugin.tcl]
 
 
@@ -83,5 +87,8 @@ package ifneeded kissb.tauri 1.0 [list source $dir/tauri/tauri.plugin.tcl]
 
 ## Flows
 ############
-package ifneeded flow.scala.applib      1.0 [list source $dir/flows/scala/applib.1_0.tcl]
-package ifneeded flow.mkdocs    1.0 [list source $dir/flows/mkdocs/mkdocs.1_0.tcl]
+package ifneeded flow.helidon.generic        1.0 [list source $dir/flows/helidon/helidon_generic.1_0.tcl]
+package ifneeded flow.helidon.scala.applib   1.0 [list source $dir/flows/helidon/helidon_scala_applib.1_0.tcl]
+
+package ifneeded flow.mkdocs                 1.0 [list source $dir/flows/mkdocs/mkdocs.1_0.tcl]
+package ifneeded flow.scala.applib           1.0 [list source $dir/flows/scala/applib.1_0.tcl]
