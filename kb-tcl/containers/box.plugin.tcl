@@ -205,8 +205,15 @@ namespace eval kissb::box  {
 
         enter {name args} {
 
-            kissb.args.contains -r {
+            # -rb to rebuild box
+            kissb.args.contains -rb {
                 catch {box.rm $name}
+
+            }
+
+            # -rs to restart
+            kissb.args.contains -rs {
+                catch {box.stop $name}
 
             }
             #set containerName [string map {: -} box-${image}]
@@ -275,6 +282,7 @@ namespace eval kissb::box  {
                         ICEAUTHORITY
                         XDG_CONFIG_DIRS
                         SESSION_MANAGER
+                        USER
             }
             set env {}
             foreach envName $envToForward {
