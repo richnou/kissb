@@ -6,7 +6,7 @@ package require kissb.builder.rclone
 
 rclone.init
 
-vars.define version 250602
+vars.define version 250612
 vars.define track  dev
 
 vars.define sign.defaultKey "E24253BA23A2452F"
@@ -158,7 +158,7 @@ vars.define sign.defaultKey "E24253BA23A2452F"
         }
 
         ## Linux
-        set kitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250501/tcl9-dist1kit-x86_64-redhat-linux-rhel8-9.0.1-250501 tclkit]
+        set kitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250627/tcl9-dist1kit-x86_64-redhat-linux-rhel8-9.0.1-250627 tclkit]
 
         exec.run chmod +x $kitFile
         exec.run ./$kitFile dist/kissb-${::version}/tclkit/packager_run.tcl --continue --kit --name kissb-${::version} --main dist/kissb-${::version}/bin/kissb
@@ -177,10 +177,10 @@ vars.define sign.defaultKey "E24253BA23A2452F"
 
         }
 
-        set winkitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250501/tcl9-dist1kit-x86_64-w64-mingw32-win64-9.0.1-250501.exe tclkit]
+        set winkitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250627/tcl9-dist1kit-x86_64-w64-mingw32-win64-9.0.1-250627.exe tclkit]
 
 
-        kissb.args.ifNotContains --nowin {
+        kissb.args.containsNot --nowin {
             exec.run chmod +x $winkitFile
             exec.run ./$winkitFile dist-win/kissb-${::version}/tclkit/packager_run.tcl --continue --kit --name kissb-${::version} --main dist-win/kissb-${::version}/bin/kissb
         }
