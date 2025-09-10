@@ -126,6 +126,7 @@ namespace eval kissb::box  {
                         --security-opt label=disable \
                         -v $::env(HOME):$::env(HOME):rw \
                         -v /run/user:/run/user:rw,rshared \
+                        -v /dev/usb:/dev/usb:rw,rslave \
                         -l kbox=$containerName \
                         -w $::env(HOME) \
                         {*}$extraArgs \
