@@ -6,7 +6,7 @@ package require kissb.builder.rclone
 
 rclone.init
 
-vars.define version 250612
+vars.define version dev
 vars.define track  dev
 
 vars.define sign.defaultKey "E24253BA23A2452F"
@@ -202,7 +202,7 @@ vars.define sign.defaultKey "E24253BA23A2452F"
             rclone.run copy -P --s3-acl=public-read kissb-${::version}              ovhs3:kissb/kissb/${::track}/${::version}
             rclone.run copy -P --s3-acl=public-read kissb-${::version}.sha256.asc   ovhs3:kissb/kissb/${::track}/${::version}
 
-            kissb.args.ifNotContains --nowin {
+            kissb.args.containsNot --nowin {
 
                 ## Sign
                 set checksumFile [files.sha256 kissb-${::version}.exe]
@@ -218,31 +218,7 @@ vars.define sign.defaultKey "E24253BA23A2452F"
 
         }
 
-        return
 
-        ## Download base kits
-        files.require tclkit-8.6.14_notk {
-            files.download https://kissb.s3.de.io.cloud.ovh.net/tclkit/8.6.14/tclkit-8.6.14_notk tclkit-8.6.14_notk
-        }
-        files.require tclkit-8.6.14_notk.exe {
-            files.download https://kissb.s3.de.io.cloud.ovh.net/tclkit/8.6.14/tclkit-8.6.14_notk.exe tclkit-8.6.14_notk.exe
-        }
-
-        exec.run chmod +x tclkit-8.6.14_notk
-
-        ## Run Starkit build
-        set startKitName kissb-${::version}
-        set resultKit [tclkit::buildStarkitWithLibsAndMainFromKit tclkit-8.6.14_notk tclkit-8.6.14_notk.exe ${startKitName}.exe lib/kissb-${::version}/bin/kissb.tcl lib/kissb-${::version}]
-        files.cp $resultKit ${startKitName}.exe
-
-        set resultKit [tclkit::buildStarkitWithLibsAndMainFromKit tclkit-8.6.14_notk tclkit-8.6.14_notk ${startKitName} lib/kissb-${::version}/bin/kissb.tcl lib/kissb-${::version}]
-        files.cp $resultKit ${startKitName}
-
-
-        kissb.args.contains -push {
-            rclone.run copy --s3-acl=public-read ${startKitName}.exe ovhs3:kissb/kissb/dev/
-            rclone.run copy --s3-acl=public-read ${startKitName} ovhs3:kissb/kissb/dev/
-        }
 
     }
 
