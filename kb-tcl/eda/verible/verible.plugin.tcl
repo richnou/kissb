@@ -34,6 +34,10 @@ namespace eval  eda::verible {
         lint args {
             exec.run ${::verible.path}/verible-verilog-lint {*}$args
         }
+
+        format args {
+            exec.run ${::verible.path}/verible-verilog-format {*}$args
+        }
     }
 
 
