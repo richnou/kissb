@@ -117,3 +117,18 @@ To refresh the cocotb installation and check for updates:
 ## Application Requirements
 
 You can add any additional requirements to a local requirements.txt file. For example, add pytest.
+
+
+## Cocotb Package Variables
+
+Before or after Loading the flow, you can set configuration variables:
+
+~~~tcl
+package require kissb.eda.cocotb
+
+vars.set CONFIGURATION VALUE
+~~~
+
+{%
+    include-markdown "./_cocotb.vars.inc.md"
+%}

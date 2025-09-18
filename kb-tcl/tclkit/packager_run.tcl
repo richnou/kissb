@@ -90,14 +90,14 @@ if {![catch {set tk_library}]} {
 if {${libs.stdTcl}} {
 
      puts "- Adding TCL Standard libraries from ${tcl.home}"
-    foreach libDir [glob -type d ${tcl.home}/*] {
+    foreach libDir [glob  ${tcl.home}/*] {
         puts "-- Adding TCL Standard library [file tail $libDir]"
         set targetDir [file join ${out.dir}]/[file tail $libDir]
         # IF target dir exists, copy source content into target dir to avoid errors
         if {[file exists $targetDir]} {
             foreach __f [glob -types {d f l} $libDir/*] {
                 puts "-- Copying ${__f} to $targetDir"
-                file copy  -force ${__f} $targetDir/
+                catch {file copy  -force ${__f} $targetDir/}
             }
         } else {
             file copy  -force $libDir $targetDir

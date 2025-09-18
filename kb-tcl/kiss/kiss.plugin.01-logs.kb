@@ -105,6 +105,16 @@ namespace eval ::kiss::log {
         }
     }
 
+    proc log.appendLogger {logger script} {
+        set __n [log.get.name]
+        log.set.name ${__n}.$logger
+        try {
+            uplevel $script
+        } finally {
+            log.set.name ${__n}
+        }
+    }
+
     proc log.withLogger {logger args} {
         set __n [log.get.name]
         log.set.name $logger
@@ -116,6 +126,7 @@ namespace eval ::kiss::log {
     }
 
     proc log.with {level args} {
+        # Runs script passed in args with given level and restores current log level afterwards
         set l [log.get.level]
         log.set.level $level
         try {

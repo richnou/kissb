@@ -1,0 +1,7 @@
+.scala-build
+.bsp
+out
+target
+.vscode
+.kissb
+.kb

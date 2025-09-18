@@ -7,15 +7,23 @@ package provide kissb.flow 1.0
 namespace eval ::kiss::flow  {
 
 
-    proc ::flow.load {desc args} {
-        if {[file exists $desc]} {
-            log.info "Loading Flow from $desc"
-        } else {
-            set flowPackage flow::$desc
-            log.info "Loading Flow from package $flowPackage"
-            package require $flowPackage 1.0
+    #proc ::flow.load {desc args} {
+    #    if {[file exists $desc]} {
+    #        log.info "Loading Flow from $desc"
+    #    } else {
+    #        set flowPackage flow::$desc
+    #        log.info "Loading Flow from package $flowPackage"
+    #        package require $flowPackage 1.0
+    #    }
+    #
+    #}
+
+    kissb.extension flow {
+
+        load {package version} {
+            uplevel [list package require $package $version]
         }
-        
+
     }
 
 }

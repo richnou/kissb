@@ -1,18 +1,15 @@
 id: "packages.variable"
+scala:
+    default_version: "3.7.1"
+scalac:
+    env_args: ""
+bloop:
+    version: "2.0.10"
+coursier:
 verilator:
+    version: "v5.030"
     runtime: "local"
-    version: "v5.024"
+    verilate_args: ""
 cocotb:
     simulator: "-"
     workdir: ".kb/work/cocotb"
-quarkus:
-    cliJar: ""
-    version: "3.17.0"
-    cliCP: ""
-coursier:
-    repositories: "ivy2Local central sonatype:releases https://oss.sonatype.org/content/groups/public/"
-    buildFolder: ".kb/coursier"
-    outputFolder: "repository"
-    binPath: ""
-    currentDeps: ""
-    tcFolder: ".kb/toolchain/coursier"

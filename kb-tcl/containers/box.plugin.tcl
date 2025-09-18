@@ -43,7 +43,8 @@ namespace eval kissb::box  {
                 dict set argsDict -image [file normalize $image]
             }
             #dict set ::box.configurations $name $argsDict
-            vars.append ::box.configurations $name $argsDict
+            vars.append box.configurations $name $argsDict
+            #puts "Configs are now: ${::box.configurations}"
         }
 
 
@@ -125,6 +126,7 @@ namespace eval kissb::box  {
                         --security-opt label=disable \
                         -v $::env(HOME):$::env(HOME):rw \
                         -v /run/user:/run/user:rw,rshared \
+                        -v /dev/usb:/dev/usb:rw,rslave \
                         -l kbox=$containerName \
                         -w $::env(HOME) \
                         {*}$extraArgs \
@@ -204,8 +206,15 @@ namespace eval kissb::box  {
 
         enter {name args} {
 
-            kissb.args.contains -r {
+            # -rb to rebuild box
+            kissb.args.contains -rb {
                 catch {box.rm $name}
+
+            }
+
+            # -rs to restart
+            kissb.args.contains -rs {
+                catch {box.stop $name}
 
             }
             #set containerName [string map {: -} box-${image}]
@@ -274,6 +283,7 @@ namespace eval kissb::box  {
                         ICEAUTHORITY
                         XDG_CONFIG_DIRS
                         SESSION_MANAGER
+                        USER
             }
             set env {}
             foreach envName $envToForward {

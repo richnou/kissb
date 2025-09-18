@@ -1,9 +1,0 @@
-
-
-#vars.set java.main kissb.ServerMain
-
-vars.set image.name example-app-helidon
-vars.set image.tag  latest
-
-# Load Helidon Flow
-flow.load helidon/microprofile_scala_c1

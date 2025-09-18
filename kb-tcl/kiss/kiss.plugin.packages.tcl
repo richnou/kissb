@@ -58,7 +58,10 @@ namespace eval ::kiss::packages {
             git.init
 
             files.require $projectGitGolder/.git {
-                git.clone $gitAddress
+                files.inDirectory $gitFolder {
+                    git.clone $gitAddress $projectGitGolder
+                }
+
             }
             files.inDirectory $projectGitGolder {
                 foreach tclIndex [files.globFiles pkgIndex.tcl tcl/pkgIndex.tcl lib/pkgIndex.tcl src/pkgIndex.tcl] {

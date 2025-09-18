@@ -1,24 +1,10 @@
 
-## <a name='::scala.amm'></a>scala\.amm
+## <a name='::bloop.compile'></a>bloop\.compile
 
-Run provided script File using ammonite
-
-
-> `scala.amm` *`scriptFile`*<br>
-
-### <a name='Parameters'></a>Parameters
-
-|||
-|----|----|
-|`scriptFile`|Not documented.|
+Compile via bloop
 
 
-## <a name='::scala.compile'></a>scala\.compile
-
-Compile module
-
-
-> `scala.compile` *`module ?args?`*<br>
+> `bloop.compile` *`module`*<br>
 
 ### <a name='Parameters'></a>Parameters
 
@@ -27,12 +13,24 @@ Compile module
 |`module`|Not documented.|
 
 
-## <a name='::scala.init'></a>scala\.init
+## <a name='::bloop.config'></a>bloop\.config
 
-Init project module  with versions version
+Configure module for bloop usage
 
 
-> `scala.init` *`module ?args?`*<br>
+> `bloop.config` *`module`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`module`|Not documented.|
+
+
+## <a name='::bloop.getBloopEnv'></a>bloop\.getBloopEnv
+
+
+> `bloop.getBloopEnv` *`module`*<br>
 
 ### <a name='Parameters'></a>Parameters
 
@@ -41,47 +39,32 @@ Init project module  with versions version
 |`module`|Not documented.|
 
 
-## <a name='::scala.jvm'></a>scala\.jvm
+## <a name='::bloop.projects'></a>bloop\.projects
 
-Select the JVM version for the application module
+Run bloop projects command
 
 
-> `scala.jvm` *`module version ?descriptor?`*<br>
+> `bloop.projects` *`?module?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`module`|Not documented. Optional, default `main`.|
+
+
+## <a name='::bloop.run'></a>bloop\.run
+
+Run module's main class via bloop
+
+
+> `bloop.run` *`module main ?args?`*<br>
 
 ### <a name='Parameters'></a>Parameters
 
 |||
 |----|----|
 |`module`|Not documented.|
-|`version`|Not documented.|
-|`descriptor`|Not documented. Optional, default `""`.|
-
-
-## <a name='::scala.module'></a>scala\.module
-
-
-> `scala.module` *`m version`*<br>
-
-### <a name='Parameters'></a>Parameters
-
-|||
-|----|----|
-|`m`|Not documented.|
-|`version`|Not documented.|
-
-
-## <a name='::scala.run'></a>scala\.run
-
-Run module's provided main class
-
-
-> `scala.run` *`module mainClass ?args?`*<br>
-
-### <a name='Parameters'></a>Parameters
-
-|||
-|----|----|
-|`module`|Not documented.|
-|`mainClass`|Not documented.|
+|`main`|Not documented.|
 
 

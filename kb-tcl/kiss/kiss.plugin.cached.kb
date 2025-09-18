@@ -16,15 +16,26 @@ namespace eval ::kiss::cached {
     kissb.extension kissb.cached {
 
 
+        cleanFiles baseName {
+            # Removes all files with prefix name $baseName
+            # To be used by API to keep cache folder clean
 
-        fileOrElse {name noarg varname script} {
+            set baseName [::kiss::cached::cleanName $baseName]
+            log.debug "Cleaning cached files matching: $baseName"
+            files.delete ${::kiss::cached::cacheFolder}/${baseName}*
+        }
+
+        fileOrElse {name refresh varname script} {
             ## Return existing file from local cache or run script with $file variable containing file path
 
             set name [::kiss::cached::cleanName $name]
             set file ${::kiss::cached::cacheFolder}/$name
-            if {![file exists $file]} {
-                uplevel [list eval $script]
+            files.requireOrRefresh $file $refresh {
+                 uplevel [list eval $script]
             }
+            #if {![file exists $file]} {
+            #    uplevel [list eval $script]
+            #}
             set cachedContent [files.read $file]
             uplevel [list set $varname $cachedContent]
             return $cachedContent

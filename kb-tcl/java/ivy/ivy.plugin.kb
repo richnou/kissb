@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.ivy 1.0
+package require kissb.xml
 
 
 namespace eval ivy {
@@ -12,6 +13,8 @@ namespace eval ivy {
     set outputFolder "repository"
 
     set binPath ""
+
+    vars.define ivy2.local.directory $::env(HOME)/.ivy2/local
 
     ## On Load -> Toolchain
     ###########
@@ -26,7 +29,7 @@ namespace eval ivy {
 
         #if {[file exists ]}
         set ivy::binPath [file normalize $tcFolder/apache-ivy-${ivy::version}/ivy-${ivy::version}.jar]
-        
+
         if {![file exists ${ivy::binPath}]} {
             puts "Downloading"
             kiss::utils::download $url $tcFolder/ivy.tar.gz
@@ -47,7 +50,7 @@ namespace eval ivy {
     }
     proc fetchAll {module deps} {
 
-        set outFolder ${ivy::tcFolder}/repository/$module 
+        set outFolder ${ivy::tcFolder}/repository/$module
         file mkdir $outFolder
 
         ## Load deps
@@ -62,6 +65,73 @@ namespace eval ivy {
         proc fetchSingle {cache org module rev} {
             kiss::utils::execIn $cache java -jar ${ivy::binPath} -dependency $org $module $rev -cache ./ -makepom out.pom
         }
+    }
+
+
+    kissb.extension ivy {
+
+        generate.ivyFile {ivyFile spec} {
+
+            set ivyFile [file normalize $ivyFile]
+
+            set specSubst [uplevel [list subst $spec]]
+
+            ## Create Writer and go through spec
+            ##<ivy-module version="2.0"
+             ##           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              ##          xsi:noNamespaceSchemaLocation=
+               ##                "http://ant.apache.org/ivy/schemas/ivy.xsd">
+             ## <info organisation="myorg"
+              ##      module="mymodule"/>
+            ##</ivy-module>
+            files.withWriter $ivyFile {
+
+
+
+                files.writer.printLine <?xml version="1.0" encoding="UTF-8"?>
+                files.writer.printLine <ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+
+                #files.writer.printLine <info module=>/
+
+                files.writer.indent
+
+
+                xml.toFileWriter $specSubst
+
+                files.writer.outdent
+                files.writer.printLine </ivy-module>
+
+
+            }
+
+        }
+
+        installIvyLocal {artifactId groupId version jar deps} {
+
+            ## Copy to output dir
+            #######
+            set jar [file normalize $jar]
+            set groupIdPath [string map {. /} $groupId]
+            log.info "Installing $jar to ivy local ${::ivy2.local.directory}/${groupId}/$artifactId/$version"
+            files.inDirectory ${::ivy2.local.directory}/${groupId}/$artifactId/$version {
+
+                files.mkdir ivys
+                files.mkdir jars
+                files.cp $jar jars/$artifactId.jar
+                ivy.generate.ivyFile ivys/ivy.xml {
+
+                    info {
+                        @organisation   $groupId
+                        @module         $artifactId
+                        @revision       $version
+                    }
+
+                }
+
+            }
+
+        }
+
     }
 
 

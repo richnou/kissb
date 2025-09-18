@@ -18,7 +18,7 @@ namespace eval git {
             } on error msg {
                 log.fatal "GIT check not successful, is GIT installed?" -exit
             }
-            
+
         }
 
     }
@@ -48,7 +48,10 @@ namespace eval git {
             } else {
                 exec.run git switch $branch
             }
-            
+
+        }
+        fetch args {
+            exec.run git fetch
         }
         pull args {
             exec.run git pull

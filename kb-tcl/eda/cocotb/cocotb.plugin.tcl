@@ -10,6 +10,9 @@ namespace eval cocotb {
     set simulator "-"
     set workdir .kb/work/cocotb
 
+    vars.define cocotb.workdir -doc "Local directory where cocotb runs" .kb/work/cocotb
+    vars.define cocotb.simulator -doc "Selected Simulator for Cocotb. None set by default user must select one" "-"
+
     kissb.extension cocotb {
 
         init args {
@@ -41,7 +44,7 @@ namespace eval cocotb {
             env.set MODULE $name
         }
         settings.trace args {
-            
+
             vars.append cocotb.compile.args --trace --trace-fst --trace-structs
             vars.append cocotb.args --trace
         }
@@ -58,7 +61,7 @@ namespace eval cocotb {
                 switch ${::cocotb::simulator} {
                     verilator {
 
-                        
+
                         if {[verilator.isDockerRuntime]} {
                             set libDir [string map [list [pwd]/ "/work/"] [python3.venv.call cocotb-config --lib-dir]]
                             set shareDir [string map [list [pwd]/ "/work/"] [python3.venv.call cocotb-config --share]]
@@ -66,8 +69,8 @@ namespace eval cocotb {
                             set libDir   [python3.venv.call cocotb-config --lib-dir]
                             set shareDir [python3.venv.call cocotb-config --share]
                         }
-                        
-                        
+
+
                         set compileArgs [concat [list --timescale 1ns/10ps] [vars.resolve cocotb/${::cocotb::simulator}.compile.args]]
                         log.info "Compilation extra args: $compileArgs "
 
@@ -81,30 +84,30 @@ namespace eval cocotb {
                             files.delete ${cocotb::workdir}
                         }
                         verilator.verilate --cc --exe -Mdir ${cocotb::workdir}  -DCOCOTB_SIM=1 --vpi --public-flat-rw --prefix Vtop -o Vtop -LDFLAGS "-Wl,-rpath,$libDir -L$libDir -lcocotbvpi_verilator" {*}$compileArgs {*}$sources
-                        
+
                         if {[verilator.isDockerRuntime]} {
                             verilator.image.run {
                                 cd /work && CCACHE_DIR=${cocotb::workdir}/.ccache make -C ${cocotb::workdir}  -f Vtop.mk
                             }
                         } else {
-                            exec.run make -C ${cocotb::workdir}  -f Vtop.mk 
+                            exec.run make -C ${cocotb::workdir}  -f Vtop.mk
                         }
-                        
 
-                        ## Run 
+
+                        ## Run
                         set runArgs [vars.resolve cocotb/${::cocotb::simulator}.args]
                         log.info "Run args: $runArgs"
                         #exec.withEnv [list LD_LIBRARY_PATH [list value [python3.venv.call cocotb-config --lib-dir] merge 1 ]] {
 
                         ## Set Python .so file location to handle OS which might not have proper linking
                         exec.withEnv [list LIBPYTHON_LOC [list value [python3.venv.call find_libpython] merge 0 ]] {
-                            exec.run echo "source .kb/build/python3-venv/bin/activate && ${cocotb::workdir}/Vtop $runArgs " | /bin/bash 
+                            exec.run echo "source .kb/build/python3-venv/bin/activate && ${cocotb::workdir}/Vtop $runArgs " | /bin/bash
                         }
                         #}
                         #verilator.image.run {
                         #    cd /work && source .kb/build/python3-venv/bin/activate && ${cocotb::workdir}/Vtop
                         #}
-                        
+
                     }
                 }
             }

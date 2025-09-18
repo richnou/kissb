@@ -110,7 +110,7 @@ namespace eval python3 {
                 uplevel [list eval [lindex $args end]]
             }
 
-            ## Requirements
+            ## Install local folder Requirements if needed
             make ${::python3::venvPath}/kissb.requirements.timestamp < requirements.txt {
                 python3.venv.install.requirements requirements.txt
                 files.writeText ${::python3::venvPath}/kissb.requirements.timestamp DONE

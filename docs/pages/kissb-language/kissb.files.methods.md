@@ -192,6 +192,19 @@ Returns the directory of the current running script
 
 ### <a name='Description'></a>Description
 
+## <a name='::files.globFolders'></a>files\.globFolders
+
+
+> `files.globFolders` *`?args?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+
+
+### <a name='Description'></a>Description
+
 ## <a name='::files.inBuildDirectory'></a>files\.inBuildDirectory
 
 
@@ -218,6 +231,42 @@ Returns the directory of the current running script
 |`script`|Not documented.|
 
 
+## <a name='::files.isAbsolute'></a>files\.isAbsolute
+
+Returns true if path is absolute
+
+
+> `files.isAbsolute` *`path`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`path`|Not documented.|
+
+
+### <a name='Return_value'></a>Return value
+
+Returns true if path is absolute
+
+## <a name='::files.isEmpty'></a>files\.isEmpty
+
+Returns true if path is a folder and empty
+
+
+> `files.isEmpty` *`path`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`path`|Not documented.|
+
+
+### <a name='Return_value'></a>Return value
+
+Returns true if path is a folder and empty
+
 ## <a name='::files.isExecutable'></a>files\.isExecutable
 
 Returns true if a file is executable for the owner by default
@@ -237,6 +286,60 @@ Returns true if a file is executable for the owner by default
 
 Returns true if a file is executable for the owner by default
 
+## <a name='::files.isFile'></a>files\.isFile
+
+Returns true if path is a file and exists
+
+
+> `files.isFile` *`path`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`path`|Not documented.|
+
+
+### <a name='Return_value'></a>Return value
+
+Returns true if path is a file and exists
+
+## <a name='::files.isFolder'></a>files\.isFolder
+
+Returns true if path is a folder and exists
+
+
+> `files.isFolder` *`path`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`path`|Not documented.|
+
+
+### <a name='Return_value'></a>Return value
+
+Returns true if path is a folder and exists
+
+## <a name='::files.isRelative'></a>files\.isRelative
+
+Returns true if path is relative
+
+
+> `files.isRelative` *`path`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`path`|Not documented.|
+
+
+### <a name='Return_value'></a>Return value
+
+Returns true if path is relative
+
 ## <a name='::files.joinWithPathSeparator'></a>files\.joinWithPathSeparator
 
 
@@ -249,6 +352,25 @@ Returns true if a file is executable for the owner by default
 
 
 ### <a name='Description'></a>Description
+
+## <a name='::files.makeAbsoluteTo'></a>files\.makeAbsoluteTo
+
+Returns an absolute path, if path is relative, make it absolute relative to base
+
+
+> `files.makeAbsoluteTo` *`path base`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`path`|Not documented.|
+|`base`|Not documented.|
+
+
+### <a name='Return_value'></a>Return value
+
+Returns an absolute path, if path is relative, make it absolute relative to base
 
 ## <a name='::files.makeExecutable'></a>files\.makeExecutable
 
@@ -492,10 +614,32 @@ Files writer
 |----|----|
 
 
+## <a name='::files.writer.print'></a>files\.writer\.print
+
+
+> `files.writer.print` *`?args?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+
+
 ## <a name='::files.writer.printLine'></a>files\.writer\.printLine
 
 
 > `files.writer.printLine` *`?args?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+
+
+## <a name='::files.writer.println'></a>files\.writer\.println
+
+
+> `files.writer.println` *`?args?`*<br>
 
 ### <a name='Parameters'></a>Parameters
 

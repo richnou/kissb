@@ -22,7 +22,7 @@ namespace eval ::kiss::json {
 
         set o [open $outFile w+]
         puts $o "\{"
-        
+
         puts $o [objToString $spec]
         #foreach {k v} $spec {
         #    puts $o "\"$k\":[vToString $v]"
@@ -42,7 +42,7 @@ namespace eval ::kiss::json {
             } else {
                 string cat "[getIndent]\"$k\":[vToString $v false]"
             }
-            
+
         }]
         log.debug "Done map: $mapped"
         decrIndent
@@ -64,12 +64,12 @@ namespace eval ::kiss::json {
             return "{}"
         } elseif {[llength $v] > 1 && $isArray==false} {
            return " {\r\n[objToString $v]\r\n[getIndent]}"
-        } elseif {[llength $v] > 1 && $isArray==true} {
+        } elseif {[llength $v] >= 1 && $isArray==true} {
             incrIndent
             set r "   [join [lmap x $v { string cat [vToString $x] }] ",\r\n[getIndent]"]"
             decrIndent
             return $r
-           
+
         } else {
             return "\"$v\""
         }

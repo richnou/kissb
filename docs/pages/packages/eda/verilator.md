@@ -16,17 +16,17 @@ tags:
     --
 
 
-## Initialisation 
+## Initialisation
 
-To use verilator, load the **kissb.verilator** package in your build file: 
+To use verilator, load the **kissb.verilator** package in your build file:
 
-~~~tcl 
+~~~tcl
 package require kissb.eda.verilator
 ~~~
 
 Then you can init the toolchain:
 
-~~~tcl 
+~~~tcl
 verilator.init
 ~~~
 
@@ -36,7 +36,7 @@ The default runtime will be a pre-build binary downloaded to the toolchain folde
 
 To quickly load the verilator runtime at a specific version, you can load the following package:
 
-~~~tcl 
+~~~tcl
 # This package downloads a local binary version of verilator
 package require kissb.eda.verilator.local VERSION
 
@@ -51,17 +51,17 @@ package require kissb.eda.verilator.docker 5.032
 
 After initialisation, you can call verilator using the **verilator.run** command:
 
-~~~tcl 
+~~~tcl
 # For example to compile
 verilator.verilate --binary counter.sv
 ~~~
 
-## Running 
+## Running
 
 To run a compiled model, you can directly execute the binary, or you can execute the binary from the docker image.
 The **verilator.simulate** method will run through the correct path.
 
-~~~tcl 
+~~~tcl
 # Run
 verilator.simulate Vcounter
 ~~~
@@ -71,3 +71,18 @@ verilator.simulate Vcounter
 ## Pre-Build Binaries
 
 {{ read_csv("./verilator_uploads.csv") }}
+
+
+## Verilator Package Variables
+
+Before or after Loading the flow, you can set configuration variables:
+
+~~~tcl
+package require kissb.eda.verilator
+
+vars.set CONFIGURATION VALUE
+~~~
+
+{%
+    include-markdown "./_verilator.vars.inc.md"
+%}

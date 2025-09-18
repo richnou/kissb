@@ -53,9 +53,18 @@ namespace eval kiss {
             }
         }
 
-        proc ::kissb.extension {extName functions} {
+        proc ::kissb.extension {extName args} {
 
-            set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
+            #set functionsNoComments [regsub -all -linestop #.+ $functions "" ]
+
+            ## ExtName can contain arguments
+            set functions [lindex $args 0]
+            if {[llength $args]>1} {
+                set functions [lindex $args end]
+            }
+
+            ## Parameters
+            set noLogger [expr {[lsearch -exact $args -noLogger]!=-1 ? true : false }]
 
             ## Split functions as string to find functions lines
             set functionsLines [lmap line [split "$functions" \n] { string trim $line}]
@@ -63,6 +72,8 @@ namespace eval kiss {
             #log.info "Functions no comments: $functionsNoComments"
             foreach {procName procArgs procScript} $functions {
                 log.debug "Extension $extName.$procName with args $procArgs"
+
+                set procFQN ${extName}.${procName}
 
                 ## Find Definition file
                 set __cframe [info frame]
@@ -84,8 +95,15 @@ namespace eval kiss {
                     #puts "$extName.$procName is at: $file:[expr $line+$fline]"
                 }
 
+                ## Augment script with logger
+                if {!$noLogger} {
+                    #set procScript [list log.appendLogger $procFQN $procScript ]
+                }
+
+
+                ## Define extension method as proc
                 #exit
-                proc ::${extName}.${procName} $procArgs $procScript
+                proc ::${procFQN} $procArgs $procScript
             }
         }
 
@@ -148,18 +166,36 @@ namespace eval kiss {
 
         }
 
+        proc getDoc {name {default ""}} {
+            if {[dict exists $::kiss::vars::_vars $name]} {
+                return [dict get $::kiss::vars::_vars $name doc]
+            } else {
+                return $default
+            }
+
+        }
+
         proc exists {name} {
            return [dict exists $::kiss::vars::_vars $name]
         }
 
         proc append {name args} {
-            dict lappend ::kiss::vars::_vars $name {*}$args
+            #puts "appending to $name $args"
+            ::set _newval [concat [get $name {}] $args]
+            dict set ::kiss::vars::_vars $name value $_newval
+            ::set ::${name} $_newval
         }
         proc set {name v} {
             if {[dict exists $::kiss::vars::_vars $name]} {
                 dict set ::kiss::vars::_vars $name previous [get $name]
             }
+            if {![dict exists $::kiss::vars::_vars $name]} {
+                dict set ::kiss::vars::_vars $name doc false
+            }
+
             dict set ::kiss::vars::_vars $name value $v
+
+
             ::set ::${name} $v
         }
         proc revert {name} {
@@ -171,10 +207,14 @@ namespace eval kiss {
         proc define {name args} {
 
 
-            if {[llength $args]>0  } {
-
-                ::set defaultVal [lindex $args end]
+            if {[llength $args]==0  } {
+                log.fatal "Cannot call vars define without a default value"
             }
+
+            #log.info "$name args before doc: [llength $args]"
+            ::set docVal [kissb.args.consumeValue -doc false]
+            #log.info "$name args after doc: [llength $args] -> $docVal"
+            ::set defaultVal [lindex $args end]
 
             # If env variable is defined, use as default value
             ::set envName [string map {. _} [string toupper $name]]
@@ -189,9 +229,8 @@ namespace eval kiss {
             }
 
             # Take documentation
-            kissb.args.withValue -doc doc {
-                dict set ::kiss::vars::_vars $name doc $doc
-            }
+            dict set ::kiss::vars::_vars $name doc $docVal
+
 
 
         }
@@ -207,10 +246,10 @@ namespace eval kiss {
     #############################
 
     proc ::@ {name args} {
-       ::kiss::targets::@ $name {*}$args
+       uplevel [list ::kiss::targets::@ $name {*}$args]
     }
     proc ::@> {name args} {
-       ::kiss::targets::run $name {*}$args
+       uplevel [list ::kiss::targets::run $name {*}$args]
     }
     namespace eval targets {
 
@@ -220,6 +259,7 @@ namespace eval kiss {
             log.fine "Registering target $name, size of args=[llength $args]"
 
             # Split Name from doc
+            ####
             set targetName [lindex $name 0]
             set targetDoc ""
             if {[llength $name] > 1} {
@@ -227,7 +267,16 @@ namespace eval kiss {
             }
             #puts "target $name doc: $targetDoc"
 
+            # Script is the last in args
+            ####
             set script [lindex $args end]
+
+            ## Replace currnet scope template variables
+            set script [uplevel [list template.replace $script]]
+
+            # Other args represent required targets
+            #######
+
             #log.info "Script is: $script"
             set reqTargets {}
             if {[llength $args]>1} {
@@ -240,7 +289,7 @@ namespace eval kiss {
                 }
             }
             #dict append::kiss::targets::_targets $name {*}$args
-            dict lappend ::kiss::targets::_targets $targetName $reqTargets $targetDoc $script
+            dict lappend ::kiss::targets::_targets $targetName  required $reqTargets doc $targetDoc script $script run false
         }
 
         proc listTargets args {
@@ -248,18 +297,27 @@ namespace eval kiss {
         }
 
         proc getScript target {
+
+            return [dict get $::kiss::targets::_targets $target script]
+
             set targetcontent [dict get $::kiss::targets::_targets $target]
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent end]
         }
 
         proc getDoc target {
+
+            return [dict get $::kiss::targets::_targets $target doc]
+
             set targetcontent [dict get $::kiss::targets::_targets $target]
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent 1]
         }
 
         proc getRequiredTargets target {
+
+            return [dict get $::kiss::targets::_targets $target required]
+
             set targetcontent [dict get $::kiss::targets::_targets $target]
             #log.info "Returning $target script: [lindex $targetcontent end]"
             return [lindex $targetcontent 0]
@@ -267,11 +325,17 @@ namespace eval kiss {
         proc hasTarget target {
             return [dict exists $::kiss::targets::_targets $target]
         }
+        proc exists target {
+            return [dict exists $::kiss::targets::_targets $target]
+        }
+        proc hasRun target {
+            return [dict get $::kiss::targets::_targets $target run]
+        }
 
         ## Run Target
-        proc run {target args} {
+        proc run {target {targetargs {}} args} {
 
-            log.fine "Running target: $target with args=$args"
+            log.fine "Running target: $target with args=$targetargs"
             if {![hasTarget $target]} {
                 log.warn "Target $target doesn't exist"
                 foreach ptarget [listTargets] {
@@ -286,7 +350,7 @@ namespace eval kiss {
             set reqTargets [getRequiredTargets $target]
 
             foreach reqTarget $reqTargets {
-                uplevel #0 [list ::kiss::targets::run $reqTarget {*}$args]
+                uplevel #0 [list ::kiss::targets::run $reqTarget $targetargs]
             }
             #array set env [array get ::env]
             #if {[llength $args]>0} {
@@ -295,8 +359,15 @@ namespace eval kiss {
             #    set argv {}
             #}
 
-            log.with.logger $target {
-                eval $script
+            # Run target
+            if {![hasRun $target] || [kissb.args.contains --force]} {
+                log.with.logger $target {
+                    set args $targetargs
+                    eval $script
+                    dict set ::kiss::targets::_targets $target run true
+                }
+            } else {
+                log.warn "Not re-running target $target"
             }
 
             #return [dict keys $::kiss::targets::_targets]
@@ -305,7 +376,7 @@ namespace eval kiss {
         # Call target without merging calling target args
         proc > {target args} {
             log.info "Call target: $target with args=$args"
-            ::kiss::targets::run $target {*}$args
+            ::kiss::targets::run $target $args --force
             #uplevel #0 [list ::kiss::targets::run $target {*}$mergedArgs]
         }
 
@@ -313,7 +384,7 @@ namespace eval kiss {
         proc >> {target args} {
             set mergedArgs [concat $args [uplevel [list set args]]]
             log.info "Call target: $target with args=$mergedArgs"
-            ::kiss::targets::run $target {*}$mergedArgs
+            ::kiss::targets::run $target $mergedArgs --force
             #uplevel #0 [list ::kiss::targets::run $target {*}$mergedArgs]
         }
 
@@ -350,6 +421,8 @@ namespace eval kiss {
 
 
     #############################
+    ## Sources
+    #############################
     namespace eval sources {
 
         set src [dict create]
@@ -358,6 +431,7 @@ namespace eval kiss {
 
             set nextDirs {}
             foreach dir $dirs {
+                #set dir [file normalize $dir]
                 set filesAndDirs [glob -tails -nocomplain -directory $dir *]
                 set foundFiles {}
                 foreach f $filesAndDirs {
@@ -383,6 +457,11 @@ namespace eval kiss {
 
         proc addSourceFolder {module path} {
 
+            set path [file normalize $path]
+            #puts "** adding $path to $module (exists=[dict exists ${::kiss::sources::src} $module $path])"
+            if {[dict exists ${::kiss::sources::src} $module $path]} {
+                return
+            }
             files.inDirectory $path {
 
                 set sources [listFilesRecursive . {}]
@@ -412,11 +491,11 @@ namespace eval kiss {
             if {[dict exists ${::kiss::sources::src} $module]} {
                 ## Returns a list of pairs {basePath sources}
                 set allFolders [dict get ${::kiss::sources::src} $module]
-                puts "Resolving sources: $allFolders"
+                #puts "Resolving sources: $allFolders"
                 set mergedFiles {}
 
                 foreach {baseDir sources} $allFolders {
-                    set mergedFiles [concat $mergedFiles [lmap pathSource $sources { join [list $baseDir $pathSource] /}]]
+                    set mergedFiles [concat $mergedFiles [lmap pathSource $sources { file normalize [join [list $baseDir $pathSource] /]}]]
                 }
 
 
@@ -484,6 +563,10 @@ namespace eval kiss {
             dict lappend ::kiss::dependencies::moduleDeps $module {*}$depsDict
         }
 
+        proc isScopeDefined moduleAndScope {
+            return [dict exists $::kiss::dependencies::moduleDeps $moduleAndScope]
+        }
+
         proc addDepSpec {module spec resolver} {
 
             ## Resolve from BOM if needed
@@ -528,9 +611,10 @@ namespace eval kiss {
             return [dict keys $currentDeps *]
         }
 
-        proc resolveDeps {module classifier} {
+        proc resolveDeps {module classifier {excludeList {}}} {
+            # Use exclude list to not add files already in exclude list
             set currentDeps [getDeps $module]
-            log.debug "Resolve deps for $module, return $classifier for $currentDeps"
+            log.debug "Resolve deps for $module, return $classifier for $currentDeps with exclusions: $excludeList"
             set res {}
             foreach {name resolutionDict} $currentDeps {
                 dict with resolutionDict {
@@ -538,8 +622,10 @@ namespace eval kiss {
                             lappend res [dict get $resolutionDict $classifier]
                     } elseif {$resolved!=false} {
                         dict for {resolvedSpec resolvedDict} $resolved {
-                            if {[dict exists $resolvedDict $classifier]} {
-                                lappend res [dict get $resolvedDict $classifier]
+                            set depToAdd [dict getdef $resolvedDict $classifier false]
+                            #log.info "Is $depToAdd in $excludeList"
+                            if {$depToAdd!=false && ($depToAdd ni $excludeList)} {
+                                lappend res $depToAdd
                             } else {
                                 #log.warn "No $classifier in $dict"
                                 #string cat ""
@@ -567,12 +653,7 @@ namespace eval kiss {
     ##############################
 
 
-    proc ::assert {res message} {
-        if {!$res} {
-            log.error "Assert failed: $message"
-            uplevel {return}
-        }
-    }
+
 
     proc ::ignore {test script} {
         if {!$test} {

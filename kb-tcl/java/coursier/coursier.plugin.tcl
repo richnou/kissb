@@ -23,30 +23,37 @@ namespace eval coursier {
 
     ## Dependency resolution
     ################
-    proc resolveModule module {
+    proc resolveModule {module {forcedVersions {}}} {
 
         # Get  the deps dictionary
         set depsForModule [kiss::dependencies::getDeps $module]
 
-        log.debug "Coursier resolve deps for $module: $depsForModule"
+        log.debug "Coursier resolve deps for $module with foced versions: $forcedVersions ->"
+        log.debug  $depsForModule
 
         # Create a SHA of the required specs for caching purpose
         set specList {}
         foreach {spec depDict} $depsForModule {
-            lappend specList $specList
+            lappend specList $spec
         }
         set specSHA [::sha2::sha256 -hex -- [join [lsort $specList]]]
-        log.debug "Coursier spec SHA256: $specSHA"
+        log.debug "Coursier spec SHA256 of $specList: $specSHA"
 
         # Get Cache file
         set cacheFileName coursier-${module}-deps-${specSHA}
-        kissb.cached.fileOrElse ${cacheFileName}.txt -> cachedDepsDict {
+        kissb.cached.fileOrElse ${cacheFileName}.txt deps cachedDepsDict {
+
+            # Forced versions args
+            set forcedVersionsArgs {}
+            if {[llength $forcedVersions]>0} {
+                set forcedVersionsArgs [list -V {*}[join $forcedVersions " -V "]]
+            }
 
             # Resolve what needs be
             dict for {spec depInfo} $depsForModule {
                 dict with depInfo {
                     if {$resolved==false} {
-                        set resolvedDict [::coursier::fetchSpec $spec]
+                        set resolvedDict [::coursier::fetchSpec $spec {*}$forcedVersionsArgs]
                         dict set depsForModule $spec resolved $resolvedDict
                         #log.info "Resolving $spec -> $resolvedDict"
                         #dict merge depInfo [::coursier::fetchSpec $spec]
@@ -55,12 +62,13 @@ namespace eval coursier {
             }
 
             # Write Dict output to file
+            kissb.cached.cleanFiles coursier-${module}-deps
             kissb.cached.writeFile ${cacheFileName}.txt  $depsForModule
             kissb.cached.writeFile ${cacheFileName}.json [json.toString $depsForModule]
         }
         log.debug "[namespace current] Cached deps: $cachedDepsDict"
         set mergedDict [kiss::dependencies::mergeDeps $module $cachedDepsDict]
-
+        #log.info "Merged deps for $module: $mergedDict"
 
 
     }
@@ -153,17 +161,21 @@ namespace eval coursier {
         foreach resolvedFile $files {
             set resolvedFile [string map {\\ /} $resolvedFile]
             set tail [file tail $resolvedFile]
+            set specKey $specId
             switch -glob $tail {
                 *-sources.jar {
-                    log.debug "$resolvedFile is sources"
+                    log.debug "$specId -> $resolvedFile is sources"
+                    # [string map {-sources ""} $tail]
                     dict lappend sortedDeps [string map {-sources ""} $tail] sources $resolvedFile
                 }
                 *-javadoc.jar {
-                    log.debug "$resolvedFile is javadoc"
+                    log.debug "$specId -> $resolvedFile is javadoc"
+                    # [string map {-javadoc ""} $tail]
                     dict lappend sortedDeps [string map {-javadoc ""} $tail] doc $resolvedFile
                 }
                 default {
-                    log.debug "$resolvedFile is lib"
+                    log.debug "$specId -> $resolvedFile is lib"
+                    # $tail
                     dict lappend sortedDeps $tail lib [file normalize $resolvedFile]
                 }
             }
@@ -172,6 +184,40 @@ namespace eval coursier {
         return $sortedDeps
 
     }
+
+    proc fetchSpecv2 {specId args} {
+
+        set files  [::coursier::runtime::fetchSingle $specId --default=true --javadoc --sources  {*}$args]
+        log.info "Fetched for $specId -> $files"
+        set sortedDeps [dict create]
+        #dict lappend sortedDeps $dep spec $dep
+        foreach resolvedFile $files {
+            set resolvedFile [string map {\\ /} $resolvedFile]
+            set tail [file tail $resolvedFile]
+            set specKey $specId
+            switch -glob $tail {
+                *-sources.jar {
+                    log.debug "$resolvedFile is sources"
+                    # [string map {-sources ""} $tail]
+                    dict lappend sortedDeps $specKey sources $resolvedFile
+                }
+                *-javadoc.jar {
+                    log.debug "$resolvedFile is javadoc"
+                    # [string map {-javadoc ""} $tail]
+                    dict lappend sortedDeps $specKey doc $resolvedFile
+                }
+                default {
+                    log.debug "$resolvedFile is lib"
+                    # $tail
+                    dict lappend sortedDeps $specId lib [file normalize $resolvedFile]
+                }
+            }
+
+        }
+        return $sortedDeps
+
+    }
+
     proc fetchAll {module deps} {
 
         set outFolder ${::coursier::tcFolder}/repository/$module
@@ -231,6 +277,9 @@ namespace eval coursier {
         run args {
             exec.run ${::coursier::binPath} {*}$args
         }
+        call args {
+            return [exec.call ${::coursier::binPath} {*}$args]
+        }
 
         install args {
             return [coursier.run install {*}$args]
@@ -238,6 +287,11 @@ namespace eval coursier {
 
         setup args {
             return [exec.call ${::coursier::binPath} setup {*}$args]
+        }
+
+        env args {
+            # Runs command with --env and using exec.call to return env result
+            return [coursier.call {*}$args --env]
         }
 
         resolve module {
