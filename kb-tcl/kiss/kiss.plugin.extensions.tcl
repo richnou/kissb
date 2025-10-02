@@ -360,6 +360,10 @@ kissb.extension env {
     isDefined name {
         return [expr [llength [array get ::env $name]] > 0 ? true : false]
     }
+
+    set {name value} {
+        set ::env($name) $value
+    }
 }
 
 ##############################
