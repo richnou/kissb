@@ -52,6 +52,26 @@ namespace eval builder::container {
 
     }
 
+    kissb.extension builder.container {
+
+        run {runArgs image args} {
+            ## Run image with provided args
+            ## This method adds necessary arguments to correctly map
+
+            set finalArgs [list {*}$runArgs -u [exec id -u]:[exec id -g] $image {*}$args]
+            log.info "Running image $image: $finalArgs"
+            switch ${::builder.container.runtime} {
+                docker {
+                    docker.run {*}$finalArgs
+                }
+
+                podman {
+                    podman.run --security-opt label=disable --userns keep-id {*}$finalArgs
+                }
+            }
+        }
+
+    }
     kissb.extension builder.container.image {
 
         selectDockerRuntime args {
