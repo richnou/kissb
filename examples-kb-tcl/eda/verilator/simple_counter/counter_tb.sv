@@ -1,3 +1,6 @@
+/**
+A very simple testbenck to demonstrate simulating the counter
+*/
 module counter_tb;
 
     logic resn;
@@ -12,8 +15,13 @@ module counter_tb;
         $dumpvars();
         resn = 0;
         clk = 0;
-        #500 @(posedge clk);
+        @(posedge clk);
+        @(posedge clk);
         resn=1;
+
+        repeat(10) begin
+            @(posedge clk);
+        end
 
         #5000 $finish();
     end
