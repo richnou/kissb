@@ -50,7 +50,7 @@ proc variablesMd {pattern file} {
 
     makeMd "files.*"            pages/kissb-language/kissb.files.methods.md
     makeMd "kissb.args.*"       pages/kissb-language/kissb.args.methods.md
-    makeMd "refresh.*"    pages/kissb-language/kissb.refresh.methods.md
+    makeMd "refresh.*"          pages/kissb-language/kissb.refresh.methods.md
     makeMd "exec.*"             pages/kissb-language/kissb.exec.methods.md
 
     makeMd "node.*"             pages/packages/nodejs/node.methods.md
@@ -59,6 +59,10 @@ proc variablesMd {pattern file} {
     makeMd "scala.*"             pages/packages/jee/scala.methods.md
     makeMd "bloop.*"             pages/packages/jee/bloop.methods.md
 
+
+    package require kissb.eda.verilator
+    package require kissb.eda.verible
+    makeMd "verible.*"             pages/packages/eda/verible.methods.md
 
 
 }
@@ -166,6 +170,7 @@ proc variablesMd {pattern file} {
         kissb.scala         {scala scalac bloop}    pages/packages/jee/_scala.vars.inc.md
         kissb.coursier      coursier                pages/packages/jee/_coursier.vars.inc.md
         kissb.eda.verilator verilator               pages/packages/eda/_verilator.vars.inc.md
+        kissb.eda.verible   verible                 pages/packages/eda/_verible.vars.inc.md
         kissb.eda.cocotb    cocotb                  pages/packages/eda/_cocotb.vars.inc.md
 
     }
@@ -187,11 +192,6 @@ proc variablesMd {pattern file} {
             foreach ns $nslist {
                 files.writer.printLine "${ns}:"
                 files.writer.indent
-
-
-
-
-
 
                 foreach v [info vars ::${ns}.*] {
                     puts "V: $v"

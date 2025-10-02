@@ -2,3 +2,4 @@ title: EDA / Hardware Design
 nav:
     - cocotb.md
     - verilator.md
+    - verible.md

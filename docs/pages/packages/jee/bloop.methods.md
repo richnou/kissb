@@ -27,6 +27,18 @@ Configure module for bloop usage
 |`module`|Not documented.|
 
 
+## <a name='::bloop.exec'></a>bloop\.exec
+
+
+> `bloop.exec` *`module ?args?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`module`|Not documented.|
+
+
 ## <a name='::bloop.getBloopEnv'></a>bloop\.getBloopEnv
 
 

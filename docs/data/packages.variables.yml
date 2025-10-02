@@ -7,9 +7,13 @@ bloop:
     version: "2.0.10"
 coursier:
 verilator:
-    version: "v5.030"
+    version: "v5.040"
     runtime: "local"
+    lint_args: "--no-decoration"
     verilate_args: ""
+verible:
+    path: "/home/rleys/.kissb/toolchains/verible/verible-v0.0-4023-gc1271a00/bin/"
+    version: "v0.0-4023-gc1271a00"
 cocotb:
     simulator: "-"
     workdir: ".kb/work/cocotb"
