@@ -40,9 +40,25 @@ namespace eval ghdl {
              kiss::toolchain::init ghdl
         }
 
+        init.system args {
+            vars.set ghdl.runtime system
+        }
+
         run args {
 
-            exec.run ${::ghdl.installFolder}/bin/ghdl {*}$args
+            switch ${::ghdl.runtime} {
+                system {
+                    exec.run ghdl {*}$args
+                }
+                kissb-llvm {
+                    exec.run ${::ghdl.installFolder}/bin/ghdl {*}$args
+                }
+
+                default {
+                    log.fatal "Unknown GHDL runtime ${::ghdl.runtime}"
+                }
+            }
+
         }
 
         analyze args {
