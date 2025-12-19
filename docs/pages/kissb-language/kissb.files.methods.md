@@ -4,13 +4,14 @@
 Appends Line to provided file
 
 
-> `files.appendLine` *`f ?args?`*<br>
+> `files.appendLine` *`f text`*<br>
 
 ### <a name='Parameters'></a>Parameters
 
 |||
 |----|----|
 |`f`|Target file|
+|`text`|Not documented.|
 |`args`|joined to a default string with join|
 
 
@@ -19,14 +20,15 @@ Appends Line to provided file
 Appends test to provided file
 
 
-> `files.appendText` *`f ?args?`*<br>
+> `files.appendText` *`f text ?args?`*<br>
 
 ### <a name='Parameters'></a>Parameters
 
 |||
 |----|----|
 |`f`|Target file|
-|`args`|joined to a default string with join|
+|`text`|Not documented.|
+|`args`|joined to a default string with join Optional, default `-nonewline`.|
 
 
 ## <a name='::files.compressDir'></a>files\.compressDir
@@ -590,6 +592,21 @@ Files writer
 |----|----|
 |`outPath`|Not documented.|
 |`script`|Not documented.|
+
+
+## <a name='::files.writeLine'></a>files\.writeLine
+
+Writes text to provided file
+
+
+> `files.writeLine` *`f ?args?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`f`|Target file|
+|`args`|joined to a default string with join|
 
 
 ## <a name='::files.writer.indent'></a>files\.writer\.indent

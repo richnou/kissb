@@ -31,7 +31,7 @@ namespace eval podman {
             }
         }
 
-        run {tag script} {
+        runold {tag script} {
             set terminalScript [uplevel [list subst $script]]
             try {
                 files.writeText .dockerRun $terminalScript

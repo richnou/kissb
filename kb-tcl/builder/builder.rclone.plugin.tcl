@@ -8,22 +8,22 @@ package provide kissb.builder.rclone 1.0
 namespace eval rclone {
 
 
-    set version 1.69.3
+    vars.define rclone.version 1.71.0
     set binPath ""
     set localConfigFile {}
 
-    vars.set rclone.config false
+    vars.define rclone.config false
 
     ::kiss::toolchain::register rclone {
 
-        set url https://downloads.rclone.org/v${::rclone::version}/rclone-v${::rclone::version}-linux-amd64.zip
+        set url https://downloads.rclone.org/v${::rclone.version}/rclone-v${::rclone.version}-linux-amd64.zip
         files.inDirectory $toolchainFolder {
 
-            files.require $toolchainFolder/rclone-v${::rclone::version}-linux-amd64/rclone {
-                files.download $url rclone-v${::rclone::version}-linux-amd64.zip
-                files.unzip rclone-v${::rclone::version}-linux-amd64.zip
+            files.require $toolchainFolder/rclone-v${::rclone.version}-linux-amd64/rclone {
+                files.download $url rclone-v${::rclone.version}-linux-amd64.zip
+                files.unzip rclone-v${::rclone.version}-linux-amd64.zip
             }
-            set ::rclone::binPath [file normalize $toolchainFolder/rclone-v${::rclone::version}-linux-amd64/rclone]
+            set ::rclone::binPath [file normalize $toolchainFolder/rclone-v${::rclone.version}-linux-amd64/rclone]
         }
 
         if {![file exists ${::rclone.config}]} {

@@ -90,6 +90,15 @@ namespace eval ::kiss::files {
 
         }
 
+        cpSubst {files dir} {
+            foreach f [glob $files] {
+                set fileText [files.read $f]
+                set fileTextReplaced [uplevel [list subst $fileText]]
+                files.writeText $dir/[file tail $f] $fileTextReplaced
+            }
+
+        }
+
         delete args {
             # Delete provided files in the args list - if a file is not a regular file or directory, the argument is treated as a glob to delete multiple files at once
             #  args - paths to files/directories or glob to be deleted
@@ -138,6 +147,17 @@ namespace eval ::kiss::files {
             return $outFile
         }
 
+
+        eachLine {f script} {
+            assert.isFile $f "Cannot read file line by line, doesn't exist"
+            set fid [open $f r]
+            try {
+                uplevel [list set __l [chan gets $fid]]
+                uplevel [list eval $script]
+            } finally {
+                close $fid
+            }
+        }
 
         globFiles args {
             #
@@ -211,16 +231,11 @@ namespace eval ::kiss::files {
             files.delete $src
         }
 
-        cpSubst {files dir} {
-            foreach f [glob $files] {
-                set fileText [files.read $f]
-                set fileTextReplaced [uplevel [list subst $fileText]]
-                files.writeText $dir/[file tail $f] $fileTextReplaced
-            }
 
-        }
 
         read f {
+            ## Reads file fully as string
+            ## returns a sting
             set fid [open $f r]
             try {
                 return [chan read $fid]

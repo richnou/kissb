@@ -1,11 +1,9 @@
-// That's a very bad counter to demonstrate cocotb
+// A very simple counter to demonstrate simulator usage
 module counter(
     input wire clk,
     input wire resn,
     output reg [3:0] value
 );
-
-   
 
     always @(posedge clk) begin
         if (!resn) begin
@@ -14,7 +12,7 @@ module counter(
         else begin
             value <= value + 4'd1;
         end
-        
+
     end
 
-endmodule 
+endmodule

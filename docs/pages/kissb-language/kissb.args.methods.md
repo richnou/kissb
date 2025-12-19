@@ -16,6 +16,21 @@
 
 ### <a name='Description'></a>Description
 
+## <a name='::kissb.args.consumeValue'></a>kissb\.args\.consumeValue
+
+
+> `kissb.args.consumeValue` *`v default ?to? ?varname?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`v`|Not documented.|
+|`default`|Not documented.|
+|`to`|Not documented. Optional, default `""`.|
+|`varname`|Not documented. Optional, default `""`.|
+
+
 ## <a name='::kissb.args.contains'></a>kissb\.args\.contains
 
 Tests if `$args` contains a specific argument, runs script if so, or elseScript if provided

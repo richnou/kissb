@@ -1,5 +1,9 @@
 package require kissb.git
 package require kissb.builder.container
+package require kissb.builder.rclone
+
+
+rclone.init ../../../../rclone.conf
 
 builder.container.image.build ./Dockerfile.builder verilator-rhel8-builder:latest
 
@@ -19,10 +23,14 @@ foreach v  $versions {
 
         verilatorBuild detach:v{{set v}}
 
+        kissb.args.contains --publish {
+            rclone.run copy -P --s3-acl=public-read  build/verilator-v{{set v}}.zip   ovhs3:kissb/hdl/verilator/
+        }
+
     }
 }
 
-proc verilatorBuild branch {
+proc verilatorBuild {branch args} {
 
     files.mkdir build
 
@@ -60,12 +68,24 @@ proc verilatorBuild branch {
             files.cp install ../build/verilator-[string map {detach: ""} $branch]
 
 
+
+        }
+
+        ## Print info
+        builder.container.image.run $::buildImage {
+            g++ --version
         }
 
         ## ZIP
         files.inDirectory ../build/ {
             files.compressDir $outputDirectoryName ${outputDirectoryName}.zip
+
+
+
         }
+
+
+
 
         # Push if needed
         #kissb.args.ifContains -s3 {

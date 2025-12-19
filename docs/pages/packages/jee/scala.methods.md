@@ -5,13 +5,14 @@ Add dependencies to specified module
 If a dependency is named @xxxx it will refer to another project module
 
 
-> `scala.addDependencies` *`module ?args?`*<br>
+> `scala.addDependencies` *`module scope ?args?`*<br>
 
 ### <a name='Parameters'></a>Parameters
 
 |||
 |----|----|
 |`module`|Not documented.|
+|`scope`|Not documented.|
 
 
 ## <a name='::scala.amm'></a>scala\.amm
@@ -115,6 +116,18 @@ Select the JVM version for the application module
 |`module`|Not documented.|
 |`version`|Not documented.|
 |`descriptor`|Not documented. Optional, default `""`.|
+
+
+## <a name='::scala.listModules'></a>scala\.listModules
+
+
+> `scala.listModules` *`match`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`match`|Not documented.|
 
 
 ## <a name='::scala.repl'></a>scala\.repl

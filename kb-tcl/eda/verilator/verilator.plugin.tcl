@@ -11,31 +11,12 @@ namespace eval verilator {
     #set version  "v5.030"
 
     vars.set verilator.runtime "local"
-    vars.set verilator.version "v5.030"
+    vars.set verilator.version "v5.040"
+
 
     vars.set verilator.verilate.args {}
+    vars.set verilator.lint.args {--no-decoration}
 
-    kissb.packages.handler kissb.eda.verilator.local {
-
-        log.info "Setting Local Verilator to version $version"
-        if {![string match v* $version]} {
-            set version v$version
-        }
-        vars.set verilator.version $version
-        verilator.runtime.local
-
-    }
-
-    kissb.packages.handler kissb.eda.verilator.docker {
-
-        log.info "Setting Docker Verilator to version $version"
-        if {![string match v* $version]} {
-            set version v$version
-        }
-        vars.set verilator.version $version
-        verilator.runtime.docker
-
-    }
 
     kiss::toolchain::register kissb-verilator {
 
@@ -50,6 +31,8 @@ namespace eval verilator {
                     files.delete verilator-${vVersion}.zip
                 }
             }
+            files.makeExecutable ${::verilator::tcFolder}/bin/verilator
+            files.makeExecutable ${::verilator::tcFolder}/bin/verilator_bin
             verilator.root ${::verilator::tcFolder}
 
         }
@@ -57,32 +40,34 @@ namespace eval verilator {
 
     kissb.extension verilator {
 
-        init args {
+
+        init.local version {
+            vars.set verilator.version v$version
+            set ::verilator.runtime "local"
             kiss::toolchain::init kissb-verilator
 
-            ## Check for ccache
-            if {[catch {exec.call ccache}]} {
-                log.error "Cannot find ccache to run verilator"
+            ## Check for ccache and g++
+            foreach tool {ccache g++ perl} {
+                if {[catch {exec.call $tool --version}]} {
+                    log.fatal "Cannot find $tool"
+                }
             }
+        }
+
+        init.docker version {
+            vars.set verilator.version v$version
+            set ::verilator.runtime docker
+            package require kissb.builder.container
+
         }
 
         root path {
             assert.isFile $path/bin/verilator "Verilator Root doesn't point to a valid root install, bin/verilator is missing"
             set ::verilator.runtime local
             vars.set verilator.root $path
-
         }
 
-        runtime.docker args {
-            set ::verilator.runtime docker
-            package require kissb.docker
-        }
 
-        runtime.local args {
-            set ::verilator.runtime "local"
-            kiss::toolchain::init kissb-verilator
-            verilator.root ${::verilator::tcFolder}
-        }
 
         isDockerRuntime args {
             if {${::verilator.runtime} == "docker"} {
@@ -92,15 +77,11 @@ namespace eval verilator {
             }
         }
 
-
-
-
         verilate args {
 
             if {${::verilator.runtime} == "docker"} {
-                package require kissb.docker
 
-                docker.run -ti -u [exec id -u]:[exec id -g] -e CCACHE_DIR=/work/.ccache -v [pwd]:/work verilator/verilator:${verilator::version} {*}$args
+                builder.container.run [list -ti -e CCACHE_DIR=/work/.ccache -v [pwd]:/work]:rw verilator/verilator:${::verilator.version} {*}[vars.resolve verilator.verilate.args] {*}$args
 
             } elseif {${::verilator.runtime} == "local"} {
 
@@ -137,9 +118,18 @@ namespace eval verilator {
 
         }
 
+        vrun {top compileArgs simulateArgs} {
+
+            log.info "==== Verilator Verilating ===="
+            verilator.verilate {*}$compileArgs
+
+            log.info "==== Verilator Simulating ===="
+            verilator.simulate V$top {*}$simulateArgs
+        }
+
         lint args {
             # Run linter
-            verilator.verilate {*}$args  --lint-only --no-decoration --error-limit 10
+            verilator.verilate --lint-only {*}${::verilator.lint.args} {*}$args
         }
 
         coverage.enable args {

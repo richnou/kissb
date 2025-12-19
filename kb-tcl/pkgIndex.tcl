@@ -57,6 +57,8 @@ package ifneeded kissb.eda.cocotb           1.0  [list source $dir/eda/cocotb/co
 package ifneeded kissb.eda.verilator        1.0  [list source $dir/eda/verilator/verilator.plugin.tcl]
 package ifneeded kissb.eda.verible          1.0  [list source $dir/eda/verible/verible.plugin.tcl]
 
+package ifneeded kissb.eda.ghdl             1.0  [list source $dir/eda/ghdl/ghdl.plugin.tcl]
+
 
 ## Java and JEE Packages
 #####################
