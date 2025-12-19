@@ -75,7 +75,7 @@ namespace eval kissb::i18n {
                         puts [dict get $localeFiles $locale] "        <item quantity=\"other\">[lindex $value 1]</item>"
                         puts [dict get $localeFiles $locale] "    </plurals>"
                     } else {
-                        puts [dict get $localeFiles $locale] "    <string name=\"$key\">$value</string>"
+                        puts [dict get $localeFiles $locale] "    <string name=\"$key\">[subst $value]</string>"
                     }
                     
                 }
