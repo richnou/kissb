@@ -42,6 +42,16 @@ namespace eval ::kiss::log {
     ## Utils
     ## Hex codes for emoji: https://dev.to/rodrigoodhin/list-of-emojis-hex-codes-35ma
     #############
+    set ::kissb.log.levels {
+        NONE 100
+        ERROR 5
+        WARN  4
+        INFO  3
+        DEBUG 2
+        ALL   1
+    }
+    set ::kissb.log.level INFO 
+    
     set ::kiss.log.level INFO
     set ::kiss.log.name {top}
 
@@ -137,10 +147,10 @@ namespace eval ::kiss::log {
     }
 
     proc log.with.info args {
-        log.with FINE {*}$args
+        log.with INFO {*}$args
     }
     proc log.with.warn args {
-        log.with FINE {*}$args
+        log.with WARN {*}$args
     }
     proc log.with.fine args {
         log.with FINE {*}$args
@@ -151,17 +161,19 @@ namespace eval ::kiss::log {
 
     proc log.message {level message {color "::term::ansi::send::sda_fgdefault"} {icon ""} {prefix ""} {postfix ""} } {
 
-
-        if {[isColorTerm]} {
-                try {
-                    $color
-                    puts "${level}.${::kiss.log.name} ${icon}${prefix}${message}${postfix}"
-                } finally {
-                    ::term::ansi::send::sda_fgdefault
-                }
-        } else {
-            puts "${level}.${::kiss.log.name} ${prefix}${message}${postfix}"
+        if {[dict getdef ${::kissb.log.levels} $level 100] > [dict getdef ${::kissb.log.levels} ${::kissb.log.level} -1]} {
+            if {[isColorTerm]} {
+                    try {
+                        $color
+                        puts "${level}.${::kiss.log.name} ${icon}${prefix}${message}${postfix}"
+                    } finally {
+                        ::term::ansi::send::sda_fgdefault
+                    }
+            } else {
+                puts "${level}.${::kiss.log.name} ${prefix}${message}${postfix}"
+            }
         }
+        
 
 
     }

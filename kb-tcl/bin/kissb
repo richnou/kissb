@@ -37,6 +37,8 @@ foreach arg $argv {
         env KB_FORCE 1
     } elseif {$arg == "--debug" || $arg == "-d"} {
         log.set.level DEBUG
+    } elseif {$arg == "--silent" || $arg == "-q"} {
+        log.set.level NONE
     } elseif {$arg == "--update"} {
         set checkVersion true
     } elseif {$arg == "--nobuild"} {
