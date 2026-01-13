@@ -150,7 +150,26 @@ kissb.extension kissb -noLogger {
             set __val [lindex $localArgs $argIndex+1]
             #uplevel [list set args [lrange $localArgs 0 ${argIndex}-1]]
             uplevel [list lpop args $argIndex ]
-            uplevel [list lpop args [expr $argIndex] ]
+            uplevel [list lpop args [expr {$argIndex}] ]
+        }
+
+        # set to requested varname
+        if {$to!=""} {
+            uplevel [list ::set $varname ${__val}]
+        }
+        return ${__val}
+    }
+    
+    args.consumeArg {v default {to ""} {varname ""}} {
+        # If the provided arg is present, returns true or the varname is set to true, otherwise returns the default 
+        # The arg is then removed from the args list
+        set localArgs [uplevel {::set args}]
+        set __val $default
+        set argIndex [lsearch -exact $localArgs $v]
+        if {$argIndex!=-1} {
+            set __val true
+            uplevel [list lpop args $argIndex ]
+
         }
 
         # set to requested varname
