@@ -8,9 +8,11 @@ package require kissb.coursier
 
 namespace eval java {
 
-    vars.define jvm.default.version       21
+    vars.define jvm.default.version 21 -doc "Java Version installed and provided by this package"
 
     vars.define javac.env.args {}
+    
+    vars.define jvm.default.cache.folder [vars.get kissb.home]/.cache/java
 
     set packageFolder [file dirname [file normalize [info script]]]
 
@@ -22,22 +24,60 @@ namespace eval java {
     kissb.extension java {
 
         defaultRunEnv args {
+            
+            ## Get Runtime Env from coursier and cache to a file
+            files.inDirectory [vars.get jvm.default.cache.folder] {
+                set jvmVersion [kissb.args.get --version [vars.resolve jvm.default.version]]
+                set cachedEnvFile jvm-path-coursier-$jvmVersion
+                files.requireOrRefresh $cachedEnvFile jvm {
+                    
+                    log.info "Creating Java Env cache file using coursier for version $jvmVersion" 
+                    #files.writeText  $cachedEnvFile [exec.cmdGetBashEnv coursier.setup  --env --jvm [vars.resolve jvm.default.version]]
+                    files.writeText  $cachedEnvFile [coursier.setup  --env --jvm $jvmVersion]
+                }
+                
+                
+                return [exec.fileGetbashEnv $cachedEnvFile]
+            }
+            
 
             # Runs coursier to get default jvm versions set in this module
             # Returns an environment dict that can be used by the exec module to run java command line or javac or other tools via java.run
-            return [exec.cmdGetBashEnv coursier.setup \
-                    --env --jvm [vars.resolve jvm.default.version]]
+            
+            #return [exec.cmdGetBashEnv coursier.setup \
+            #        --env --jvm [vars.resolve jvm.default.version]]
         }
 
         run args {
             # Runs java cmd line tool using jvm.default.version variable
             #
             exec.withEnv [java.defaultRunEnv] {
-                puts "Run java"
+                #puts "Run java"
 
                 exec.run java {*}$args
             }
         }
+        
+        selected.env args {
+            # Returns env update required for the selected java 
+            return [java.defaultRunEnv {*}$args]
+        }
+        
+        selected.bashEnv args {
+            # Prints the env in bash format for the selected java
+            #  args - add --version VERSION to select a specific version.
+            set env [java.selected.env {*}$args]
+            puts [exec.envDictToBashEnv $env]
+        }
+        
+        selected.run {tool args} {
+            exec.withEnv [java.defaultRunEnv] {
+                #puts "Run java"
+
+                exec.run $tool {*}$args
+            }
+        }
+        
         docker {module imageSpec args} {
 
             package require kissb.docker
