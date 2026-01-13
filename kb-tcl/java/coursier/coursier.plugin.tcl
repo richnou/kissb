@@ -286,7 +286,12 @@ namespace eval coursier {
         }
 
         setup args {
-            return [exec.call ${::coursier::binPath} setup {*}$args]
+            kissb.args.consumeArg --kissb-print false -> printResult
+            set res  [exec.call ${::coursier::binPath} setup {*}$args]
+            if {$printResult} {
+                log.info $res
+            }
+            return $res
         }
 
         env args {
@@ -317,7 +322,7 @@ namespace eval coursier {
 
         }
 
-        ## App
+        
         withApp {apps script} {
             # Runs provided script with environment path updated to provide applications listed in $apps
             #  apps - list of apps to be provided in path by coursier
@@ -326,6 +331,10 @@ namespace eval coursier {
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm $jvmVersion --apps [join $apps ,]]
             exec.withEnv $compileEnv $script
 
+        }
+        
+        listJvm args {
+            coursier.run java --available 
         }
     }
 
