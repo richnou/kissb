@@ -511,3 +511,17 @@ kissb.extension os {
         }
     }
 }
+
+
+#####################
+# Time utilities
+#####################
+
+kissb.extension time {
+    
+    unixTimestamp args {
+        # Return number of seconds for current time
+        return [clock seconds]
+    }
+
+}
