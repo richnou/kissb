@@ -11,6 +11,9 @@ vars.define track  dev
 
 vars.define sign.defaultKey "E24253BA23A2452F"
 
+vars.define kit.dist.tclversion 9.0.3
+vars.define kit.dist.release    260106
+
 
 
 @ reuse {
@@ -138,6 +141,8 @@ vars.define sign.defaultKey "E24253BA23A2452F"
 @ dist-kit {
 
     package require kissb.tcl9.kit
+    
+    
 
     # Make Zip release
     set zipFile [> dist-zip]
@@ -158,7 +163,7 @@ vars.define sign.defaultKey "E24253BA23A2452F"
         }
 
         ## Linux
-        set kitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250627/tcl9-dist1kit-x86_64-redhat-linux-rhel8-9.0.1-250627 tclkit]
+        set kitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/${::kit.dist.release}/tcl9-dist1kit-x86_64-redhat-linux-rhel8-${::kit.dist.tclversion}-${::kit.dist.release} tclkit]
 
         exec.run chmod +x $kitFile
         exec.run ./$kitFile dist/kissb-${::version}/tclkit/packager_run.tcl --continue --kit --name kissb-${::version} --main dist/kissb-${::version}/bin/kissb
@@ -177,7 +182,7 @@ vars.define sign.defaultKey "E24253BA23A2452F"
 
         }
 
-        set winkitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/250627/tcl9-dist1kit-x86_64-w64-mingw32-win64-9.0.1-250627.exe tclkit]
+        set winkitFile [files.downloadOrRefresh https://kissb.s3.de.io.cloud.ovh.net/tcl9/dist1/${::kit.dist.release}/tcl9-dist1kit-x86_64-w64-mingw32-win64-${::kit.dist.tclversion}-${::kit.dist.release}.exe tclkit]
 
 
         kissb.args.containsNot --nowin {
