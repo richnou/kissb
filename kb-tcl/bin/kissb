@@ -5,8 +5,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+## Logging level args processing to allow debugging or silent mode
+foreach arg $argv {
+    if {$arg == "--debug" || $arg == "-d"} {
+        set ::kissb.log.level DEBUG
+    } elseif {$arg == "--silent" || $arg == "-q"} {
+        set ::kissb.log.level NONE
+    }
+}
 ## Load KISSB
 package require kissb
+
 
 vars.set kissb.binFolder [file normalize [file dirname [info script]]/../]
 vars.set kissb.mainScript [file normalize [info script]]
@@ -35,10 +44,6 @@ foreach arg $argv {
         env KB_REFRESH_[string toupper [string map {--refresh- ""} $arg]] 1
     } elseif {$arg == "--force"} {
         env KB_FORCE 1
-    } elseif {$arg == "--debug" || $arg == "-d"} {
-        log.set.level DEBUG
-    } elseif {$arg == "--silent" || $arg == "-q"} {
-        log.set.level NONE
     } elseif {$arg == "--update"} {
         set checkVersion true
     } elseif {$arg == "--nobuild"} {
@@ -222,7 +227,13 @@ try {
                 if {[llength [info procs $cmd]]==0} {
                     set package kissb.[lindex [split $cmd .] 0]
                     log.debug "Loading package $package by convention to find command"
-                    catch {package require $package}
+                    try {
+                        package require $package
+                    } on error {msg options} {
+                        log.error "Could not load package $package for command $cmd: [dict get $options -errorinfo]"
+                        throw ERROR "Could not load package $package for command $cmd"
+                    }
+                    
                 }
 
                 $bin {*}$cmdArgs {*}$args

@@ -50,16 +50,20 @@ namespace eval ::kiss::log {
         DEBUG 2
         ALL   1
     }
-    set ::kissb.log.level INFO 
     
-    set ::kiss.log.level INFO
+    if {[catch {set ::kissb.log.level}]} {
+        set ::kissb.log.level INFO
+    }
+    
+    
+    
     set ::kiss.log.name {top}
 
     proc log.get.level args {
-        return ${::kiss.log.level}
+        return ${::kissb.log.level}
     }
     proc log.set.level level {
-        set ::kiss.log.level $level
+        set ::kissb.log.level $level
     }
 
     proc log.get.name args {
@@ -70,10 +74,10 @@ namespace eval ::kiss::log {
     }
 
     proc log.set.fine args {
-        set ::kiss.log.level FINE
+        set ::kissb.log.level FINE
     }
     proc log.set.info args {
-        set ::kiss.log.level INFO
+        set ::kissb.log.level INFO
     }
 
     proc log {level message} {
@@ -160,8 +164,9 @@ namespace eval ::kiss::log {
     }
 
     proc log.message {level message {color "::term::ansi::send::sda_fgdefault"} {icon ""} {prefix ""} {postfix ""} } {
-
-        if {[dict getdef ${::kissb.log.levels} $level 100] > [dict getdef ${::kissb.log.levels} ${::kissb.log.level} -1]} {
+        
+        
+        if {[dict getdef ${::kissb.log.levels} $level 100] >= [dict getdef ${::kissb.log.levels} ${::kissb.log.level} -1]} {
             if {[isColorTerm]} {
                     try {
                         $color
