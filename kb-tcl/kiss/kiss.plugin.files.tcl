@@ -98,6 +98,23 @@ namespace eval ::kiss::files {
             }
 
         }
+        
+        compressDir {dir out args} {
+            # Compress dir into output archive
+            # @arg --rename , input dir will be renamed to out file name in output tar
+
+            if {[file extension $out]==".zip"} {
+                files.zipDir $dir $out {*}$args
+            } else {
+                files.tarDir $dir $out {*}$args
+            }
+        }
+        
+        containsText {file line args} {
+            assert.isFile $file "Cannot check if file contains text, doesn't exist"
+            set txt [files.read $file]
+            return [string match *{line}* $txt]
+        }
 
         delete args {
             # Delete provided files in the args list - if a file is not a regular file or directory, the argument is treated as a glob to delete multiple files at once
@@ -156,6 +173,22 @@ namespace eval ::kiss::files {
                 uplevel [list eval $script]
             } finally {
                 close $fid
+            }
+        }
+        
+        extract {f args} {
+            if {[string match *.tar.* $f] || [string match *.tgz $f]} {
+                files.untar $f {*}$args
+            } else {
+                files.unzip $f {*}$args
+            }
+        }
+        
+        extractAndDelete {f args} {
+            try {
+                files.extract $f
+            } finally {
+                files.delete $f
             }
         }
 
@@ -222,8 +255,55 @@ namespace eval ::kiss::files {
             # Returns true if path is relative
             return [expr {[file pathtype $path ] == "relative"}]
         }
+        
+        isLink {path} {
+            try {
+                file link $path 
+                return true   
+            } on error args {
+                return false
+            }
+        }
+        
+        inDirectory {d script} {
+            file mkdir $d
+            set tmpDir [pwd]
+            cd $d
+            try {
+                uplevel $script
+            } finally {
+                cd $tmpDir
+            }
+
+        }
+
+        inBuildDirectory {d script} {
+            set __p ${::kissb.buildDir}/$d
+            file mkdir ${__p}
+            set tmpDir [pwd]
+            cd ${__p}
+            try {
+                uplevel $script
+            } finally {
+                cd $tmpDir
+            }
+
+        }
 
 
+        linkSymbolic {source -> destination} {
+            # Creates a link for source at destination (source -> destination)
+            file link -symbolic $source $destination
+        }
+        
+        linkIsDestination {source -> destination} {
+            # Returns true if the source path is pointing to the destination 
+            if {[files.isFile $source] && [file link $source] == [file normalize $destination]} {
+                return true
+            } else {
+                return false
+            }
+        }
 
 
         mv {src dst} {
@@ -233,16 +313,7 @@ namespace eval ::kiss::files {
 
 
 
-        read f {
-            ## Reads file fully as string
-            ## returns a sting
-            set fid [open $f r]
-            try {
-                return [chan read $fid]
-            } finally {
-                close $fid
-            }
-        }
+        
 
         makeAbsoluteTo {path base} {
             # Returns an absolute path, if path is relative, make it absolute relative to base
@@ -271,69 +342,74 @@ namespace eval ::kiss::files {
 
         }
 
+        
+        read f {
+            ## Reads file fully as string
+            ## returns a sting
+            assert.isFile $f "Cannot read content of file $f, doesn't exist"
+            set fid [open $f r]
+            try {
+                return [chan read $fid]
+            } finally {
+                close $fid
+            }
+        }
+        
+        readOrDefault {f default} {
+            # Reads file or returns default value if it doesn't exist
+            if {[files.isFile $f]} {
+                return [files.read $f]
+            } else {
+                return $default
+            }
+        }
 
-
-        require {f script} {
+        require {f script args} {
             # Require File, if not present, run script
             #  f - File to be required
             #  script - Script to be evaluated if the file is not present
+            
+            set _silent [kissb.args.contains --kissb-silent]
+            
             if {![file exists $f]} {
-                log.warn "File $f is absent, calling script"
+                if {!${_silent}} { log.warn "File $f is absent, calling script" }
                 uplevel [list set __f $f]
                 uplevel [list eval $script]
             } else {
-                log.info "File $f is present, not doing anything"
+                if {!${_silent}} {log.info "File $f is present, not doing anything"}
             }
         }
-        requireOrForce {f script} {
+        
+        
+        requireOrForce {f script args} {
             if {[env KB_FORCE 0]==1} {
                 uplevel [list set __f $f]
                 uplevel [list eval $script]
             } else {
-                uplevel [list files.require $f $script]
+                uplevel [list files.require $f $script {*}$args]
             }
         }
-        requireOrRefresh {f key script} {
+        
+        
+        requireOrRefresh {f key script args} {
             # Executes $script if the provided file $f doesn't exist, or the refresh key $key was requested
             #  f - path of file to check for existence
             #  key - the key provided by user to kissb as argument --refresh-**key** to force file refresh
             #  script - Script executed, user must ensure it creates the requested file. File path is passed as ${__f} variable
             #
             # Doesn't return anything.
+            
+            
 
             if {[refresh.is $key]} {
                 uplevel [list set __f $f]
                 uplevel [list eval $script]
             } else {
-                uplevel [list files.require $f $script]
+                uplevel [list files.require $f $script {*}$args]
             }
         }
 
-        inDirectory {d script} {
-            file mkdir $d
-            set tmpDir [pwd]
-            cd $d
-            try {
-                uplevel $script
-            } finally {
-                cd $tmpDir
-            }
-
-        }
-
-        inBuildDirectory {d script} {
-            set __p ${::kissb.buildDir}/$d
-            file mkdir ${__p}
-            set tmpDir [pwd]
-            cd ${__p}
-            try {
-                uplevel $script
-            } finally {
-                cd $tmpDir
-            }
-
-        }
-
+        
 
 
 
@@ -354,31 +430,9 @@ namespace eval ::kiss::files {
         }
 
 
-        compressDir {dir out args} {
-            # Compress dir into output archive
-            # @arg --rename , input dir will be renamed to out file name in output tar
+        
 
-            if {[file extension $out]==".zip"} {
-                files.zipDir $dir $out {*}$args
-            } else {
-                files.tarDir $dir $out {*}$args
-            }
-        }
-
-        extract {f args} {
-            if {[string match *.tar.* $f] || [string match *.tgz $f]} {
-                files.untar $f {*}$args
-            } else {
-                files.unzip $f {*}$args
-            }
-        }
-        extractAndDelete {f args} {
-            try {
-                files.extract $f
-            } finally {
-                files.delete $f
-            }
-        }
+        
 
 
         withWriter {outPath script} {
@@ -495,6 +549,30 @@ namespace eval ::kiss::files {
 
             }
         }
+    }
+    
+    kissb.extension files.lock {
+     
+        withLockfile {file script} {
+            # Runs the provided script if the specified lock file is not present. If the lock file is already present, doesn't do anything
+        }
+        
+        ifNoLockfile {file script} {
+            # Runs the provided script with a file lock set, if the specified lock file is not present. If the lock file is already present, doesn't do anything
+            if {![files.isFile $file]} {
+                try {
+                    files.writeText $file "kissb.lock"
+                    uplevel [list eval $script]
+                } finally {
+                    files.delete $file
+                }
+                
+                #uplevel [list eval $script]
+            } else {
+                log.warn "Lock file $file detected, not doing anything"
+            }
+        }
+        
     }
 
 
