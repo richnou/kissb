@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.java 1.0
+package provide kissb.jvm 1.0
 package require zipfile::mkzip
 package require kissb.coursier
 
@@ -12,7 +13,7 @@ namespace eval java {
 
     vars.define javac.env.args {}
     
-    vars.define jvm.default.cache.folder [vars.get kissb.home]/.cache/java
+    vars.define _jvm.default.cache.folder [vars.get kissb.home]/.cache/java
 
     set packageFolder [file dirname [file normalize [info script]]]
 
@@ -26,7 +27,7 @@ namespace eval java {
         defaultRunEnv args {
             
             ## Get Runtime Env from coursier and cache to a file
-            files.inDirectory [vars.get jvm.default.cache.folder] {
+            files.inDirectory [vars.get _jvm.default.cache.folder] {
                 set jvmVersion [kissb.args.get --version [vars.resolve jvm.default.version]]
                 set cachedEnvFile jvm-path-coursier-$jvmVersion
                 files.requireOrRefresh $cachedEnvFile jvm {
@@ -34,7 +35,7 @@ namespace eval java {
                     log.info "Creating Java Env cache file using coursier for version $jvmVersion" 
                     #files.writeText  $cachedEnvFile [exec.cmdGetBashEnv coursier.setup  --env --jvm [vars.resolve jvm.default.version]]
                     files.writeText  $cachedEnvFile [coursier.setup  --env --jvm $jvmVersion]
-                }
+                } --kissb-silent
                 
                 
                 return [exec.fileGetbashEnv $cachedEnvFile]
@@ -70,12 +71,18 @@ namespace eval java {
             puts [exec.envDictToBashEnv $env]
         }
         
-        selected.run {tool args} {
+        selected.run {args} {
+            # Runs the provided arguments as command using the default java environment 
+            # For example java.selected.run java --version would print the selected version
             exec.withEnv [java.defaultRunEnv] {
                 #puts "Run java"
 
-                exec.run $tool {*}$args
+                exec.run {*}$args
             }
+        }
+        
+        selected.withEnv script {
+            uplevel [list exec.withEnv [java.defaultRunEnv] [list eval $script ]]
         }
         
         docker {module imageSpec args} {
@@ -180,5 +187,48 @@ namespace eval java {
 
 
 
+    }
+}
+
+
+namespace eval jvm {
+    
+    foreach jvmTool {java javac} {
+        
+        #puts "Creating JVM tool function jvm.$jvmTool"
+        proc ::jvm.$jvmTool args "java.selected.run $jvmTool {*}\$args"
+        #kissb.extension jvm [list $jvmTool args [list java.selected.run $jvmTool {*}$args]]   
+            
+    }
+    
+    proc ::jvm.bashEnv args {
+        java.selected.bashEnv {*}$args
+    }
+    
+    
+    proc ::jvm.alternatives.provide args {
+        
+        # This utility sets a binary alternative to the alternative package
+        package require kissb.alternatives
+        
+        kissb.args.get --version ${::jvm.default.version} -> jvmVersion
+        
+        
+        set env [java.selected.env --version $jvmVersion]
+        set jdkHome [dict get $env JAVA_HOME value]
+        
+        log.info "Setting up alternative for Java at $jdkHome"
+        set bins {}
+        files.withGlobFiles $jdkHome/bin/* {
+            if {[files.isExecutable $file]} {
+                lappend bins [file tail $file] $file
+            } else {
+                log.info "File $file is not executablen not adding to alternative"
+            }
+        }
+        
+        alternatives.setup jvm $jvmVersion [list bin $bins links [list jdk $jdkHome] env [list JAVA_HOME [list value links/jdk merge 0]] ] {}
+        log.success "Java version: [exec.call java --version]"
+        
     }
 }

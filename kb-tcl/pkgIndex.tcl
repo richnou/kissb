@@ -63,6 +63,7 @@ package ifneeded kissb.eda.ghdl             1.0  [list source $dir/eda/ghdl/ghdl
 ## Java and JEE Packages
 #####################
 package ifneeded kissb.java                 1.0  [list source $dir/java/java.plugin.tcl]
+package ifneeded kissb.jvm                  1.0  [list source $dir/java/java.plugin.tcl]
 package ifneeded kissb.coursier             1.0  [list source $dir/java/coursier/coursier.plugin.tcl]
 package ifneeded kissb.gradle               1.0  [list source $dir/java/gradle/gradle.plugin.kb]
 package ifneeded kissb.maven                1.0  [list source $dir/java/maven/maven.plugin.kb]
