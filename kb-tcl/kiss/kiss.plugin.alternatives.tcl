@@ -37,7 +37,7 @@ namespace eval ::kissb::alternatives {
             
         }
         
-        configure {group {version ""}} {
+        use {group {version ""}} {
             # Use this method as user to request an alternative configuration.
             # The method will search for a package that provides the group and variant using standard command name $group.alternatives.provide --version $version
             
@@ -45,7 +45,7 @@ namespace eval ::kissb::alternatives {
             try {
                 package require kissb.$group 
             } on error args {
-                log.error "Could not load a package to provide an alternative for $group.$variant"
+                log.error "Could not load a package to provide an alternative for $group.$version"
                 return false
             }
             
@@ -81,6 +81,7 @@ namespace eval ::kissb::alternatives {
             # Opts are provided and saved by the package a info for the user
             log.info "Setting up alternative for $group,version=$version"
             
+            
             files.inDirectory ${::kissb.alternatives.folder} {
                 
                 ## Retrieve or init current setup
@@ -105,7 +106,7 @@ namespace eval ::kissb::alternatives {
                         if {[files.isLink $linkPath]} {
                             ## Undo then relink
                             files.delete $linkPath
-                        } elseif {[files.isFile]} {
+                        } elseif {[files.isFile $linkPath]} {
                             log.fatal "Link $linkPath is not a link and exists, not touching, failing - there's a problem with this package internal setup"
                         }
                         
@@ -123,7 +124,7 @@ namespace eval ::kissb::alternatives {
                 }
                 
                 ## Setup links 
-                foreach {link linkPath} [dict get $binDict links] {
+                foreach {link linkPath} [dict getdef $binDict links {}] {
                     
                     ## If Link exists and is the same, don't do anything, otherwise create or change
                     set localPath links/$link
@@ -147,7 +148,7 @@ namespace eval ::kissb::alternatives {
                 }
                 
                 ## Save Environment 
-                foreach {envVar opts} [dict get $binDict env] {
+                foreach {envVar opts} [dict getdef $binDict env {}] {
                     
                     set envVal [dict get $opts value]
                     if {[files.isFile $envVal] || [files.isFolder $envVal]} {
