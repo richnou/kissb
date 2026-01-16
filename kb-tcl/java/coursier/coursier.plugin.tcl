@@ -345,7 +345,7 @@ namespace eval coursier {
             
             #kissb.args.get --version ${::coursier.}
             set csPath [kiss::toolchain::init coursier]
-            alternatives.setup scala.coursier launcher [list cs ${::coursier::binPath}] {}
+            alternatives.setup scala.coursier launcher [list bin [list cs ${::coursier::binPath}]] {}
             log.success "Coursier version: [exec.call cs version]"
             
         }
