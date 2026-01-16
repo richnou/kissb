@@ -3,13 +3,132 @@
 # SPDX-License-Identifier: Apache-2.0
 
 package provide kissb.gradle 1.0
-
+package provide kiss.gradlew
+package require kissb.java
 
 namespace eval gradle {
 
+    vars.define gradle.version 8.5 -doc "Default Gradle Version"
+    vars.define _gradle.home "" -doc "Gradle Home set by toolchain"
+    
+    kiss::toolchain::register gradle {
+        
+        files.inDirectory $toolchainFolder {
+            
+            files.requireOrRefresh gradle-${::gradle.version}/bin/gradle gradle {
+                
+                set url https://services.gradle.org/distributions/gradle-${::gradle.version}-all.zip
+                files.downloadOrRefresh $url gradle
+                files.extractAndDelete gradle-${::gradle.version}-all.zip
+            }
+            
+            vars.set _gradle.home [file normalize gradle-${::gradle.version}]
+            return [vars.get _gradle.home]
+        }
+        
+    }
+    
+    kissb.extension gradle {
+        
+        init args {
+            kiss::toolchain::init gradle
+        }
+        
+        env args {
+            # Returns the environment for currently installed gradle
+            gradle.init
+            return [subst {PATH {value ${::_gradle.home}/bin merge 1} GRADLE_HOME {value ${::_gradle.home} merge 0}}]
+        }
+        
+        withEnv script {
+            
+            
+            uplevel [list exec.withEnv [gradle.env] [list eval $script ]]   
+        }
+        
+        alternatives.provide args {
+            
+            kissb.args.get --version ${::gradle.version} -> gradleVersion
+            vars.set gradle.version $gradleVersion
+            set gradlePath [kiss::toolchain::init gradle]
+            alternatives.setup gradle $gradleVersion [list bin [list gradle ${gradlePath}/bin/gradle]]  {}
+            log.success "Gradle version: [exec.call gradle --version]"
+            
+        }
+        
+    }
+    
+    
+}
 
+namespace eval gradlew {
+
+    
+    
+    
+    
     proc ::gradlew args {
-        ::kiss::utils::execIn . ./gradlew {*}$args
+        
+        # Runs the local gradlew exec
+        assert.isFile gradlew "Cannot run gradlew, no gradlew installed - run gradle.gradlew.install to load gradlew"
+        
+        java.selected.withEnv {
+            exec.run ./gradlew {*}$args
+        }
+        
+        #::kiss::utils::execIn . ./gradlew {*}$args
+    }
+    
+    #kissb.extension gradle {
+    #    
+    #}
+    
+    kissb.extension gradlew {
+        
+        init args {
+            
+            set validateonly [kissb.args.contains --validate false]
+            
+            # init gradlew by checking it is installed and at the correct version
+            if {[files.isFile gradlew]} {
+                log.success "Gradlew wrapper detected"
+                
+                if {![files.containsText gradle/wrapper/gradle-wrapper.properties distributionUrl=https\://services.gradle.org/distributions/gradle-${::gradle.version}-bin.zip]} {
+                    if {$validateonly} {
+                        log.fatal "Gradlew Wrapper version is not ${::gradle.version}"
+                    } else {
+                        # Fix
+                    }
+                    
+                }
+            } else {
+                
+                if {!${validateonly}} {
+                    
+                    # Setup
+                    ######
+                    
+                    ## Check there is at last a settings file 
+                    if {![files.isFile settings.gradle.kts]} {
+                        log.warn "There is no settings.gradle.kts file in the work directory, creating an empty one to allow gradle wrapper to be installed"
+                        files.writeText settings.gradle.kts ""
+                    }
+                    gradle.withEnv {
+                        log.success "Setting up gradle wrapper using gradle version:"
+                        exec.run gradle --version
+                        exec.run gradle wrapper
+                    } 
+                    
+                } else {
+                    log.fatal "gradlew not present and not going to be installed"
+                }
+                
+            }
+            
+            
+        }
+        
+        
     }
 
 }
