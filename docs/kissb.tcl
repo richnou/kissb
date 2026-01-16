@@ -43,7 +43,7 @@ proc variablesMd {pattern file} {
     package require ruff 2.5.0
 }
 
-@ generate.apidoc {
+@ generate.apidoc : loadRuff {
 
     package require git:https://github.com/richnou/ruff.git 2.5.0
     package require ruff 2.5.0
@@ -58,6 +58,9 @@ proc variablesMd {pattern file} {
     package require kissb.scala
     makeMd "scala.*"             pages/packages/jee/scala.methods.md
     makeMd "bloop.*"             pages/packages/jee/bloop.methods.md
+    
+    package require kissb.java
+    makeMd "java.*"             pages/packages/jee/java.methods.md 
 
 
     package require kissb.eda.verilator
@@ -168,6 +171,7 @@ proc variablesMd {pattern file} {
     set packagesNamespaces {
 
         kissb.scala         {scala scalac bloop}    pages/packages/jee/_scala.vars.inc.md
+        kissb.java          {jvm java}              pages/packages/jee/_java.vars.inc.md
         kissb.coursier      coursier                pages/packages/jee/_coursier.vars.inc.md
         kissb.eda.verilator verilator               pages/packages/eda/_verilator.vars.inc.md
         kissb.eda.verible   verible                 pages/packages/eda/_verible.vars.inc.md
@@ -229,4 +233,10 @@ proc variablesMd {pattern file} {
     puts "EOF vars"
 
 
+}
+
+@ generate.all {
+
+    > generate.apidoc 
+    > generate.variables
 }

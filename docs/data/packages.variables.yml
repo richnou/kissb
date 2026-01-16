@@ -5,6 +5,9 @@ scalac:
     env_args: ""
 bloop:
     version: "2.0.10"
+jvm:
+    default_version: "21"
+java:
 coursier:
 verilator:
     version: "v5.040"

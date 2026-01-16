@@ -49,6 +49,30 @@ Runs a command and returns a dict of env based on export lines
 |----|----|
 
 
+## <a name='::exec.envDictToBashEnv'></a>exec\.envDictToBashEnv
+
+
+> `exec.envDictToBashEnv` *`dict`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`dict`|Not documented.|
+
+
+## <a name='::exec.fileGetbashEnv'></a>exec\.fileGetbashEnv
+
+
+> `exec.fileGetbashEnv` *`file`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`file`|Not documented.|
+
+
 ## <a name='::exec.run'></a>exec\.run
 
 
