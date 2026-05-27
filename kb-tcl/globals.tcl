@@ -3,7 +3,7 @@ vars.set kissb.home $::env(HOME)/.kissb
 files.mkdir ${::kissb.home}
 
 vars.set kissb.projectFolder [pwd]
-vars.set kissb.buildDir ${::kissb.projectFolder}/.kb
+vars.define kissb.buildDir ${::kissb.projectFolder}/.kb
 
 
 # Portable for main zip or git distribution, kit for single file runtime kit
