@@ -41,8 +41,12 @@ namespace eval verilator {
     kissb.extension verilator {
 
 
-        init.local version {
-            vars.set verilator.version v$version
+        init.local args {
+
+            kissb.args.contains -version {
+                vars.set verilator.version v[kissb.args.get -version ""]
+            }
+
             set ::verilator.runtime "local"
             kiss::toolchain::init kissb-verilator
 
@@ -52,10 +56,19 @@ namespace eval verilator {
                     log.fatal "Cannot find $tool"
                 }
             }
+
+            ## Add to Path?
+            kissb.args.contains -addToPath {
+                env.add PATH ${::verilator.root}/bin :
+            }
         }
 
-        init.docker version {
-            vars.set verilator.version v$version
+        init.docker args {
+
+            kissb.args.contains -version {
+                vars.set verilator.version v[kissb.args.get -version ""]
+            }
+
             set ::verilator.runtime docker
             package require kissb.builder.container
 

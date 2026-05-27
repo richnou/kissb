@@ -38,6 +38,9 @@ namespace eval ghdl {
 
         init.kissb-llvm  args {
              kiss::toolchain::init ghdl
+             kissb.args.contains -addToPath {
+                 env.add PATH ${::ghdl.installFolder}/bin :
+             }
         }
 
         init.system args {
