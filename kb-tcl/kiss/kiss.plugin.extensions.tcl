@@ -361,48 +361,28 @@ kissb.extension env {
         return [expr [llength [array get ::env $name]] > 0 ? true : false]
     }
 
+    get {name default} {
+        if {[env.isDefined $name]} {
+            return $::env($name)
+        } else {
+            return $default
+        }
+    }
+
     set {name value} {
         set ::env($name) $value
     }
-}
 
-##############################
-## Dependencies extension
-##############################
-kissb.extension dependencies {
-
-
-    bom dict {
-        ## Save provided dict in bom
-
-
-        #log.info "Adding BOM: $spec"
-        ::kiss::dependencies::addBOM $dict
-    }
-
-    add {module resolver args} {
-
-        foreach dSpecs $args {
-            foreach dSpec $dSpecs {
-                log.debug "Adding Dependency: $dSpec"
-                ::kiss::dependencies::addDepSpec $module $dSpec $resolver
-            }
+    add {name value separator} {
+        if {[env.isDefined $name]} {
+            env.set $name [join [list [env.get $name ""] $value] $separator]
+        } else {
+            env.set $name $value
         }
-
-    }
-
-    getDeps {module args} {
-        return [::kiss::dependencies::getDeps $module]
-    }
-
-    resolve {module type args} {
-        return [::kiss::dependencies::resolveDeps $module $type]
-    }
-
-    isScopeDefined module {
-        return [::kiss::dependencies::isScopeDefined $module]
     }
 }
+
+
 
 ##############################
 ## Dependencies extension
