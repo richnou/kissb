@@ -16,6 +16,24 @@
 
 ### <a name='Description'></a>Description
 
+## <a name='::kissb.args.consumeArg'></a>kissb\.args\.consumeArg
+
+If the provided arg is present, returns true or the varname is set to true, otherwise returns the default
+The arg is then removed from the args list
+
+
+> `kissb.args.consumeArg` *`v default ?to? ?varname?`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`v`|Not documented.|
+|`default`|Not documented.|
+|`to`|Not documented. Optional, default `""`.|
+|`varname`|Not documented. Optional, default `""`.|
+
+
 ## <a name='::kissb.args.consumeValue'></a>kissb\.args\.consumeValue
 
 

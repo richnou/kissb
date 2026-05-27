@@ -129,6 +129,19 @@ Downloads file from the URL if needed, or if refresh key is set
 |`outFile`|Not documented. Optional, default `""`.|
 
 
+## <a name='::files.eachLine'></a>files\.eachLine
+
+
+> `files.eachLine` *`f script`*<br>
+
+### <a name='Parameters'></a>Parameters
+
+|||
+|----|----|
+|`f`|Not documented.|
+|`script`|Not documented.|
+
+
 ## <a name='::files.extract'></a>files\.extract
 
 
@@ -448,6 +461,8 @@ Returns the path to the created temp file
 |----|----|
 |`f`|Not documented.|
 
+
+### <a name='Description'></a>Description
 
 ## <a name='::files.require'></a>files\.require
 

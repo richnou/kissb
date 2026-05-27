@@ -83,15 +83,15 @@ namespace eval builder::container {
 
             switch ${::builder.container.runtime} {
                 docker {
-                    docker.build -f $dockerFile -t $tag .
+                    docker.build {*}$args -f $dockerFile -t $tag .
                 }
 
                 podman {
-                    set extraArgs {}
-                    kissb.args.contains -quiet {
-                        lappend extraArgs -q
-                    }
-                    podman.build {*}$extraArgs -f $dockerFile -t $tag .
+                    #set extraArgs {}
+                    #kissb.args.contains -quiet {
+                    #    lappend extraArgs -q
+                    #}
+                    podman.build {*}$args -f $dockerFile -t $tag .
                 }
             }
         }

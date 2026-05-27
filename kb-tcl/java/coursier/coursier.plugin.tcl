@@ -14,7 +14,47 @@ namespace eval coursier {
     set binPath ""
 
     set repositories {ivy2Local central sonatype:releases https://oss.sonatype.org/content/groups/public/}
+    
+    
+    ## On Load -> Toolchain
+    ###########
+    kiss::toolchain::register coursier {
+        #puts "Init Coursier Toolchain"
 
+        set ::coursier::tcFolder $toolchainFolder
+        file mkdir ${::coursier::tcFolder}
+
+        if {[os.isWindows]} {
+            set ::coursier::binPath [file normalize ${::coursier::tcFolder}/cs.exe]
+        } else {
+            set ::coursier::binPath [file normalize ${::coursier::tcFolder}/cs]
+        }
+
+        files.inDirectory ${::coursier::tcFolder} {
+            if {![file exists ${::coursier::binPath}]} {
+                log.info "Downloading Coursier"
+                if {[os.isWindows]} {
+                    files.download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-win32.zip" ${::coursier::tcFolder}/cs-x86_64-pc-win32.zip
+                    exec.run powershell -command "Expand-Archive cs-x86_64-pc-win32.zip -DestinationPath ."
+                    exec.run powershell -command "mv cs-x86_64-pc-win32.exe cs.exe"
+                    exec.run powershell -command ".\\cs.exe"
+                } else {
+                    files.download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" ${::coursier::tcFolder}/cs-x86_64-pc-linux.gz
+                    exec.run gunzip -d cs-x86_64-pc-linux.gz
+                    exec.run mv cs-x86_64-pc-linux cs
+                    exec.run chmod +x cs
+                }
+
+                #exec.run $tcFolder curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
+            } else {
+                log.fine "Coursier TC ready in ${::coursier::binPath}"
+            }
+        }
+
+
+    }
+    
+    
     ## Repos
     ###############
     proc addRepository url {
@@ -73,43 +113,7 @@ namespace eval coursier {
 
     }
 
-    ## On Load -> Toolchain
-    ###########
-    kiss::toolchain::register coursier {
-        #puts "Init Coursier Toolchain"
-
-        set ::coursier::tcFolder $toolchainFolder
-        file mkdir ${::coursier::tcFolder}
-
-        if {[os.isWindows]} {
-            set ::coursier::binPath [file normalize ${::coursier::tcFolder}/cs.exe]
-        } else {
-            set ::coursier::binPath [file normalize ${::coursier::tcFolder}/cs]
-        }
-
-        files.inDirectory ${::coursier::tcFolder} {
-            if {![file exists ${::coursier::binPath}]} {
-                log.info "Downloading Coursier"
-                if {[os.isWindows]} {
-                    files.download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-win32.zip" ${::coursier::tcFolder}/cs-x86_64-pc-win32.zip
-                    exec.run powershell -command "Expand-Archive cs-x86_64-pc-win32.zip -DestinationPath ."
-                    exec.run powershell -command "mv cs-x86_64-pc-win32.exe cs.exe"
-                    exec.run powershell -command ".\\cs.exe"
-                } else {
-                    files.download "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" ${::coursier::tcFolder}/cs-x86_64-pc-linux.gz
-                    exec.run gunzip -d cs-x86_64-pc-linux.gz
-                    exec.run mv cs-x86_64-pc-linux cs
-                    exec.run chmod +x cs
-                }
-
-                #exec.run $tcFolder curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs
-            } else {
-                log.fine "Coursier TC ready in ${::coursier::binPath}"
-            }
-        }
-
-
-    }
+    
 
     ## Fetch
     ##############
@@ -286,7 +290,12 @@ namespace eval coursier {
         }
 
         setup args {
-            return [exec.call ${::coursier::binPath} setup {*}$args]
+            kissb.args.consumeArg --kissb-print false -> printResult
+            set res  [exec.call ${::coursier::binPath} setup {*}$args]
+            if {$printResult} {
+                log.info $res
+            }
+            return $res
         }
 
         env args {
@@ -317,7 +326,7 @@ namespace eval coursier {
 
         }
 
-        ## App
+        
         withApp {apps script} {
             # Runs provided script with environment path updated to provide applications listed in $apps
             #  apps - list of apps to be provided in path by coursier
@@ -326,6 +335,19 @@ namespace eval coursier {
             set compileEnv [exec.cmdGetBashEnv coursier.setup -q --env --jvm $jvmVersion --apps [join $apps ,]]
             exec.withEnv $compileEnv $script
 
+        }
+        
+        listJvm args {
+            coursier.run java --available 
+        }
+        
+        alternatives.provide args {
+            
+            #kissb.args.get --version ${::coursier.}
+            set csPath [kiss::toolchain::init coursier]
+            alternatives.setup scala.coursier launcher [list bin [list cs ${::coursier::binPath}]] {}
+            log.success "Coursier version: [exec.call cs version]"
+            
         }
     }
 

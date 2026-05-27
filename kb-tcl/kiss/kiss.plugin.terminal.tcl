@@ -117,6 +117,10 @@ namespace eval ::kiss::terminal {
             # Runs a command and returns a dict of env based on export lines
             return [exec.bashEnvToDict [{*}$args]]
         }
+        
+        fileGetbashEnv file {
+            return [exec.bashEnvToDict [files.read $file]]
+        }
 
 
         bashEnvToDict str {
@@ -139,7 +143,20 @@ namespace eval ::kiss::terminal {
             }
             return $res
         }
-
+        
+        envDictToBashEnv dict {
+         
+            set resScript {}
+            foreach {env opts} $dict {
+                #puts "Env to Bash: $env -> $opts"
+                if {[dict getdef $opts merge 0]} {
+                    puts "export ${env}=\"[dict getdef $opts value UNDEF]:\$${env}\""
+                } else {
+                    puts "export ${env}=\"[dict getdef $opts value UNDEF]\""
+                }
+            }
+            
+        }
 
         withEnv {envDict args} {
             # Runs the script provided in $args list with a temporary environment modified using the provided envDict.
