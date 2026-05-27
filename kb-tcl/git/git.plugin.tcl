@@ -39,7 +39,27 @@ namespace eval git {
         }
 
         clone {address {folder ""}} {
-            exec.run git clone $address
+            if {$folder==""} {
+                set folder [string map {.git ""} [lindex [split $address /] end]]
+            }
+            files.require $folder {
+                exec.run git clone $address $folder
+            }
+
+
+            return $folder
+        }
+
+        cloneWithModules {url {folder ""}} {
+            set clonedFolder [git.clone $url $folder]
+            log.info "Cloned into $clonedFolder, updating submodules"
+            files.inDirectory $clonedFolder {
+                exec.run git submodule init
+                exec.run git submodule update --remote
+            }
+
+            return $clonedFolder
+
         }
 
         switch branch {
