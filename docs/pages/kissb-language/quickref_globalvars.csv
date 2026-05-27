@@ -1,0 +1,4 @@
+Variable , Documentation , Example
+kissb.userhome,Path to user's home folder, -
+kissb.projectFolder,Points to the folder where the kissb build file is located,set aFile ${::kissb.projectFolder}
+kissb.buildDir,"The default folder to place build files, defaults to ${::kissb.projectFolder}/.kb",files.inDirectory ${::kissb.buildDir} {}
